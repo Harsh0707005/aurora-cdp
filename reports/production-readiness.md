@@ -188,7 +188,7 @@ Resume if interrupted: `cd aurora-eval-harness && .venv/bin/aurora-eval run --ad
 
 1. **R1 — hot-key blocking.** Raise `blocking.block_size_limit` (the harness baseline uses 200) *and* make oversized blocks degrade gracefully (sub-block on a second key, or cap pairs per record) instead of being dropped; re-run the three tiers. Expected: blocking recall ≥ 0.85, pairwise F1 ≥ 0.90 on small, duplicate-flood recall > 0.5.
 2. **R2 — memory and throughput at 1M.** `score_pairs` materialises every candidate pair as a Python dict with a `features_json` string; at ~8–9 M pairs this is several GB. Stream pairs in chunks and make feature persistence optional.
-3. **R3 — deterministic stable-id tie-break.** Break equal-overlap ties on a stable cluster attribute, not the previous id string.
+3. **R3 — deterministic stable-id tie-break.** Break equal-overlap ties on a stable cluster attribute, not the previous id string. *Done 2026-10-22 evening (`stable_id.tie_break: stable`, see `docs/feature-parity.md` assumption 18); metrics unchanged on the small tier.*
 4. **R4 — jitter alerting.** The 2 % alert fires on healthy early windows; alert on *harmful* churn (purity dropped) or on the trend, and re-check once R1 lands (more merges early ⇒ less churn later).
 5. **R5 — false-merge margin.** Medium sits at 2.12 % cluster-weighted; after R1 widens recall, re-verify the ceiling and consider adding `postal` to `cluster.conflict_attributes` for household twins.
 

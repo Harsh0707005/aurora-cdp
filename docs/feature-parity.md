@@ -22,7 +22,7 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
 | Stitch labels (forced merge / split) | ✅ | CSV overlay (`labels.file`) **and** persisted `stitch_labels` table (`aurora labels add|import|list|remove`, survive runs); merge → score-5 `label_merge` edge that outranks attribute conflicts, split → scored edge dropped + transitive pair veto; group-id label form not reproduced (pairs only) |
 | One-to-one (ck) Stitch mode | 🟡 | `ck_exact` is a deterministic rule; dedicated mode ❌ |
 | Incremental clustering | 🟡 | changed-record pair filtering + carried edges; correctness equivalence not verified |
-| Stable ID assignment (greedy max-overlap, ties by ascending id) | ✅ | `stable_id.py` |
+| Stable ID assignment (greedy max-overlap, ties by ascending id) | ✅ | `stable_id.py`; `stable_id.tie_break: documented` reproduces the ascending-id rule, the default `stable` breaks equal-overlap ties by oldest previous id → larger current cluster → documented order (assumption 18) |
 | Unified Changes PKs / Clusters (added/deleted/updated + run id) | ✅ | `unified_changes_pk`, `unified_changes_clusters` |
 | Jitter metric + 2% alert | ✅ | `jitter_reports` |
 | Stitch QA tables (blocking keys, scores incl. non-merges, skipped blocks, cluster size distribution) | ✅ / 🟡 | several QA queries still to add (weakest match, many semantic values, FK validation) |
@@ -78,6 +78,11 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
     (checked on cluster roots, so it also blocks transitive merges). Amperity's labels are cluster group ids.
 16. **Manual blocklist lives in config** (`blocklist.manual`), normalised like the records on load, not in a
     tenant `BlocklistValues` table; entries are logged per run with the number of records they blanked.
+18. **Stable-ID tie-break** (`stable_id.tie_break: stable`, default): Amperity breaks equal-overlap ties by ascending
+    previous id, which with uuid4 ids makes the survivor of a 2-way equal merge random. We prefer the previous id
+    minted first (ledger `MIN(valid_from)`), then the larger current cluster (more records keep their id), and only
+    then the documented order; `documented` restores the original rule. Jitter counts are unchanged on the small
+    tier (churn mean / max 1.53 % / 2.19 % either way); only which id survives differs.
 17. **Learned scorer monotonicity** (`matcher.ordinal.monotone`) is a projected-gradient sign constraint on the
     feature weights; it is off by default so the unconstrained fit used in the ordinal evaluation runs stays
     reproducible.

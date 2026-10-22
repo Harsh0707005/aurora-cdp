@@ -25,6 +25,11 @@ final window, laptop (`cProfile`, same 2,676,111 blocked / 6,737,512 scored pair
   several features), and the element-wise equality loops (`_exact_vec`, birthdate, house number, trivial dupe) use
   array comparisons. The memo is keyed by `id(frame)` rather than stored in `DataFrame.attrs` (pandas deep-copies
   `attrs` into every derived Series, which cost 200 s on its own).
+- **Stable-ID tie-break (memo R3)**: `stable_id.tie_break` (`stable`, default | `documented`). Equal-overlap ties were
+  broken by the previous id *string*, i.e. randomly with uuid4 ids; `stable` prefers the previous id minted first
+  (`id_ledger` `MIN(valid_from)`), then the larger current cluster, then the documented order. Small tier through the
+  harness: every metric identical (churn 1.53 % / 2.19 %), only the surviving id in exact ties differs
+  (`reports/2026-10-22/small-v7-tiebreak`). `tests/test_stable_id_tiebreak.py`.
 - **`ingestion.semantics`**: `update_dt` parsing takes the pandas fast path (datetime columns: `to_pydatetime`;
   strings: `to_datetime(format="ISO8601")` with a dateutil fallback for anything it cannot parse); the per-row
   `iterrows` for foreign keys runs only when the mapping declares fk columns.

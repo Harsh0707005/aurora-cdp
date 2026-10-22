@@ -1,0 +1,19 @@
+{"t": 1792671241.708365, "ts": "2026-10-22T17:44:01", "kind": "run_start", "pid": 81772, "run_name": "small-v6-perf", "input_hash": "9c8e499a357b5eb30c0e", "completed_stages": []}
+{"t": 1792671241.739381, "ts": "2026-10-22T17:44:01", "kind": "stage_start", "pid": 81772, "stage": "load", "attempt": 0}
+{"t": 1792671241.879406, "ts": "2026-10-22T17:44:01", "kind": "stage_end", "pid": 81772, "stage": "load", "attempt": 0, "elapsed_s": 0.14}
+{"t": 1792671241.937829, "ts": "2026-10-22T17:44:01", "kind": "stage_start", "pid": 81772, "stage": "resolve:w0", "attempt": 0}
+{"t": 1792671242.659251, "ts": "2026-10-22T17:44:02", "kind": "stage_end", "pid": 81772, "stage": "resolve:w0", "attempt": 0, "elapsed_s": 0.721}
+{"t": 1792671242.686244, "ts": "2026-10-22T17:44:02", "kind": "stage_start", "pid": 81772, "stage": "resolve:w1", "attempt": 0}
+{"t": 1792671243.4980202, "ts": "2026-10-22T17:44:03", "kind": "stage_end", "pid": 81772, "stage": "resolve:w1", "attempt": 0, "elapsed_s": 0.812}
+{"t": 1792671243.533695, "ts": "2026-10-22T17:44:03", "kind": "stage_start", "pid": 81772, "stage": "resolve:w2", "attempt": 0}
+{"t": 1792671244.7486851, "ts": "2026-10-22T17:44:04", "kind": "stage_end", "pid": 81772, "stage": "resolve:w2", "attempt": 0, "elapsed_s": 1.215}
+{"t": 1792671244.796601, "ts": "2026-10-22T17:44:04", "kind": "stage_start", "pid": 81772, "stage": "resolve:w3", "attempt": 0}
+{"t": 1792671246.454879, "ts": "2026-10-22T17:44:06", "kind": "stage_end", "pid": 81772, "stage": "resolve:w3", "attempt": 0, "elapsed_s": 1.658}
+{"t": 1792671246.5087948, "ts": "2026-10-22T17:44:06", "kind": "stage_start", "pid": 81772, "stage": "resolve:w4", "attempt": 0}
+{"t": 1792671248.50882, "ts": "2026-10-22T17:44:08", "kind": "stage_end", "pid": 81772, "stage": "resolve:w4", "attempt": 0, "elapsed_s": 2.0}
+{"t": 1792671248.587915, "ts": "2026-10-22T17:44:08", "kind": "stage_start", "pid": 81772, "stage": "resolve:w5", "attempt": 0}
+{"t": 1792671251.085932, "ts": "2026-10-22T17:44:11", "kind": "stage_end", "pid": 81772, "stage": "resolve:w5", "attempt": 0, "elapsed_s": 2.498}
+{"t": 1792671251.611469, "ts": "2026-10-22T17:44:11", "kind": "stage_start", "pid": 81772, "stage": "metrics", "attempt": 0}
+{"t": 1792671252.538079, "ts": "2026-10-22T17:44:12", "kind": "stage_end", "pid": 81772, "stage": "metrics", "attempt": 0, "elapsed_s": 0.927}
+{"t": 1792671252.538699, "ts": "2026-10-22T17:44:12", "kind": "stage_start", "pid": 81772, "stage": "report"}
+{"t": 1792671253.114571, "ts": "2026-10-22T17:44:13", "kind": "run_complete", "pid": 81772, "report": "/Users/harshmaster/Desktop/Projects/aurora-cdp/reports/2026-10-22/small-v6-perf/report.md"}

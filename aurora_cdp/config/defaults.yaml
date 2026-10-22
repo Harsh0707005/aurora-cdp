@@ -224,6 +224,9 @@ storage:
 stable_id:
   enabled: true
   jitter_alert_pct: 2.0         # [AMP] alert when >=2% of records change ID between runs
+  tie_break: stable             # [ASSUMPTION] equal-overlap ties: `documented` = Amperity's ascending (previous id, cluster id),
+                                # random with uuid4 ids; `stable` = oldest previous id first, then the larger current
+                                # cluster, then the documented order (which id survives a 2-way merge is then reproducible)
 
 survivorship:
   # [AMP] Source_Priority: lower number wins; unassigned -> 999. Field_Priority overrides per attribute.

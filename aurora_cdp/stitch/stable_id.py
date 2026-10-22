@@ -47,9 +47,18 @@ class StableIdResult:
     jitter: JitterReport | None = None
 
 
+TIE_BREAKS = ("documented", "stable")
+
+
 def assign_stable_ids_duck(con: duckdb.DuckDBPyConnection, jitter_alert_pct: float = 2.0,
-                           cur_table: str = "_cur", prev_table: str = "_prev") -> JitterReport:
+                           cur_table: str = "_cur", prev_table: str = "_prev",
+                           tie_break: str = "documented", prev_meta_table: str | None = None) -> JitterReport:
     """Core. ``cur_table(rid, cid)``: this run's record -> cluster id; ``prev_table(rid, aurora_id)``: last ledger.
+
+    ``tie_break`` decides between candidate edges of equal weight: ``documented`` is Amperity's rule (ascending
+    previous id, then cluster id), which with uuid4 ids makes the survivor of an equal-overlap merge random;
+    ``stable`` prefers the previous id seen first (``prev_meta_table(aurora_id, first_seen)``), then the larger
+    current cluster (more records keep their id), and only then falls back to the documented order.
 
     Writes temp tables ``_cmap(cid, aurora_id, inherited_prev)``, ``_rid_map(rid, aurora_id)``,
     ``_pkchg(rid, aurora_id, aurora_id_prev, change_type)`` and
@@ -58,8 +67,23 @@ def assign_stable_ids_duck(con: duckdb.DuckDBPyConnection, jitter_alert_pct: flo
     con.execute("CREATE OR REPLACE TEMP TABLE _deg AS SELECT prev_id, cid, w, COUNT(*) OVER (PARTITION BY prev_id) AS dp, COUNT(*) OVER (PARTITION BY cid) AS dc FROM _w")
     con.execute("CREATE OR REPLACE TEMP TABLE _cmap (cid VARCHAR, aurora_id VARCHAR, inherited_prev VARCHAR)")
     con.execute("INSERT INTO _cmap SELECT cid, prev_id, prev_id FROM _deg WHERE dp = 1 AND dc = 1")
-    # ambiguous subset: splits / merges, resolved greedily in weight order (ties: prev id, cluster id ascending)
-    rows = con.execute("SELECT prev_id, cid, w FROM _deg WHERE dp > 1 OR dc > 1 ORDER BY w DESC, prev_id, cid").fetchall()
+    # ambiguous subset: splits / merges, resolved greedily in weight order
+    if tie_break not in TIE_BREAKS:
+        raise ValueError(f"stable_id.tie_break must be one of {TIE_BREAKS}, got {tie_break!r}")
+    if tie_break == "stable":
+        meta = prev_meta_table or "(SELECT NULL::VARCHAR AS aurora_id, NULL::TIMESTAMP AS first_seen WHERE FALSE)"
+        rows = con.execute(
+            f"""
+            SELECT d.prev_id, d.cid, d.w
+            FROM _deg d
+            LEFT JOIN {meta} m ON m.aurora_id = d.prev_id
+            LEFT JOIN (SELECT cid, COUNT(*) AS cn FROM {cur_table} GROUP BY 1) cc ON cc.cid = d.cid
+            WHERE d.dp > 1 OR d.dc > 1
+            ORDER BY d.w DESC, m.first_seen ASC NULLS LAST, cc.cn DESC, d.prev_id, d.cid
+            """
+        ).fetchall()
+    else:
+        rows = con.execute("SELECT prev_id, cid, w FROM _deg WHERE dp > 1 OR dc > 1 ORDER BY w DESC, prev_id, cid").fetchall()
     used_prev: set[str] = set()
     used_cur: set[str] = set()
     picked = []
@@ -133,16 +157,23 @@ def assign_stable_ids_duck(con: duckdb.DuckDBPyConnection, jitter_alert_pct: flo
                         ids_minted=int(minted), ids_retired=int(retired), alert=bool(has_prev) and jitter_pct >= jitter_alert_pct)
 
 
-def assign_stable_ids(current: dict[str, str], previous: dict[str, str], jitter_alert_pct: float = 2.0) -> StableIdResult:
-    """Dict API over the SQL core. current: rid -> cluster_id (this run). previous: rid -> aurora_id (last ledger)."""
+def assign_stable_ids(current: dict[str, str], previous: dict[str, str], jitter_alert_pct: float = 2.0,
+                      tie_break: str = "documented", first_seen: dict[str, object] | None = None) -> StableIdResult:
+    """Dict API over the SQL core. current: rid -> cluster_id (this run). previous: rid -> aurora_id (last ledger).
+    ``first_seen`` (aurora_id -> datetime) feeds the ``stable`` tie-break."""
     con = duckdb.connect(":memory:")
     try:
         con.register("_cur_src", pd.DataFrame({"rid": list(current), "cid": list(current.values())}, dtype=object))
         con.register("_prev_src", pd.DataFrame({"rid": list(previous), "aurora_id": list(previous.values())}, dtype=object))
         con.execute("CREATE TEMP TABLE _cur AS SELECT rid::VARCHAR AS rid, cid::VARCHAR AS cid FROM _cur_src")
         con.execute("CREATE TEMP TABLE _prev AS SELECT rid::VARCHAR AS rid, aurora_id::VARCHAR AS aurora_id FROM _prev_src")
+        meta = None
+        if first_seen:
+            con.register("_meta_src", pd.DataFrame({"aurora_id": list(first_seen), "first_seen": list(first_seen.values())}))
+            con.execute("CREATE TEMP TABLE _prev_meta AS SELECT aurora_id::VARCHAR AS aurora_id, first_seen::TIMESTAMP AS first_seen FROM _meta_src")
+            meta = "_prev_meta"
         res = StableIdResult()
-        res.jitter = assign_stable_ids_duck(con, jitter_alert_pct)
+        res.jitter = assign_stable_ids_duck(con, jitter_alert_pct, tie_break=tie_break, prev_meta_table=meta)
         for cid, aid, inh in con.execute("SELECT cid, aurora_id, inherited_prev FROM _cmap").fetchall():
             res.cluster_to_id[cid] = aid
             if inh is None:

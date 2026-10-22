@@ -620,7 +620,13 @@ def run_stitch(
     con.execute(
         "CREATE OR REPLACE TEMP TABLE _prev AS SELECT datasource || '|' || pk AS rid, datasource, pk, aurora_id FROM id_ledger WHERE is_current"
     )
-    jitter = assign_stable_ids_duck(con, float(cfg.stable_id.get("jitter_alert_pct", 2.0)))
+    con.execute(  # when each previous id was first minted (every ledger generation), for the `stable` tie-break
+        "CREATE OR REPLACE TEMP TABLE _prev_meta AS SELECT aurora_id, MIN(valid_from) AS first_seen FROM id_ledger GROUP BY 1"
+    )
+    jitter = assign_stable_ids_duck(
+        con, float(cfg.stable_id.get("jitter_alert_pct", 2.0)),
+        tie_break=str(cfg.stable_id.get("tie_break", "stable")), prev_meta_table="_prev_meta",
+    )
     timings["stable_id"] = round(time.perf_counter() - t, 3)
 
     t = time.perf_counter()

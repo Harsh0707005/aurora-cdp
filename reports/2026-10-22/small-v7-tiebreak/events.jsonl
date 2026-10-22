@@ -1,0 +1,19 @@
+{"t": 1792671996.811, "ts": "2026-10-22T17:56:36", "kind": "run_start", "pid": 82608, "run_name": "small-v7-tiebreak", "input_hash": "fbf6f178511789610c95", "completed_stages": []}
+{"t": 1792671996.837316, "ts": "2026-10-22T17:56:36", "kind": "stage_start", "pid": 82608, "stage": "load", "attempt": 0}
+{"t": 1792671996.968532, "ts": "2026-10-22T17:56:36", "kind": "stage_end", "pid": 82608, "stage": "load", "attempt": 0, "elapsed_s": 0.131}
+{"t": 1792671997.021384, "ts": "2026-10-22T17:56:37", "kind": "stage_start", "pid": 82608, "stage": "resolve:w0", "attempt": 0}
+{"t": 1792671997.660602, "ts": "2026-10-22T17:56:37", "kind": "stage_end", "pid": 82608, "stage": "resolve:w0", "attempt": 0, "elapsed_s": 0.639}
+{"t": 1792671997.684939, "ts": "2026-10-22T17:56:37", "kind": "stage_start", "pid": 82608, "stage": "resolve:w1", "attempt": 0}
+{"t": 1792671998.452544, "ts": "2026-10-22T17:56:38", "kind": "stage_end", "pid": 82608, "stage": "resolve:w1", "attempt": 0, "elapsed_s": 0.768}
+{"t": 1792671998.485782, "ts": "2026-10-22T17:56:38", "kind": "stage_start", "pid": 82608, "stage": "resolve:w2", "attempt": 0}
+{"t": 1792671999.596077, "ts": "2026-10-22T17:56:39", "kind": "stage_end", "pid": 82608, "stage": "resolve:w2", "attempt": 0, "elapsed_s": 1.11}
+{"t": 1792671999.6377652, "ts": "2026-10-22T17:56:39", "kind": "stage_start", "pid": 82608, "stage": "resolve:w3", "attempt": 0}
+{"t": 1792672001.138051, "ts": "2026-10-22T17:56:41", "kind": "stage_end", "pid": 82608, "stage": "resolve:w3", "attempt": 0, "elapsed_s": 1.5}
+{"t": 1792672001.188478, "ts": "2026-10-22T17:56:41", "kind": "stage_start", "pid": 82608, "stage": "resolve:w4", "attempt": 0}
+{"t": 1792672003.09649, "ts": "2026-10-22T17:56:43", "kind": "stage_end", "pid": 82608, "stage": "resolve:w4", "attempt": 0, "elapsed_s": 1.908}
+{"t": 1792672003.152726, "ts": "2026-10-22T17:56:43", "kind": "stage_start", "pid": 82608, "stage": "resolve:w5", "attempt": 0}
+{"t": 1792672005.469764, "ts": "2026-10-22T17:56:45", "kind": "stage_end", "pid": 82608, "stage": "resolve:w5", "attempt": 0, "elapsed_s": 2.317}
+{"t": 1792672005.950115, "ts": "2026-10-22T17:56:45", "kind": "stage_start", "pid": 82608, "stage": "metrics", "attempt": 0}
+{"t": 1792672006.786507, "ts": "2026-10-22T17:56:46", "kind": "stage_end", "pid": 82608, "stage": "metrics", "attempt": 0, "elapsed_s": 0.836}
+{"t": 1792672006.7870772, "ts": "2026-10-22T17:56:46", "kind": "stage_start", "pid": 82608, "stage": "report"}
+{"t": 1792672007.320276, "ts": "2026-10-22T17:56:47", "kind": "run_complete", "pid": 82608, "report": "/Users/harshmaster/Desktop/Projects/aurora-cdp/reports/2026-10-22/small-v7-tiebreak/report.md"}
