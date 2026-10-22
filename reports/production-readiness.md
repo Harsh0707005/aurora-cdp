@@ -1,5 +1,54 @@
 # Production-readiness decision memo — aurora-cdp identity resolver
 
+## Final position at HEAD (evening, 2026-10-22, engine `ef7c7f4`+; supersedes every section below)
+
+**Verdict: all five gates pass on every tier, including the 1M large tier, on seed-42 corpora never used for tuning.**
+The large tier was run for the first time today on AWS (`r6a.4xlarge`, 16 vCPU / 123 GB, ap-south-1, $0.57/h; total
+spend for the day's four 1M runs ≈ $2). Test suite: `121 passed`.
+
+| gate | threshold | small 20k (`small-v8-dupefix`) | medium 200k (`medium-v4-dupefix`) | **large 1M (`large-v2`)** |
+|---|---|---|---|---|
+| Pairwise P / R / F1 | P ≥ 0.98, F1 ≥ 0.90 | 0.998 / 0.872 / 0.931 ✅ | 0.996 / 0.860 / 0.923 ✅ | **0.995 / 0.850 / 0.917** ✅ |
+| B³ F1 | ≥ 0.93 | 0.937 ✅ | 0.934 ✅ | **0.934** ✅ |
+| Blocking recall | ≥ 0.85 | 0.878 ✅ | 0.892 ✅ | **0.872** ✅ |
+| False-merge clusters | ≤ 2.0 % | 0.75 % ✅ | 0.83 % ✅ | **0.83 %** ✅ (max 3 persons in one cluster) |
+| Records dropped by blocking | 0 | 0 ✅ | 0 ✅ | 0 ✅ |
+| ID churn / 30-day window, mean / max | report | 1.53 % / 2.19 % | 1.51 % / 2.47 % | 1.51 % / 2.39 % |
+| Wall (6 windows replayed) / engine peak RSS | large ≤ 2 h / 6.4 GB | 10 s / 0.5 GB (laptop) | 120 s / 1.4 GB (laptop) | **23 min / 4.5 GB** (harness process tree incl. 60 M stored pairs: 20.7 GB) |
+
+Three changes between the morning position and this one, each verified on the held-out tiers (`CHANGELOG.md`):
+
+1. **Quadratic blocking accounting removed** (`94a307f`). The zero-discard check's `NOT EXISTS (… p.l = idx OR p.r = idx)`
+   scanned the pair table once per key row; blocking at 200k went 157 s → 0.6 s, scoring 70 s → 21 s after vectorising
+   the feature sanitisation, output byte-identical. The 1M window that took 1147 s at HEAD takes 104 s.
+2. **Dupe-group collapse requires an identifier** (`ef7c7f4`). The first 1M run (`large`, `large-fullpairs`: P 0.986,
+   false merges **2.72 %**, one cluster holding **158 people** named James) exposed that name-only records with every
+   other field blank were collapsed as "the same record" before scoring. With the fix the 1M false-merge rate is 0.83 %
+   and the worst cluster holds 3 persons; medium 2.22 % → 0.83 % (its ceiling had been missed all day); recall unchanged.
+3. **Stable-ID tie-break** (`22c7304`, memo R3): oldest previous id, then larger current cluster, instead of the uuid string.
+
+### Large-tier runs today (seed 42, harness, every window; `reports/2026-10-22/`)
+
+| run | engine | P / R / F1 | B³ | false merges | blocking recall | wall |
+|---|---|---|---|---|---|---|
+| HEAD `8b50675` (stopped after window 1) | quadratic query | — | — | — | — | windows 0/1: 271 s / 1147 s |
+| `large` | perf fix only, pair export capped at 50 M | 0.986 / 0.851 / 0.913 | 0.931 | 2.72 % ❌ | not measurable (export cap) | 22 min |
+| `large-fullpairs` | perf fix only, caps raised | 0.986 / 0.851 / 0.913 | 0.931 | 2.72 % ❌ | 0.874 | 25 min |
+| **`large-v2`** | + dupe-group identifier rule | **0.995 / 0.850 / 0.917** | **0.934** | **0.83 %** ✅ | **0.872** ✅ | 26 min (shared box) |
+
+Per-window engine time is now proportional to candidate pairs (1M window: 25 M representative pairs / 60 M expanded
+pairs, scoring 254 s of 434 s), not quadratic in records. Candidate pairs still grow super-linearly (≈ N^1.7 on this
+corpus), so the single-node design is comfortable to a few million records and needs partitioned execution beyond that —
+the gap to Amperity's Spark-based Stitch (tenants of 15–395 M records) is architectural, not algorithmic.
+
+### Still not verified
+- Real PII data: every accuracy figure is on the harness' synthetic generator; name/address/nickname behaviour on real
+  customer data (and a labelled sample to train the ordinal scorer) remains the top open item.
+- 10 M+ records: no run exists; extrapolation only.
+- Stress / size-ramp / concurrency figures below are from the historical engine and were not repeated.
+
+---
+
 ## Final position at HEAD (`66a79cc`, branch `feat/amperity-gaps-dnf-ordinal`, 2026-10-22 evening)
 
 **Verdict: production-grade on the small tier (all five gates on data never tuned on); four of five gates on the

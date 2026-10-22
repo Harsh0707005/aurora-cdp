@@ -1,0 +1,8 @@
+[    0.4s] dataset /home/ubuntu/data/aurora-testdata/large (1,000,000 profiles) -> run /home/ubuntu/Projects/aurora-eval-harness/runs/large
+[    1.2s] [aurora_cdp] window 0: resolving 166,947 records (isolated child)
+[  274.5s] [aurora_cdp] window 0: 166,947 records -> clusters=77,742 pairs=3,532,637 edges=180,227 jitter=0.0% in 271.29s
+[  276.0s] [aurora_cdp] window 1: resolving 332,940 records (isolated child) with previous ids
+[ 1425.7s] [aurora_cdp] window 1: 332,940 records -> clusters=104,882 pairs=10,979,967 edges=579,724 jitter=2.3876% in 1147.4s
+[ 1428.0s] [aurora_cdp] window 2: resolving 499,787 records (isolated child) with previous ids
+/home/ubuntu/.local/share/uv/python/cpython-3.11.17-linux-x86_64-gnu/lib/python3.11/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 3 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

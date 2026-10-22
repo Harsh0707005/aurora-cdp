@@ -1,0 +1,185 @@
+{
+  "stages": {
+    "load": {
+      "status": "complete",
+      "at": "2026-10-22T12:52:49+00:00",
+      "profiles": 1000000
+    },
+    "resolve": {
+      "status": "complete",
+      "at": "2026-10-22T13:19:53+00:00",
+      "elapsed_s": 1624.65,
+      "clusters": 155629
+    },
+    "metrics": {
+      "status": "complete",
+      "at": "2026-10-22T13:21:20+00:00",
+      "summary": "pairwise P=0.995 R=0.850 F1=0.917 | B3 F1=0.934 | false-merge clusters=0.83% (profiles 1.78%) | split persons=38.11% | ID churn/30d mean=1.51% max=2.39% | AUC-ROC=0.960 AP=0.902 blocking-recall=0.872"
+    },
+    "report": {
+      "status": "complete",
+      "at": "2026-10-22T13:21:21+00:00",
+      "report": "../aurora-cdp/reports/2026-10-22/large-v2/report.md"
+    }
+  },
+  "status": "complete",
+  "run_name": "large-v2",
+  "input_hash": "1eb4a7e09922ec747484",
+  "dataset": "/home/ubuntu/data/aurora-testdata/large",
+  "adapter": "aurora_cdp",
+  "report_dir": "../aurora-cdp/reports/2026-10-22/large-v2",
+  "spec": {
+    "dataset": "large",
+    "adapter": "aurora_cdp",
+    "run_name": "large-v2",
+    "seed": 20261022,
+    "adapter_kwargs": {
+      "max_stored_pairs": 150000000,
+      "threshold": null,
+      "windows": "replay",
+      "config": {
+        "matcher": {
+          "max_expanded_pairs": 200000000
+        }
+      },
+      "cdp_path": "/home/ubuntu/Projects/aurora-cdp-v2",
+      "isolate_windows": true,
+      "deterministic_ids": true,
+      "datasource_column": "source",
+      "timeout_s": 21600.0
+    },
+    "data_dir": "/home/ubuntu/data/aurora-testdata",
+    "reports_root": "../aurora-cdp/reports",
+    "date": "2026-10-22",
+    "runs_dir": "/home/ubuntu/Projects/aurora-eval-harness/runs",
+    "link_dir": "/home/ubuntu/Projects/aurora-eval-harness/reports/engine",
+    "resume": true,
+    "force": false,
+    "rebuild_report": false,
+    "sweep": true,
+    "sweep_grid": "0.3:0.95:0.05",
+    "sample": null,
+    "top_k": 25,
+    "notes": [],
+    "limitations": [],
+    "resource_interval": 2.0,
+    "retries": 1,
+    "argv": [
+      "--adapter",
+      "aurora_cdp",
+      "--cdp-path",
+      "/home/ubuntu/Projects/aurora-cdp-v2",
+      "--dataset",
+      "large",
+      "--seed",
+      "20261022",
+      "--run-name",
+      "large-v2",
+      "--date",
+      "2026-10-22",
+      "--isolate-windows",
+      "--resource-interval",
+      "2",
+      "--timeout-s",
+      "21600",
+      "--max-stored-pairs",
+      "150000000",
+      "--cdp-config",
+      "{\"matcher\": {\"max_expanded_pairs\": 200000000}}",
+      "--data-dir",
+      "/home/ubuntu/data/aurora-testdata",
+      "--reports-root",
+      "../aurora-cdp/reports"
+    ]
+  },
+  "pid": 11494,
+  "summary": "pairwise P=0.995 R=0.850 F1=0.917 | B3 F1=0.934 | false-merge clusters=0.83% (profiles 1.78%) | split persons=38.11% | ID churn/30d mean=1.51% max=2.39% | AUC-ROC=0.960 AP=0.902 blocking-recall=0.872",
+  "finished_at": "2026-10-22T13:21:21+00:00",
+  "resources": {
+    "wall_s": 1711.72,
+    "samples": 801,
+    "interval_s": 2.0,
+    "peak_rss_mb": 20715.0,
+    "mean_rss_mb": 4998.3,
+    "mean_cpu_pct": 129.3,
+    "peak_cpu_pct": 1340.3,
+    "cpu_count": 16,
+    "stage_wall_s": {
+      "init": 0.0,
+      "load": 0.42,
+      "resolve": 0.02,
+      "resolve:w0": 47.73,
+      "resolve:w1": 112.34,
+      "resolve:w2": 189.03,
+      "resolve:w3": 273.06,
+      "resolve:w4": 352.25,
+      "resolve:w5": 450.28,
+      "assemble": 111.38,
+      "persist": 88.66,
+      "metrics": 86.55,
+      "report": 0.01
+    },
+    "per_stage": {
+      "resolve:w0": {
+        "samples": 24,
+        "peak_rss_mb": 2432.8,
+        "mean_cpu_pct": 119.4,
+        "wall_s": 47.73
+      },
+      "resolve:w1": {
+        "samples": 56,
+        "peak_rss_mb": 4571.7,
+        "mean_cpu_pct": 126.2,
+        "wall_s": 112.34
+      },
+      "resolve:w2": {
+        "samples": 94,
+        "peak_rss_mb": 5270.1,
+        "mean_cpu_pct": 127.1,
+        "wall_s": 189.03
+      },
+      "resolve:w3": {
+        "samples": 136,
+        "peak_rss_mb": 8076.5,
+        "mean_cpu_pct": 139.2,
+        "wall_s": 273.06
+      },
+      "resolve:w4": {
+        "samples": 175,
+        "peak_rss_mb": 10281.3,
+        "mean_cpu_pct": 133.3,
+        "wall_s": 352.25
+      },
+      "resolve:w5": {
+        "samples": 224,
+        "peak_rss_mb": 13124.0,
+        "mean_cpu_pct": 135.0,
+        "wall_s": 450.28
+      },
+      "assemble": {
+        "samples": 24,
+        "peak_rss_mb": 20715.0,
+        "mean_cpu_pct": 99.8,
+        "wall_s": 111.38
+      },
+      "persist": {
+        "samples": 31,
+        "peak_rss_mb": 8475.9,
+        "mean_cpu_pct": 102.2,
+        "wall_s": 88.66
+      },
+      "metrics": {
+        "samples": 35,
+        "peak_rss_mb": 10218.6,
+        "mean_cpu_pct": 100.2,
+        "wall_s": 86.55
+      },
+      "report": {
+        "samples": 2,
+        "peak_rss_mb": 5066.1,
+        "mean_cpu_pct": 50.5,
+        "wall_s": 0.01
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{"t": 1792670244.0075448, "ts": "2026-10-22T11:57:24", "kind": "run_start", "pid": 3870, "run_name": "aws-small-smoke", "input_hash": "b4eb6abb9ce3d8c8d3ac", "completed_stages": []}
+{"t": 1792670244.0148246, "ts": "2026-10-22T11:57:24", "kind": "stage_start", "pid": 3870, "stage": "load", "attempt": 0}
+{"t": 1792670244.0642428, "ts": "2026-10-22T11:57:24", "kind": "stage_end", "pid": 3870, "stage": "load", "attempt": 0, "elapsed_s": 0.049}
+{"t": 1792670244.102034, "ts": "2026-10-22T11:57:24", "kind": "stage_start", "pid": 3870, "stage": "resolve:w0", "attempt": 0}
+{"t": 1792670247.0770962, "ts": "2026-10-22T11:57:27", "kind": "stage_end", "pid": 3870, "stage": "resolve:w0", "attempt": 0, "elapsed_s": 2.975}
+{"t": 1792670247.1273005, "ts": "2026-10-22T11:57:27", "kind": "stage_start", "pid": 3870, "stage": "resolve:w1", "attempt": 0}
+{"t": 1792670249.4976854, "ts": "2026-10-22T11:57:29", "kind": "stage_end", "pid": 3870, "stage": "resolve:w1", "attempt": 0, "elapsed_s": 2.37}
+{"t": 1792670249.5576143, "ts": "2026-10-22T11:57:29", "kind": "stage_start", "pid": 3870, "stage": "resolve:w2", "attempt": 0}
+{"t": 1792670253.2730553, "ts": "2026-10-22T11:57:33", "kind": "stage_end", "pid": 3870, "stage": "resolve:w2", "attempt": 0, "elapsed_s": 3.715}
+{"t": 1792670253.347925, "ts": "2026-10-22T11:57:33", "kind": "stage_start", "pid": 3870, "stage": "resolve:w3", "attempt": 0}
+{"t": 1792670258.6477678, "ts": "2026-10-22T11:57:38", "kind": "stage_end", "pid": 3870, "stage": "resolve:w3", "attempt": 0, "elapsed_s": 5.3}
+{"t": 1792670258.7382042, "ts": "2026-10-22T11:57:38", "kind": "stage_start", "pid": 3870, "stage": "resolve:w4", "attempt": 0}
+{"t": 1792670265.8524258, "ts": "2026-10-22T11:57:45", "kind": "stage_end", "pid": 3870, "stage": "resolve:w4", "attempt": 0, "elapsed_s": 7.114}
+{"t": 1792670265.9538674, "ts": "2026-10-22T11:57:45", "kind": "stage_start", "pid": 3870, "stage": "resolve:w5", "attempt": 0}
+{"t": 1792670274.6761127, "ts": "2026-10-22T11:57:54", "kind": "stage_end", "pid": 3870, "stage": "resolve:w5", "attempt": 0, "elapsed_s": 8.722}
+{"t": 1792670275.6403978, "ts": "2026-10-22T11:57:55", "kind": "stage_start", "pid": 3870, "stage": "metrics", "attempt": 0}
+{"t": 1792670277.3188243, "ts": "2026-10-22T11:57:57", "kind": "stage_end", "pid": 3870, "stage": "metrics", "attempt": 0, "elapsed_s": 1.678}
+{"t": 1792670277.319226, "ts": "2026-10-22T11:57:57", "kind": "stage_start", "pid": 3870, "stage": "report"}
+{"t": 1792670278.4636688, "ts": "2026-10-22T11:57:58", "kind": "run_complete", "pid": 3870, "report": "../aurora-cdp/reports/2026-10-22/aws-small-smoke/report.md"}
