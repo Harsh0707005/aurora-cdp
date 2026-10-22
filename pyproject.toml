@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aurora-cdp"
+version = "0.1.0"
+description = "Aurora CDP: in-house, local-first customer data platform (identity resolution, stable IDs, profiles, audiences)."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.27",
+  "pydantic>=2.5",
+  "duckdb>=1.0",
+  "pandas>=2.1",
+  "numpy>=1.26",
+  "rapidfuzz>=3.5",
+  "phonenumbers>=8.13",
+  "python-dateutil>=2.8",
+  "networkx>=3.1",
+  "typer[all]>=0.12",
+  "rich>=13.0",
+  "pyyaml>=6.0",
+  "jinja2>=3.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.4",
+  "pytest-cov>=4.1",
+  "black>=24.1",
+  "isort>=5.13",
+  "ruff>=0.4",
+  "mypy>=1.8",
+  "httpx>=0.27",
+]
+
+[project.scripts]
+aurora = "aurora_cdp.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["aurora_cdp*"]
+
+[tool.setuptools.package-data]
+"aurora_cdp.config" = ["*.yaml"]
+"aurora_cdp.storage" = ["*.sql", "migrations/*.sql"]
+"aurora_cdp.api" = ["templates/*.html"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501", "B008"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_ignores = true
+# Kept permissive on purpose for the scaffold; tighten per-module later.
+check_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

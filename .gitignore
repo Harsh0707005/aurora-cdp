@@ -1,0 +1,25 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.aurora/
+outputs/
+.coverage
+htmlcov/
+.DS_Store
+
+# aurora-cdp (Spark/Delta engine)
+.tmp/
+data/raw/
+data/lake/
+data/cdc/
+data/eval/*.json
+data/runs/
+docs/research/
+spark-warehouse/
+derby.log
+metastore_db/
+*.joblib

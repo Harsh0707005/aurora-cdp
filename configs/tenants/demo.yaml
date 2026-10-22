@@ -1,0 +1,24 @@
+# Demo tenant: overrides a handful of defaults to show the layering mechanism.
+tenant: demo
+sources: [web, store, loyalty]
+
+blocking:
+  strategies:
+    - {name: email_exact,     kind: email_exact,     enabled: true, max_block_size: 50}
+    - {name: email_canonical, kind: email_canonical, enabled: true, max_block_size: 50}
+    - {name: name_prefix,     kind: name_prefix,     enabled: true, max_block_size: 150, params: {given_prefix: 3}}
+    - {name: phone_e164,      kind: phone_e164,      enabled: true, max_block_size: 50}
+    - {name: address,         kind: address,         enabled: true, max_block_size: 100}
+    - {name: fk_loyalty,      kind: fk,              enabled: true, max_block_size: 20, params: {column: loyalty_id}}
+
+blocklist:
+  emails: ["test@test.com", "noemail@noemail.com", "none@none.com", "na@na.com", "demo@demo.com"]
+  phones: ["0000000000", "1111111111", "1234567890", "9999999999", "5555555555"]
+
+scoring:
+  mode: config
+  edge_keep_threshold: 3.0
+
+hygiene:
+  supersized_threshold: 64
+  hard_limit: 500

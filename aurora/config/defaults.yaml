@@ -1,0 +1,112 @@
+# Global defaults. Tenant files in configs/tenants/*.yaml override any key.
+tenant: default
+sources: [web, store, loyalty]
+
+blocking:
+  max_pairs: 5000000
+  strategies:
+    - {name: email_exact,     kind: email_exact,     enabled: true, max_block_size: 50}
+    - {name: email_canonical, kind: email_canonical, enabled: true, max_block_size: 50}
+    - {name: name_prefix,     kind: name_prefix,     enabled: true, max_block_size: 150, params: {given_prefix: 3}}
+    - {name: phone_e164,      kind: phone_e164,      enabled: true, max_block_size: 50}
+    - {name: phone_prefix,    kind: phone_prefix,    enabled: false, max_block_size: 100, params: {digits: 8}}
+    - {name: address,         kind: address,         enabled: true, max_block_size: 100}
+    - {name: fk_loyalty,      kind: fk,              enabled: true, max_block_size: 20, params: {column: loyalty_id}}
+
+blocklist:
+  emails: ["test@test.com", "noemail@noemail.com", "none@none.com", "na@na.com"]
+  phones: ["0000000000", "1111111111", "1234567890", "9999999999"]
+  names: ["test", "unknown", "n/a", "customer", "guest"]
+  email_domains: ["example.invalid"]
+
+scoring:
+  mode: config
+  bias: 0.0
+  weights:
+    email_exact: 3.2
+    email_sim: 1.0
+    phone_exact: 2.6
+    phone_prefix: 0.6
+    given_jw: 1.3
+    surname_jw: 1.6
+    name_exact: 0.4
+    nickname_match: 0.3
+    postal_eq: 0.6
+    house_eq: 0.5
+    street_sim: 0.5
+    dob_eq: 1.8
+    dob_near: 0.6
+    fk_match: 3.5
+    name_conflict: -2.5
+    dob_conflict: -2.0
+  thresholds: [1.0, 2.0, 3.0, 4.0, 5.0]
+  edge_keep_threshold: 3.0
+  deterministic_keys: [email_exact, phone_exact, fk_match]
+  hard_conflicts:
+    dob_conflict: true
+
+hygiene:
+  supersized_threshold: 64
+  hard_limit: 500
+  weak_bridge_score: 3.5
+  max_carve_iterations: 5
+
+stable_id:
+  hungarian_max_nodes: 2000
+  namespace: aurora-cdp
+
+storage:
+  format: delta
+  lake_root: data/lake
+  cdc_root: data/cdc
+  raw_root: data/raw
+  eval_root: data/eval
+
+spark:
+  master: local[*]
+  app_name: aurora-cdp
+  shuffle_partitions: 16
+  driver_memory: 4g
+
+nicknames:
+  bill: william
+  billy: william
+  will: william
+  bob: robert
+  rob: robert
+  bobby: robert
+  liz: elizabeth
+  beth: elizabeth
+  betty: elizabeth
+  jim: james
+  jimmy: james
+  mike: michael
+  mick: michael
+  kate: katherine
+  katie: katherine
+  kathy: katherine
+  tom: thomas
+  tommy: thomas
+  dick: richard
+  rick: richard
+  rich: richard
+  chris: christopher
+  jen: jennifer
+  jenny: jennifer
+  dan: daniel
+  danny: daniel
+  joe: joseph
+  joey: joseph
+  sam: samuel
+  alex: alexander
+  andy: andrew
+  drew: andrew
+  nick: nicholas
+  tony: anthony
+  pat: patricia
+  patty: patricia
+  sue: susan
+  susie: susan
+  peggy: margaret
+  meg: margaret
+  maggie: margaret
