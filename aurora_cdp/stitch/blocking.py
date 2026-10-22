@@ -75,6 +75,9 @@ def strategy_key_sql(strategy: dict) -> tuple[str, str | None]:
     if kind == "name_birthdate":
         return name, ("CASE WHEN given_name_canon IS NOT NULL AND surname_norm IS NOT NULL AND birthdate_norm IS NOT NULL "
                       "THEN substr(given_name_canon,1,3)||':'||substr(surname_norm,1,1)||':'||birthdate_norm END")
+    if kind == "name":
+        return name, (f"CASE WHEN {_GIVEN} IS NOT NULL AND surname_norm IS NOT NULL "
+                      f"THEN substr({_GIVEN},1,3)||':'||substr(surname_norm,1,3) END")
     if kind == "loy_id":
         return name, "loy_id_norm"
     if kind == "ck":
@@ -102,6 +105,9 @@ def blocking_keys_for(record: dict, strategy: dict) -> list[tuple[str, str]]:
     if kind == "name_birthdate":
         g, s, b = record.get("given_name_canon"), record.get("surname_norm"), record.get("birthdate_norm")
         return [(name, f"{g[:3]}:{s[:1]}:{b}")] if g and s and b else []
+    if kind == "name":
+        g, s = record.get("given_name_canon") or record.get("given_name_norm"), record.get("surname_norm")
+        return [(name, f"{g[:3]}:{s[:3]}")] if g and s else []
     if kind == "loy_id":
         v = record.get("loy_id_norm")
         return [(name, v)] if v else []
@@ -288,10 +294,14 @@ def build_candidate_pairs(con: duckdb.DuckDBPyConnection, cfg, rec_table: str = 
     refine_keys = cfg.get("refine_keys", {}) or {}
     strategies = list(cfg.get("strategies", []))
     kinds = {s.get("name", s["type"]): s["type"] for s in strategies}
+    budgets = {s.get("name", s["type"]): int(s.get("max_pairs_per_block", budget)) for s in strategies}
 
     stats = BlockingStats()
     assign_dupe_groups(con, collapse, rec_table)
     build_keys(con, strategies, rec_table)
+    con.register("_budget_src", pd.DataFrame({"strategy": list(budgets), "budget": list(budgets.values())}))
+    con.execute("CREATE OR REPLACE TEMP TABLE _budget AS SELECT * FROM _budget_src")
+    con.unregister("_budget_src")
     stats.records = con.execute(f"SELECT COUNT(*) FROM {rec_table}").fetchone()[0]
     stats.representatives = con.execute(f"SELECT COUNT(*) FROM {rec_table} WHERE is_rep").fetchone()[0]
     stats.dupe_groups = con.execute(f"SELECT COUNT(*) FROM (SELECT dupe_group FROM {rec_table} GROUP BY 1 HAVING COUNT(*) > 1)").fetchone()[0]
@@ -301,11 +311,11 @@ def build_candidate_pairs(con: duckdb.DuckDBPyConnection, cfg, rec_table: str = 
     con.execute(
         """
         CREATE OR REPLACE TEMP TABLE _blk_full AS
-        SELECT strategy, bk, n,
-               CASE WHEN strategy LIKE 'fk-%' THEN ? ELSE ? END AS size_limit,
-               n > CASE WHEN strategy LIKE 'fk-%' THEN ? ELSE ? END AS oversized
-        FROM _blk
-        WHERE n >= 2 AND n * (n - 1) / 2 <= ?
+        SELECT k.strategy, k.bk, k.n,
+               CASE WHEN k.strategy LIKE 'fk-%' THEN ? ELSE ? END AS size_limit,
+               k.n > CASE WHEN k.strategy LIKE 'fk-%' THEN ? ELSE ? END AS oversized
+        FROM _blk k LEFT JOIN _budget b ON b.strategy = k.strategy
+        WHERE k.n >= 2 AND k.n * (k.n - 1) / 2 <= COALESCE(b.budget, ?)
         """,
         [fk_limit, limit, fk_limit, limit, budget],
     )
@@ -326,15 +336,16 @@ def build_candidate_pairs(con: duckdb.DuckDBPyConnection, cfg, rec_table: str = 
     # 2. blocks beyond the pair budget: composite-key refinement + sorted-neighbourhood sweep (never dropped)
     big = con.execute(
         """
-        SELECT strategy, bk, n, CASE WHEN strategy LIKE 'fk-%' THEN ? ELSE ? END AS size_limit
-        FROM _blk WHERE n * (n - 1) / 2 > ? ORDER BY n DESC, strategy, bk
+        SELECT k.strategy, k.bk, k.n, CASE WHEN k.strategy LIKE 'fk-%' THEN ? ELSE ? END AS size_limit, COALESCE(b.budget, ?) AS budget
+        FROM _blk k LEFT JOIN _budget b ON b.strategy = k.strategy
+        WHERE k.n * (k.n - 1) / 2 > COALESCE(b.budget, ?) ORDER BY k.n DESC, k.strategy, k.bk
         """,
-        [fk_limit, limit, budget],
+        [fk_limit, limit, budget, budget],
     ).fetchall()
-    for strategy, bk, n, size_limit in big:
+    for strategy, bk, n, size_limit, blk_budget in big:
         kind = "fk" if strategy.startswith("fk-") else kinds.get(strategy, strategy)
-        keys = list(refine_keys.get(kind) or refine_keys.get(strategy) or ["name3", "postal", "birthdate", "update_month"])
-        pairs, sub_blocks = refine_oversized_block(con, strategy, bk, keys, target, budget, window, rec_table)
+        keys = list(refine_keys.get(strategy) or refine_keys.get(kind) or ["name3", "postal", "birthdate", "update_month"])
+        pairs, sub_blocks = refine_oversized_block(con, strategy, bk, keys, target, int(blk_budget), window, rec_table)
         con.register("_refined_pairs", pairs)
         con.execute("INSERT INTO _pairs SELECT l, r FROM _refined_pairs")
         con.unregister("_refined_pairs")

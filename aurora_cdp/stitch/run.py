@@ -37,7 +37,7 @@ from .matcher import score_frame
 from .stable_id import assign_stable_ids
 
 log = logging.getLogger(__name__)
-TEMP_TABLES = ("_rec", "_bk", "_blk", "_blk_full", "_pairs", "_pairs_n", "_scores", "_gs", "_changed")
+TEMP_TABLES = ("_rec", "_bk", "_blk", "_blk_full", "_budget", "_pairs", "_pairs_n", "_scores", "_gs", "_changed")
 
 
 @dataclass

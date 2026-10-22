@@ -65,6 +65,7 @@ blocking:
     phone:          [name3, postal, birthdate, update_month, given3]
     name_postal:    [email, phone, birthdate, house_number, update_month]
     name_birthdate: [email, phone, postal, house_number, update_month]
+    name:           [postal, birthdate, email, phone, house_number, update_month]
     loy_id:         [name3, postal, birthdate, update_month]
     ck:             [name3, postal, birthdate, update_month]
     fk:             [name3, postal, birthdate, update_month]
@@ -77,6 +78,9 @@ blocking:
       type: name_postal         # first3(given_name) + surname + postal   [AMP]
     - name: name_birthdate
       type: name_birthdate      # first3(given_name) + first(surname) + birthdate  [AMP]
+    - name: name
+      type: name                # first3(given_name) + first3(surname): the only key records with nothing but a
+      max_pairs_per_block: 50000   # name can share [ASSUMPTION]; common names are refined, not compared in full
     - name: loy_id_exact
       type: loy_id              # loyalty id exact (key-only matches must still be blocked together)
     - name: ck_exact

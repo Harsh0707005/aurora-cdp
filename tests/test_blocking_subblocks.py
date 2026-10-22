@@ -80,3 +80,14 @@ def test_frame_input_and_fk_keys():
     load_records_table(con, df)
     st = build_candidate_pairs(con, {**BASE, "strategies": [{"name": "fk", "type": "fk"}]})
     assert st.pairs == 1 and st.keys == 3
+
+
+def test_name_strategy_and_per_strategy_budget():
+    recs = {f"s|{i:03d}": {"datasource": "s", "pk": f"{i:03d}", "given_name_canon": "dorothy", "surname_norm": "hunter" if i % 2 else "hunterr",
+                           "postal_norm": f"{i % 3}", "email_norm": f"e{i}@x.org"} for i in range(60)}  # distinct e-mails: no dupe collapse
+    cfg = {**BASE, "strategies": [{"name": "name", "type": "name", "max_pairs_per_block": 300}], "sn_window": 2, "refine_target": 5}
+    res = build_blocks(recs, cfg)
+    assert res.oversized and res.oversized[0].handling == "refined"  # 60*59/2 > 300 -> refined on postal
+    touched = {a for a, _ in res.pairs} | {b for _, b in res.pairs}
+    assert touched == set(recs) and res.stats.records_dropped_by_blocking == 0
+    assert ("s|000", "s|003") in res.pairs  # same postal sub-block (0 and 3 -> postal 0); trailing surname typo bridged by the 3-char prefix
