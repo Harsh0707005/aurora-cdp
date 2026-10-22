@@ -41,9 +41,49 @@ pairs, scoring 254 s of 434 s), not quadratic in records. Candidate pairs still 
 corpus), so the single-node design is comfortable to a few million records and needs partitioned execution beyond that —
 the gap to Amperity's Spark-based Stitch (tenants of 15–395 M records) is architectural, not algorithmic.
 
+### Real PII data (evening, 2026-10-22): North Carolina voter-registration snapshots, 7.0 M records
+
+Built from three public statewide snapshots (2023-01-01, 2024-01-01, 2025-01-01; `tools/build_ncvoter_corpus.py`,
+`docs/evaluation.md`): 7,000,002 records of 2,585,325 real people (NCID = truth), one record per person per
+snapshot, real names / street addresses / households, 47 % with a phone, **no e-mail**, and only a birth *year*
+(the state publishes age, not birth date). Run on an `r6a.8xlarge` (32 vCPU / 246 GB) with every window replayed.
+
+| run | P / R / F1 | B³ F1 | false-merge clusters | churn mean / max | engine, final 7 M window | peak RSS engine / harness |
+|---|---|---|---|---|---|---|
+| `ncvoter-200k` (73.8k persons, laptop-class) | 0.998 / 0.990 / 0.994 | 0.996 | 0.10 % | 0.14 % / 0.24 % | 22 s | 0.5 / 0.5 GB |
+| `ncvoter-7m` (year-only birthdate as `dob`) | **0.911** / 0.987 / 0.947 | 0.983 | **3.00 %** | 3.93 % / 6.92 % | 24 min | 14.5 / 68 GB |
+| `ncvoter-7m-nodob` (ablation: birth year removed) | 0.986 / **0.924** / 0.954 | 0.973 | **0.48 %** | 0.05 % / 0.07 % | 15 min | 14.1 / 48 GB |
+
+Recall by what actually changed between a person's records (7 M, with / without birth year):
+
+| pair kind | share of true pairs | recall with year | recall without |
+|---|---|---|---|
+| identical name + address | 89.8 % | 1.000 | 0.998 |
+| moved, same name | 9.0 % | 0.919 | 0.267 |
+| surname changed, same address | 0.5 % | 0.550 | 0.446 |
+| first name changed | 0.3 % | 0.684 | 0.563 |
+| surname changed and moved | 0.4 % | 0.295 | 0.077 |
+
+Reading. (1) On real names and addresses the engine links what Amperity is paid to link: 92 % of movers are
+followed when a birth year is present, 99.8 % of unchanged records are matched, and ID churn is at the 0.05 % level
+when the evidence is clean. (2) The 3.00 % false-merge rate at 7 M is a *corpus* artefact with an *engine* lesson:
+the direct false edges are "same first name, same surname, same birth year, different address" (120 k pairs inside
+the 2023 snapshot alone); the rules scorer weights a shared birth *year* exactly like a shared birth *date*, and
+same-name-same-year collisions grow with N² — negligible at 200k (0.10 %), 3 % at 7 M. Removing the year cuts false
+merges to 0.48 % but drops mover recall to 27 %, because the year was the only evidence tying a mover's two
+addresses together. With a real date of birth (or an e-mail) both numbers would be the good one; with neither,
+the hand-set weights cannot know how discriminating a field is for the population in front of them — this is
+precisely what Amperity's trained classifier learns, and it is the strongest argument today for training the
+ordinal scorer on labelled real pairs. (3) Household false merges are real: same address + same surname + near
+names (MICHAEL / MICHELLE, MARK / MARTHA) pass the given-name conflict at JW ≥ 0.6; retail data is full of these,
+so that tolerance (and a household-aware rule) must be re-swept on labelled data before any production use.
+(4) Blocking recall in both 7 M reports (0.577 / 0.673) is **not** a blocking measurement: the final window's
+expanded pair export (509 M / 333 M pairs) exceeded `matcher.max_expanded_pairs` (300 M), so the harness' pair
+file is representative-only; assignment-based metrics are unaffected. Costs: ≈ 4 h of `r6a.8xlarge` ≈ $5.
+
 ### Still not verified
-- Real PII data: every accuracy figure is on the harness' synthetic generator; name/address/nickname behaviour on real
-  customer data (and a labelled sample to train the ordinal scorer) remains the top open item.
+- Real retail data: the voter corpus has no e-mail and no true birth date, so the strongest retail signals are
+  untested; a Williams-Sonoma shadow run against Amperity's own IDs remains the decisive test.
 - 10 M+ records: no run exists; extrapolation only.
 - Stress / size-ramp / concurrency figures below are from the historical engine and were not repeated.
 

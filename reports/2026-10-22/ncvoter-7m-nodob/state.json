@@ -1,0 +1,160 @@
+{
+  "stages": {
+    "load": {
+      "status": "complete",
+      "at": "2026-10-22T14:39:08+00:00",
+      "profiles": 7000002
+    },
+    "resolve": {
+      "status": "complete",
+      "at": "2026-10-22T15:35:04+00:00",
+      "elapsed_s": 3354.84,
+      "clusters": 2833701
+    },
+    "metrics": {
+      "status": "complete",
+      "at": "2026-10-22T15:39:57+00:00",
+      "summary": "pairwise P=0.986 R=0.924 F1=0.954 | B3 F1=0.973 | false-merge clusters=0.48% (profiles 0.97%) | split persons=9.63% | ID churn/30d mean=0.05% max=0.07% | AUC-ROC=0.996 AP=0.971 blocking-recall=0.673"
+    },
+    "report": {
+      "status": "complete",
+      "at": "2026-10-22T15:39:58+00:00",
+      "report": "../aurora-cdp/reports/2026-10-22/ncvoter-7m-nodob/report.md"
+    }
+  },
+  "status": "complete",
+  "run_name": "ncvoter-7m-nodob",
+  "input_hash": "bb7e15afe5ff310c310e",
+  "dataset": "/home/ubuntu/data/aurora-testdata/ncvoter-7m-nodob",
+  "adapter": "aurora_cdp",
+  "report_dir": "../aurora-cdp/reports/2026-10-22/ncvoter-7m-nodob",
+  "spec": {
+    "dataset": "/home/ubuntu/data/aurora-testdata/ncvoter-7m-nodob",
+    "adapter": "aurora_cdp",
+    "run_name": "ncvoter-7m-nodob",
+    "seed": 20261022,
+    "adapter_kwargs": {
+      "max_stored_pairs": 80000000,
+      "threshold": null,
+      "windows": "replay",
+      "config": {
+        "matcher": {
+          "max_expanded_pairs": 300000000
+        }
+      },
+      "cdp_path": null,
+      "isolate_windows": true,
+      "deterministic_ids": true,
+      "datasource_column": "source",
+      "timeout_s": 36000.0
+    },
+    "data_dir": null,
+    "reports_root": "../aurora-cdp/reports",
+    "date": "2026-10-22",
+    "runs_dir": "/home/ubuntu/Projects/aurora-eval-harness/runs",
+    "link_dir": "/home/ubuntu/Projects/aurora-eval-harness/reports/engine",
+    "resume": true,
+    "force": false,
+    "rebuild_report": false,
+    "sweep": true,
+    "sweep_grid": "0.3:0.95:0.05",
+    "sample": null,
+    "top_k": 25,
+    "notes": [],
+    "limitations": [],
+    "resource_interval": 5.0,
+    "retries": 1,
+    "argv": [
+      "--adapter",
+      "aurora_cdp",
+      "--dataset",
+      "/home/ubuntu/data/aurora-testdata/ncvoter-7m-nodob",
+      "--seed",
+      "20261022",
+      "--run-name",
+      "ncvoter-7m-nodob",
+      "--date",
+      "2026-10-22",
+      "--isolate-windows",
+      "--resource-interval",
+      "5",
+      "--timeout-s",
+      "36000",
+      "--max-stored-pairs",
+      "80000000",
+      "--cdp-config",
+      "{\"matcher\": {\"max_expanded_pairs\": 300000000}}",
+      "--reports-root",
+      "../aurora-cdp/reports"
+    ]
+  },
+  "pid": 11543,
+  "summary": "pairwise P=0.986 R=0.924 F1=0.954 | B3 F1=0.973 | false-merge clusters=0.48% (profiles 0.97%) | split persons=9.63% | ID churn/30d mean=0.05% max=0.07% | AUC-ROC=0.996 AP=0.971 blocking-recall=0.673",
+  "finished_at": "2026-10-22T15:39:58+00:00",
+  "resources": {
+    "wall_s": 3652.82,
+    "samples": 697,
+    "interval_s": 5.0,
+    "peak_rss_mb": 48219.0,
+    "mean_rss_mb": 15795.7,
+    "mean_cpu_pct": 156.6,
+    "peak_cpu_pct": 543.1,
+    "cpu_count": 32,
+    "stage_wall_s": {
+      "init": 0.0,
+      "load": 3.6,
+      "resolve": 0.13,
+      "resolve:w0": 607.95,
+      "resolve:w1": 1070.2,
+      "resolve:w2": 1380.36,
+      "assemble": 140.51,
+      "persist": 157.11,
+      "metrics": 292.95,
+      "report": 0.01
+    },
+    "per_stage": {
+      "resolve:w0": {
+        "samples": 121,
+        "peak_rss_mb": 17320.3,
+        "mean_cpu_pct": 142.3,
+        "wall_s": 607.95
+      },
+      "resolve:w1": {
+        "samples": 212,
+        "peak_rss_mb": 48219.0,
+        "mean_cpu_pct": 175.5,
+        "wall_s": 1070.2
+      },
+      "resolve:w2": {
+        "samples": 273,
+        "peak_rss_mb": 29111.7,
+        "mean_cpu_pct": 167.1,
+        "wall_s": 1380.36
+      },
+      "assemble": {
+        "samples": 12,
+        "peak_rss_mb": 32375.7,
+        "mean_cpu_pct": 100.2,
+        "wall_s": 140.51
+      },
+      "persist": {
+        "samples": 25,
+        "peak_rss_mb": 17581.4,
+        "mean_cpu_pct": 100.7,
+        "wall_s": 157.11
+      },
+      "metrics": {
+        "samples": 53,
+        "peak_rss_mb": 15656.4,
+        "mean_cpu_pct": 100.2,
+        "wall_s": 292.95
+      },
+      "report": {
+        "samples": 1,
+        "peak_rss_mb": 9832.2,
+        "mean_cpu_pct": 100.0,
+        "wall_s": 0.01
+      }
+    }
+  }
+}
