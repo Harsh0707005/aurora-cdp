@@ -1,0 +1,345 @@
+{
+  "adapter": "aurora_cdp",
+  "aurora_cdp_commit": "dc2387ee4397dae7df3a9d0ffc1f2aee8983bb86",
+  "aurora_cdp_commit_source": "git",
+  "aurora_cdp_dirty_worktree": true,
+  "aurora_cdp_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp",
+  "aurora_cdp_version": "0.1.0",
+  "aurora_cdp_config": {
+    "workspace": ".aurora",
+    "outputs_dir": "outputs",
+    "db_file": "aurora.duckdb",
+    "normalize": {
+      "default_region": "US",
+      "phone_use_last10_for_match": true,
+      "email_strip_plus_tag": true,
+      "email_strip_gmail_dots": false,
+      "nickname_file": null,
+      "address_parsing": false,
+      "email_junk_local_parts": [
+        "test",
+        "no",
+        "none",
+        "reservation",
+        "admin",
+        "contact",
+        "guest",
+        "info",
+        "noreply",
+        "no-reply",
+        "donotreply",
+        "unknown"
+      ],
+      "address_abbreviations": {
+        "ST": "STREET",
+        "AVE": "AVENUE",
+        "RD": "ROAD",
+        "BLVD": "BOULEVARD",
+        "DR": "DRIVE",
+        "LN": "LANE",
+        "CT": "COURT",
+        "STE": "SUITE",
+        "APT": "APARTMENT",
+        "N": "NORTH",
+        "S": "SOUTH",
+        "E": "EAST",
+        "W": "WEST",
+        "1ST": "FIRST",
+        "2ND": "SECOND",
+        "3RD": "THIRD"
+      }
+    },
+    "blocklist": {
+      "email_max_given_names": 20,
+      "email_max_surnames": 20,
+      "phone_max_given_names": 20,
+      "address_max_given_names": 40
+    },
+    "blocking": {
+      "block_size_limit": 100,
+      "fk_block_size_limit": 1000,
+      "max_pairs_per_block": 500000,
+      "refine_target": 100,
+      "sn_window": 25,
+      "collapse_trivial_dupes": true,
+      "persist_blocking_keys": true,
+      "strategy_source": "fixed",
+      "learned_strategies_file": null,
+      "learned_keep_types": [
+        "ck",
+        "loy_id",
+        "fk"
+      ],
+      "dnf": {
+        "max_terms": 2,
+        "min_positive_pairs": 200,
+        "min_predicate_pc": 0.01,
+        "target_pc": 0.95,
+        "min_gain_pairs": 5,
+        "pairs_per_record_budget": 20,
+        "sample_records": 20000,
+        "sample_positive_pairs": 5000,
+        "sample_seed": 0,
+        "labels": "self"
+      },
+      "refine_keys": {
+        "email": [
+          "name3",
+          "postal",
+          "birthdate",
+          "update_month",
+          "given3"
+        ],
+        "phone": [
+          "name3",
+          "postal",
+          "birthdate",
+          "update_month",
+          "given3"
+        ],
+        "name_postal": [
+          "email",
+          "phone",
+          "birthdate",
+          "house_number",
+          "update_month"
+        ],
+        "name_birthdate": [
+          "email",
+          "phone",
+          "postal",
+          "house_number",
+          "update_month"
+        ],
+        "name": [
+          "postal",
+          "birthdate",
+          "email",
+          "phone",
+          "house_number",
+          "update_month"
+        ],
+        "loy_id": [
+          "name3",
+          "postal",
+          "birthdate",
+          "update_month"
+        ],
+        "ck": [
+          "name3",
+          "postal",
+          "birthdate",
+          "update_month"
+        ],
+        "fk": [
+          "name3",
+          "postal",
+          "birthdate",
+          "update_month"
+        ],
+        "dnf": [
+          "postal",
+          "birthdate",
+          "email",
+          "phone",
+          "name3",
+          "update_month"
+        ]
+      },
+      "strategies": [
+        {
+          "name": "email_exact",
+          "type": "email"
+        },
+        {
+          "name": "phone_exact",
+          "type": "phone"
+        },
+        {
+          "name": "name_postal",
+          "type": "name_postal"
+        },
+        {
+          "name": "name_birthdate",
+          "type": "name_birthdate"
+        },
+        {
+          "name": "name",
+          "type": "name",
+          "max_pairs_per_block": 50000
+        },
+        {
+          "name": "loy_id_exact",
+          "type": "loy_id"
+        },
+        {
+          "name": "ck_exact",
+          "type": "ck"
+        },
+        {
+          "name": "fk",
+          "type": "fk"
+        }
+      ]
+    },
+    "matcher": {
+      "match_threshold": 3.0,
+      "scorer": "rules",
+      "ordinal": {
+        "model_file": null,
+        "retrain": "auto",
+        "save_model": true,
+        "apply_rules_first": true,
+        "levels": 3,
+        "self_train_rounds": 3,
+        "confidence_margin": 1.0,
+        "negatives_per_positive": 2.0,
+        "max_train_pairs": 40000,
+        "min_positive_pairs": 300,
+        "min_negative_pairs": 300,
+        "l2": 0.001,
+        "lr": 0.05,
+        "epochs": 300,
+        "sample_seed": 0
+      },
+      "score_chunk_size": 250000,
+      "persist_features": false,
+      "export_expanded_dupe_pairs": true,
+      "max_expanded_pairs": 50000000,
+      "deterministic": {
+        "ck_exact_score": 5.0,
+        "loy_exact_score": 5.0,
+        "email_exact_with_name_score": 4.5,
+        "phone_exact_with_name_score": 4.2,
+        "name_agreement_min": 0.85
+      },
+      "weights": {
+        "bias": -2.5,
+        "given_sim": 1.0,
+        "surname_sim": 1.2,
+        "email_exact": 3.0,
+        "email_sim": 0.5,
+        "email_sim_min": 0.92,
+        "phone_exact": 2.5,
+        "address_sim": 1.2,
+        "postal_exact": 0.6,
+        "birthdate_exact": 1.5,
+        "fk_shared": 1.0,
+        "name_mismatch_penalty": -1.5,
+        "name_mismatch_floor": 0.6,
+        "address_house_number_mismatch_cap": 0.3,
+        "birthdate_conflict": -3.0
+      },
+      "hard_conflicts": {
+        "birthdate": true,
+        "birthdate_typo_tolerance": 2
+      }
+    },
+    "cluster": {
+      "supersized_min_size": 500,
+      "conflict_attributes": [
+        "birthdate"
+      ]
+    },
+    "storage": {
+      "duckdb": {
+        "memory_limit": "3GB",
+        "threads": 4,
+        "temp_directory": null,
+        "preserve_insertion_order": false
+      }
+    },
+    "stable_id": {
+      "enabled": true,
+      "jitter_alert_pct": 2.0
+    },
+    "survivorship": {
+      "source_priority": {
+        "loyalty": 1,
+        "crm": 2,
+        "ecommerce": 3,
+        "pos": 4
+      },
+      "field_priority": {},
+      "recency_field": "update_dt",
+      "attributes": [
+        "given_name",
+        "surname",
+        "email",
+        "phone",
+        "address",
+        "address2",
+        "city",
+        "state",
+        "postal",
+        "country",
+        "birthdate"
+      ]
+    },
+    "sources": {},
+    "tuning": {
+      "thresholds": [
+        2.0,
+        2.5,
+        3.0,
+        3.5,
+        4.0
+      ],
+      "min_precision": 0.98
+    }
+  },
+  "harness_commit": "1211f2017a2dcaf198a4002f7323561ee6e8edca",
+  "harness_version": "0.1.0",
+  "seed": 20261022,
+  "dataset": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/small",
+  "run_at": "2026-10-22T09:34:51+00:00",
+  "host": {
+    "platform": "macOS",
+    "platform_release": "25.5.0",
+    "machine": "arm64",
+    "python": "3.11.11",
+    "cpu_count": 8,
+    "mem_total_gb": 8.59,
+    "hostname": "Harshs-Macbook-Air"
+  },
+  "run_name": "small-rules",
+  "input_hash": "e769e647dc6e2ab5222b",
+  "adapter_config": {
+    "cdp_path": null,
+    "config": "/Users/harshmaster/Desktop/Projects/aurora-cdp/.tmp/overlays/rules.yaml",
+    "threshold": 0.6,
+    "datasource_column": "source",
+    "datasource": "input",
+    "windows": "replay",
+    "deterministic_ids": true,
+    "seed": 20261022,
+    "isolate_windows": false,
+    "max_stored_pairs": 20000000,
+    "epoch": "2026-01-01",
+    "window_days": 30,
+    "retries": 1,
+    "timeout_s": null,
+    "threshold_raw": 3.0,
+    "score_scale": 5.0,
+    "engine_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp"
+  },
+  "dataset_manifest_fingerprint": 1314847783426890627,
+  "dataset_seed": 42,
+  "sample": null,
+  "argv": [
+    "--adapter",
+    "aurora_cdp",
+    "--dataset",
+    "small",
+    "--seed",
+    "20261022",
+    "--run-name",
+    "small-rules",
+    "--date",
+    "2026-10-22",
+    "--reports-root",
+    "/Users/harshmaster/Desktop/Projects/aurora-cdp/reports",
+    "--cdp-config",
+    "/Users/harshmaster/Desktop/Projects/aurora-cdp/.tmp/overlays/rules.yaml"
+  ]
+}

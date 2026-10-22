@@ -1,0 +1,810 @@
+{
+  "ok": true,
+  "failed": [],
+  "n_cases": 17,
+  "n_checks": 91,
+  "metrics": {
+    "pairwise.precision/recall/f1": {
+      "status": "validated",
+      "case": "A: pairwise",
+      "failed_checks": []
+    },
+    "pairwise.tp/fp/fn pairs": {
+      "status": "validated",
+      "case": "A: pairwise",
+      "failed_checks": []
+    },
+    "cluster.bcubed_precision/recall/f1": {
+      "status": "validated",
+      "case": "A: B-cubed",
+      "failed_checks": []
+    },
+    "cluster.false_merge (cluster/profile/pair)": {
+      "status": "validated",
+      "case": "A: false-merge",
+      "failed_checks": []
+    },
+    "cluster.split (persons/profiles)": {
+      "status": "validated",
+      "case": "A: split",
+      "failed_checks": []
+    },
+    "cluster.exact_match_rate / cluster_count_ratio": {
+      "status": "validated",
+      "case": "A: exact / ratio",
+      "failed_checks": []
+    },
+    "cluster.pred_size_dist / truth_size_dist": {
+      "status": "validated",
+      "case": "A: size distributions",
+      "failed_checks": []
+    },
+    "churn.rate / merge vs split": {
+      "status": "validated",
+      "case": "C: churn rate, merge vs split",
+      "failed_checks": []
+    },
+    "churn.harmful vs justified": {
+      "status": "validated",
+      "case": "C: harmful vs justified",
+      "failed_checks": []
+    },
+    "curves.blocking_recall": {
+      "status": "validated",
+      "case": "A: blocking recall",
+      "failed_checks": []
+    },
+    "curves.auc_roc / average_precision": {
+      "status": "validated",
+      "case": "A: ROC / PR",
+      "failed_checks": []
+    },
+    "curves.operating_point": {
+      "status": "validated",
+      "case": "A: operating point @0.75",
+      "failed_checks": []
+    },
+    "per_window quality": {
+      "status": "validated",
+      "case": "C: per-window quality",
+      "failed_checks": []
+    },
+    "sanity: perfect input": {
+      "status": "validated",
+      "case": "perfect prediction",
+      "failed_checks": []
+    },
+    "sanity: all-singleton input": {
+      "status": "validated",
+      "case": "all singletons",
+      "failed_checks": []
+    },
+    "sanity: all-merged input": {
+      "status": "validated",
+      "case": "everything merged",
+      "failed_checks": []
+    },
+    "sanity: disjoint prediction": {
+      "status": "validated",
+      "case": "disjoint prediction",
+      "failed_checks": []
+    },
+    "sanity: disjoint pairs file": {
+      "status": "validated",
+      "case": "pairs file with no true pair",
+      "failed_checks": []
+    },
+    "threshold_sweep": {
+      "status": "approximation",
+      "note": "approximation \u2014 harness connected components over engine pair scores; not the engine's conflict-aware clustering"
+    },
+    "overmerge.dominant_feature": {
+      "status": "untrusted",
+      "note": "untrusted \u2014 attribution by engine match_type only (engine pair features are not exported)"
+    },
+    "curves.score_hist": {
+      "status": "untrusted",
+      "note": "untrusted \u2014 diagnostic histogram, no golden case"
+    },
+    "engine.metrics (pairs_blocked, skipped_blocks, cluster_size_distribution, timings)": {
+      "status": "untrusted",
+      "note": "untrusted \u2014 reported verbatim from the engine, not independently recomputed"
+    },
+    "engine.jitter_pct per snapshot": {
+      "status": "cross-checked",
+      "note": "engine jitter == harness churn rate per window",
+      "windows": [
+        {
+          "window": 1,
+          "engine_jitter": 0.044195000000000005,
+          "harness_churn": 0.04419545596016184,
+          "engine_compared": 3213,
+          "harness_carried": 3213,
+          "ok": true
+        },
+        {
+          "window": 2,
+          "engine_jitter": 0.037194,
+          "harness_churn": 0.037193831267009377,
+          "engine_compared": 6614,
+          "harness_carried": 6614,
+          "ok": true
+        },
+        {
+          "window": 3,
+          "engine_jitter": 0.022242,
+          "harness_churn": 0.022242260294559665,
+          "engine_compared": 9981,
+          "harness_carried": 9981,
+          "ok": true
+        },
+        {
+          "window": 4,
+          "engine_jitter": 0.018011,
+          "harness_churn": 0.018010612061878782,
+          "engine_compared": 13381,
+          "harness_carried": 13381,
+          "ok": true
+        },
+        {
+          "window": 5,
+          "engine_jitter": 0.011543000000000001,
+          "harness_churn": 0.011543062200956938,
+          "engine_compared": 16720,
+          "harness_carried": 16720,
+          "ok": true
+        }
+      ]
+    }
+  },
+  "cases": {
+    "pairwise": {
+      "case": "A: pairwise",
+      "ok": true,
+      "checks": [
+        {
+          "check": "precision",
+          "expected": 0.5,
+          "got": 0.5,
+          "ok": true
+        },
+        {
+          "check": "recall",
+          "expected": 0.5,
+          "got": 0.5,
+          "ok": true
+        },
+        {
+          "check": "f1",
+          "expected": 0.5,
+          "got": 0.5,
+          "ok": true
+        },
+        {
+          "check": "tp_pairs",
+          "expected": 2,
+          "got": 2,
+          "ok": true
+        },
+        {
+          "check": "fp_pairs",
+          "expected": 2,
+          "got": 2,
+          "ok": true
+        },
+        {
+          "check": "fn_pairs",
+          "expected": 2,
+          "got": 2,
+          "ok": true
+        },
+        {
+          "check": "predicted_pairs",
+          "expected": 4,
+          "got": 4,
+          "ok": true
+        },
+        {
+          "check": "true_pairs",
+          "expected": 4,
+          "got": 4,
+          "ok": true
+        }
+      ]
+    },
+    "bcubed": {
+      "case": "A: B-cubed",
+      "ok": true,
+      "checks": [
+        {
+          "check": "bcubed_precision",
+          "expected": 0.7777777777777778,
+          "got": 0.7777777777777778,
+          "ok": true
+        },
+        {
+          "check": "bcubed_recall",
+          "expected": 0.7777777777777778,
+          "got": 0.7777777777777777,
+          "ok": true
+        },
+        {
+          "check": "bcubed_f1",
+          "expected": 0.7777777777777778,
+          "got": 0.7777777777777778,
+          "ok": true
+        }
+      ]
+    },
+    "false_merge": {
+      "case": "A: false-merge",
+      "ok": true,
+      "checks": [
+        {
+          "check": "clusters",
+          "expected": 1,
+          "got": 1,
+          "ok": true
+        },
+        {
+          "check": "cluster_rate",
+          "expected": 0.3333333333333333,
+          "got": 0.3333333333333333,
+          "ok": true
+        },
+        {
+          "check": "profiles",
+          "expected": 3,
+          "got": 3,
+          "ok": true
+        },
+        {
+          "check": "profile_rate",
+          "expected": 0.5,
+          "got": 0.5,
+          "ok": true
+        },
+        {
+          "check": "pair_rate = 1-precision",
+          "expected": 0.5,
+          "got": 0.5,
+          "ok": true
+        },
+        {
+          "check": "persons_affected",
+          "expected": 2,
+          "got": 2,
+          "ok": true
+        },
+        {
+          "check": "max_persons_in_cluster",
+          "expected": 2,
+          "got": 2,
+          "ok": true
+        }
+      ]
+    },
+    "split": {
+      "case": "A: split",
+      "ok": true,
+      "checks": [
+        {
+          "check": "persons",
+          "expected": 1,
+          "got": 1,
+          "ok": true
+        },
+        {
+          "check": "person_rate",
+          "expected": 0.3333333333333333,
+          "got": 0.3333333333333333,
+          "ok": true
+        },
+        {
+          "check": "profiles",
+          "expected": 3,
+          "got": 3,
+          "ok": true
+        },
+        {
+          "check": "profile_rate",
+          "expected": 0.5,
+          "got": 0.5,
+          "ok": true
+        }
+      ]
+    },
+    "exact": {
+      "case": "A: exact / ratio",
+      "ok": true,
+      "checks": [
+        {
+          "check": "exact_match_clusters",
+          "expected": 1,
+          "got": 1,
+          "ok": true
+        },
+        {
+          "check": "exact_match_rate",
+          "expected": 0.3333333333333333,
+          "got": 0.3333333333333333,
+          "ok": true
+        },
+        {
+          "check": "cluster_count_ratio",
+          "expected": 1.0,
+          "got": 1.0,
+          "ok": true
+        },
+        {
+          "check": "n_pred_clusters",
+          "expected": 3,
+          "got": 3,
+          "ok": true
+        },
+        {
+          "check": "n_truth_persons",
+          "expected": 3,
+          "got": 3,
+          "ok": true
+        }
+      ]
+    },
+    "sizes": {
+      "case": "A: size distributions",
+      "ok": true,
+      "checks": [
+        {
+          "check": "pred.mean",
+          "expected": 2.0,
+          "got": 2.0,
+          "ok": true
+        },
+        {
+          "check": "pred.max",
+          "expected": 3,
+          "got": 3,
+          "ok": true
+        },
+        {
+          "check": "pred.singletons",
+          "expected": 1,
+          "got": 1,
+          "ok": true
+        },
+        {
+          "check": "truth.mean",
+          "expected": 2.0,
+          "got": 2.0,
+          "ok": true
+        },
+        {
+          "check": "truth.max",
+          "expected": 3,
+          "got": 3,
+          "ok": true
+        },
+        {
+          "check": "truth.singletons",
+          "expected": 1,
+          "got": 1,
+          "ok": true
+        }
+      ]
+    },
+    "blocking": {
+      "case": "A: blocking recall",
+      "ok": true,
+      "checks": [
+        {
+          "check": "blocking_recall",
+          "expected": 0.5,
+          "got": 0.5,
+          "ok": true
+        },
+        {
+          "check": "positives_in_candidates",
+          "expected": 2,
+          "got": 2,
+          "ok": true
+        },
+        {
+          "check": "n_scored_pairs",
+          "expected": 4,
+          "got": 4,
+          "ok": true
+        }
+      ]
+    },
+    "curves": {
+      "case": "A: ROC / PR",
+      "ok": true,
+      "checks": [
+        {
+          "check": "auc_roc",
+          "expected": 0.75,
+          "got": 0.75,
+          "ok": true
+        },
+        {
+          "check": "average_precision",
+          "expected": 0.8333333333333334,
+          "got": 0.8333333333333333,
+          "ok": true
+        }
+      ]
+    },
+    "operating": {
+      "case": "A: operating point @0.75",
+      "ok": true,
+      "checks": [
+        {
+          "check": "precision",
+          "expected": 0.5,
+          "got": 0.5,
+          "ok": true
+        },
+        {
+          "check": "recall_in_candidates",
+          "expected": 0.5,
+          "got": 0.5,
+          "ok": true
+        },
+        {
+          "check": "effective_recall",
+          "expected": 0.25,
+          "got": 0.25,
+          "ok": true
+        },
+        {
+          "check": "tp",
+          "expected": 1,
+          "got": 1,
+          "ok": true
+        },
+        {
+          "check": "fp",
+          "expected": 1,
+          "got": 1,
+          "ok": true
+        },
+        {
+          "check": "fn",
+          "expected": 1,
+          "got": 1,
+          "ok": true
+        }
+      ]
+    },
+    "churn": {
+      "case": "C: churn rate, merge vs split",
+      "ok": true,
+      "checks": [
+        {
+          "check": "w1.carried",
+          "expected": 3,
+          "got": 3,
+          "ok": true
+        },
+        {
+          "check": "w1.churned",
+          "expected": 1,
+          "got": 1,
+          "ok": true
+        },
+        {
+          "check": "w1.churn_rate",
+          "expected": 0.3333333333333333,
+          "got": 0.3333333333333333,
+          "ok": true
+        },
+        {
+          "check": "w1.merge",
+          "expected": 1,
+          "got": 1,
+          "ok": true
+        },
+        {
+          "check": "w1.split",
+          "expected": 0,
+          "got": 0,
+          "ok": true
+        },
+        {
+          "check": "w1.new",
+          "expected": 1,
+          "got": 1,
+          "ok": true
+        },
+        {
+          "check": "w2.carried",
+          "expected": 4,
+          "got": 4,
+          "ok": true
+        },
+        {
+          "check": "w2.churned",
+          "expected": 1,
+          "got": 1,
+          "ok": true
+        },
+        {
+          "check": "w2.churn_rate",
+          "expected": 0.25,
+          "got": 0.25,
+          "ok": true
+        },
+        {
+          "check": "w2.merge",
+          "expected": 0,
+          "got": 0,
+          "ok": true
+        },
+        {
+          "check": "w2.split",
+          "expected": 1,
+          "got": 1,
+          "ok": true
+        },
+        {
+          "check": "mean_churn_rate",
+          "expected": 0.29166666666666663,
+          "got": 0.29166666666666663,
+          "ok": true
+        },
+        {
+          "check": "max_churn_rate",
+          "expected": 0.3333333333333333,
+          "got": 0.3333333333333333,
+          "ok": true
+        }
+      ]
+    },
+    "churn_harm": {
+      "case": "C: harmful vs justified",
+      "ok": true,
+      "checks": [
+        {
+          "check": "w1.justified",
+          "expected": 1,
+          "got": 1,
+          "ok": true
+        },
+        {
+          "check": "w1.harmful",
+          "expected": 0,
+          "got": 0,
+          "ok": true
+        },
+        {
+          "check": "w2.harmful",
+          "expected": 0,
+          "got": 0,
+          "ok": true
+        },
+        {
+          "check": "harmful_share",
+          "expected": 0.0,
+          "got": 0.0,
+          "ok": true
+        }
+      ]
+    },
+    "per_window": {
+      "case": "C: per-window quality",
+      "ok": true,
+      "checks": [
+        {
+          "check": "w0.precision",
+          "expected": 1.0,
+          "got": 1.0,
+          "ok": true
+        },
+        {
+          "check": "w0.recall",
+          "expected": 0.3333333333333333,
+          "got": 0.3333333333333333,
+          "ok": true
+        },
+        {
+          "check": "w1.recall",
+          "expected": 1.0,
+          "got": 1.0,
+          "ok": true
+        },
+        {
+          "check": "w2.false_merge_cluster_rate",
+          "expected": 0.0,
+          "got": 0.0,
+          "ok": true
+        }
+      ]
+    },
+    "perfect": {
+      "case": "perfect prediction",
+      "ok": true,
+      "checks": [
+        {
+          "check": "f1",
+          "expected": 1.0,
+          "got": 1.0,
+          "ok": true
+        },
+        {
+          "check": "bcubed_f1",
+          "expected": 1.0,
+          "got": 1.0,
+          "ok": true
+        },
+        {
+          "check": "false_merge.cluster_rate",
+          "expected": 0.0,
+          "got": 0.0,
+          "ok": true
+        },
+        {
+          "check": "split.person_rate",
+          "expected": 0.0,
+          "got": 0.0,
+          "ok": true
+        },
+        {
+          "check": "exact_match_rate",
+          "expected": 1.0,
+          "got": 1.0,
+          "ok": true
+        }
+      ]
+    },
+    "singletons": {
+      "case": "all singletons",
+      "ok": true,
+      "checks": [
+        {
+          "check": "recall",
+          "expected": 0.0,
+          "got": 0.0,
+          "ok": true
+        },
+        {
+          "check": "precision (no predicted pairs -> 1 by convention)",
+          "expected": 1.0,
+          "got": 1.0,
+          "ok": true
+        },
+        {
+          "check": "f1",
+          "expected": 0.0,
+          "got": 0.0,
+          "ok": true
+        },
+        {
+          "check": "bcubed_precision",
+          "expected": 1.0,
+          "got": 1.0,
+          "ok": true
+        },
+        {
+          "check": "bcubed_recall",
+          "expected": 0.5,
+          "got": 0.5,
+          "ok": true
+        },
+        {
+          "check": "false_merge.clusters",
+          "expected": 0,
+          "got": 0,
+          "ok": true
+        },
+        {
+          "check": "split.persons",
+          "expected": 2,
+          "got": 2,
+          "ok": true
+        }
+      ]
+    },
+    "merged": {
+      "case": "everything merged",
+      "ok": true,
+      "checks": [
+        {
+          "check": "recall",
+          "expected": 1.0,
+          "got": 1.0,
+          "ok": true
+        },
+        {
+          "check": "precision",
+          "expected": 0.26666666666666666,
+          "got": 0.26666666666666666,
+          "ok": true
+        },
+        {
+          "check": "false_merge.cluster_rate",
+          "expected": 1.0,
+          "got": 1.0,
+          "ok": true
+        },
+        {
+          "check": "false_merge.profile_rate",
+          "expected": 1.0,
+          "got": 1.0,
+          "ok": true
+        },
+        {
+          "check": "bcubed_recall",
+          "expected": 1.0,
+          "got": 1.0,
+          "ok": true
+        },
+        {
+          "check": "bcubed_precision",
+          "expected": 0.38888888888888884,
+          "got": 0.38888888888888884,
+          "ok": true
+        }
+      ]
+    },
+    "disjoint": {
+      "case": "disjoint prediction",
+      "ok": true,
+      "checks": [
+        {
+          "check": "recall",
+          "expected": 0.0,
+          "got": 0.0,
+          "ok": true
+        },
+        {
+          "check": "precision",
+          "expected": 0.0,
+          "got": 0.0,
+          "ok": true
+        },
+        {
+          "check": "f1",
+          "expected": 0.0,
+          "got": 0.0,
+          "ok": true
+        },
+        {
+          "check": "false_merge.cluster_rate",
+          "expected": 1.0,
+          "got": 1.0,
+          "ok": true
+        },
+        {
+          "check": "split.person_rate",
+          "expected": 1.0,
+          "got": 1.0,
+          "ok": true
+        }
+      ]
+    },
+    "disjoint_pairs": {
+      "case": "pairs file with no true pair",
+      "ok": true,
+      "checks": [
+        {
+          "check": "blocking_recall",
+          "expected": 0.0,
+          "got": 0.0,
+          "ok": true
+        },
+        {
+          "check": "auc_roc (undefined -> None)",
+          "expected": null,
+          "got": null,
+          "ok": true
+        },
+        {
+          "check": "positives_in_candidates",
+          "expected": 0,
+          "got": 0,
+          "ok": true
+        }
+      ]
+    }
+  }
+}

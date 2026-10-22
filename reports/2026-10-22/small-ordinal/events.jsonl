@@ -1,0 +1,19 @@
+{"t": 1792661711.185177, "ts": "2026-10-22T15:05:11", "kind": "run_start", "pid": 66804, "run_name": "small-ordinal", "input_hash": "c1f6aaa50c8acc7e60d9", "completed_stages": []}
+{"t": 1792661711.2191942, "ts": "2026-10-22T15:05:11", "kind": "stage_start", "pid": 66804, "stage": "load", "attempt": 0}
+{"t": 1792661711.299156, "ts": "2026-10-22T15:05:11", "kind": "stage_end", "pid": 66804, "stage": "load", "attempt": 0, "elapsed_s": 0.08}
+{"t": 1792661711.3456068, "ts": "2026-10-22T15:05:11", "kind": "stage_start", "pid": 66804, "stage": "resolve:w0", "attempt": 0}
+{"t": 1792661712.8769841, "ts": "2026-10-22T15:05:12", "kind": "stage_end", "pid": 66804, "stage": "resolve:w0", "attempt": 0, "elapsed_s": 1.531}
+{"t": 1792661712.9023192, "ts": "2026-10-22T15:05:12", "kind": "stage_start", "pid": 66804, "stage": "resolve:w1", "attempt": 0}
+{"t": 1792661716.5663302, "ts": "2026-10-22T15:05:16", "kind": "stage_end", "pid": 66804, "stage": "resolve:w1", "attempt": 0, "elapsed_s": 3.664}
+{"t": 1792661716.601386, "ts": "2026-10-22T15:05:16", "kind": "stage_start", "pid": 66804, "stage": "resolve:w2", "attempt": 0}
+{"t": 1792661723.518896, "ts": "2026-10-22T15:05:23", "kind": "stage_end", "pid": 66804, "stage": "resolve:w2", "attempt": 0, "elapsed_s": 6.917}
+{"t": 1792661723.563353, "ts": "2026-10-22T15:05:23", "kind": "stage_start", "pid": 66804, "stage": "resolve:w3", "attempt": 0}
+{"t": 1792661733.3794088, "ts": "2026-10-22T15:05:33", "kind": "stage_end", "pid": 66804, "stage": "resolve:w3", "attempt": 0, "elapsed_s": 9.816}
+{"t": 1792661733.451675, "ts": "2026-10-22T15:05:33", "kind": "stage_start", "pid": 66804, "stage": "resolve:w4", "attempt": 0}
+{"t": 1792661744.469801, "ts": "2026-10-22T15:05:44", "kind": "stage_end", "pid": 66804, "stage": "resolve:w4", "attempt": 0, "elapsed_s": 11.018}
+{"t": 1792661744.533056, "ts": "2026-10-22T15:05:44", "kind": "stage_start", "pid": 66804, "stage": "resolve:w5", "attempt": 0}
+{"t": 1792661756.753333, "ts": "2026-10-22T15:05:56", "kind": "stage_end", "pid": 66804, "stage": "resolve:w5", "attempt": 0, "elapsed_s": 12.22}
+{"t": 1792661757.267752, "ts": "2026-10-22T15:05:57", "kind": "stage_start", "pid": 66804, "stage": "metrics", "attempt": 0}
+{"t": 1792661758.238783, "ts": "2026-10-22T15:05:58", "kind": "stage_end", "pid": 66804, "stage": "metrics", "attempt": 0, "elapsed_s": 0.971}
+{"t": 1792661758.239363, "ts": "2026-10-22T15:05:58", "kind": "stage_start", "pid": 66804, "stage": "report"}
+{"t": 1792661758.81235, "ts": "2026-10-22T15:05:58", "kind": "run_complete", "pid": 66804, "report": "/Users/harshmaster/Desktop/Projects/aurora-cdp/reports/2026-10-22/small-ordinal/report.md"}
