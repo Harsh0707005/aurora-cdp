@@ -63,3 +63,17 @@ def test_scores_are_chunk_invariant():
     whole = score_frame(features_frame(pd.DataFrame(L), pd.DataFrame(R), CFG), CFG)
     parts = [score_frame(features_frame(pd.DataFrame(L[i:i + 100]), pd.DataFrame(R[i:i + 100]), CFG), CFG) for i in range(0, 600, 100)]
     pd.testing.assert_frame_equal(whole.reset_index(drop=True), pd.concat(parts, ignore_index=True))
+
+
+def test_trivial_dupe_requires_identifier_and_birthdate_agreement():
+    from aurora_cdp.stitch.features import compute_features, features_frame
+    name_only = {"given_name_norm": "james", "surname_norm": "smith"}
+    with_dob = {"given_name_norm": "james", "surname_norm": "smith", "birthdate_norm": "1982-12-11"}
+    with_email = {"given_name_norm": "james", "surname_norm": "smith", "email_norm": "js@x.org"}
+    assert compute_features(name_only, dict(name_only), CFG)["trivial_dupe"] == 0.0  # name alone is not a record identity
+    assert compute_features(name_only, with_dob, CFG)["trivial_dupe"] == 0.0  # birthdate presence differs
+    assert compute_features(with_email, dict(with_email), CFG)["trivial_dupe"] == 1.0
+    legacy = {**CFG, "trivial_dupe": {"requires_identifier": False, "fields": ["given_name_norm", "surname_norm"]}}
+    assert compute_features(name_only, dict(name_only), legacy)["trivial_dupe"] == 1.0
+    F = features_frame(pd.DataFrame([name_only, with_email]), pd.DataFrame([dict(name_only), dict(with_email)]), CFG)
+    assert F["trivial_dupe"].tolist() == [0.0, 1.0]

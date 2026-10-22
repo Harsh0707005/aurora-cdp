@@ -161,6 +161,10 @@ matcher:
     name_mismatch_floor: 0.6    # [ASSUMPTION] given/surname similarity below this triggers the penalty
     address_house_number_mismatch_cap: 0.3   # [ASSUMPTION] address similarity cap when house numbers differ
     birthdate_conflict: -3.0
+  trivial_dupe:                 # [AMP] trivial dupes = semantically the same record; swept (reports/<date>/tuning-hc)
+    fields: [given_name_norm, surname_norm, email_norm, phone_match, address_norm, postal_norm, birthdate_norm]
+    identifier_fields: [email_norm, phone_match, address_norm]
+    requires_identifier: true   # a shared name with nothing else is not a trivial dupe (it bridged different people)
   hard_conflicts:
     birthdate: true             # [AMP] birthdate is the canonical hard conflict
     birthdate_typo_tolerance: 2 # Levenshtein distance treated as a typo rather than a conflict [ASSUMPTION]

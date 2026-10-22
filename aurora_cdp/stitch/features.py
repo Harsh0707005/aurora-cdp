@@ -30,7 +30,16 @@ FEATURE_NAMES = [
     "fk_shared",
     "trivial_dupe",
 ]
-TRIVIAL_DUPE_FIELDS = ("given_name_norm", "surname_norm", "email_norm", "phone_match", "address_norm", "postal_norm")
+TRIVIAL_DUPE_FIELDS = ("given_name_norm", "surname_norm", "email_norm", "phone_match", "address_norm", "postal_norm", "birthdate_norm")
+# a trivial dupe must agree on at least one of these (a shared name alone is not "the same record")
+TRIVIAL_DUPE_IDENTIFIERS = ("email_norm", "phone_match", "address_norm")
+
+
+def _trivial_cfg(cfg) -> tuple[tuple[str, ...], tuple[str, ...], bool]:
+    td = cfg.get("trivial_dupe", {}) or {}
+    fields = tuple(td.get("fields") or TRIVIAL_DUPE_FIELDS)
+    idents = tuple(td.get("identifier_fields") or TRIVIAL_DUPE_IDENTIFIERS)
+    return fields, idents, bool(td.get("requires_identifier", True))
 # columns a side needs for feature computation
 SIDE_COLUMNS = [
     "given_name_norm", "given_name_canon", "surname_norm", "email_norm", "phone_match", "address_norm", "postal_norm",
@@ -129,11 +138,10 @@ def compute_features(a: dict, b: dict, cfg) -> dict[str, float | None]:
     fa, fb = _fks(a), _fks(b)
     shared = [ns for ns in fa if ns in fb and fa[ns] == fb[ns]]
     f["fk_shared"] = 1.0 if shared else (0.0 if fa and fb else None)
-    f["trivial_dupe"] = (
-        1.0
-        if all(a.get(k) == b.get(k) for k in TRIVIAL_DUPE_FIELDS) and any(a.get(k) for k in TRIVIAL_DUPE_FIELDS)
-        else 0.0
-    )
+    fields, idents, need_ident = _trivial_cfg(cfg)
+    same = all(a.get(k) == b.get(k) for k in fields)
+    witness = any(a.get(k) for k in (idents if need_ident else fields))
+    f["trivial_dupe"] = 1.0 if same and witness else 0.0
     return f
 
 
@@ -231,11 +239,13 @@ def features_frame(left: pd.DataFrame, right: pd.DataFrame, cfg) -> pd.DataFrame
         shared = [ns for ns in da if ns in db and da[ns] == db[ns]]
         fk[i] = 1.0 if shared else (0.0 if da and db else np.nan)
     f["fk_shared"] = fk
+    fields, idents, need_ident = _trivial_cfg(cfg)
     allq = np.ones(n, dtype=bool)
     anyv = np.zeros(n, dtype=bool)
-    for k in TRIVIAL_DUPE_FIELDS:
+    for k in fields:
         xa, xb = _col(left, k), _col(right, k)
         allq &= np.array([x == y for x, y in zip(xa, xb, strict=True)])
-        anyv |= _present(xa)
+        if k in (idents if need_ident else fields):
+            anyv |= _present(xa)
     f["trivial_dupe"] = (allq & anyv).astype(np.float64)
     return pd.DataFrame(f, columns=FEATURE_NAMES)
