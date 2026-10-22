@@ -280,11 +280,12 @@ def tune(
     grid = [float(t) for t in thresholds.split(",")] if thresholds else None
     people = 400 if quick else 1500
     table = sweep(cfg, grid, people=people, quick=quick)
-    best = pick_best(table)
+    min_p = cfg.tuning.get("min_precision")
+    best = pick_best(table, min_p)
     last_best = cfg.workspace_path / "last_best.yaml"
-    write_results(table, best, docs_path, last_best, people)
+    write_results(table, best, docs_path, last_best, people, min_p)
     console.print(table.to_string(index=False))
-    console.print(f"best threshold={best} (by F1, then lowest ID churn) -> {last_best} ; table -> {docs_path}")
+    console.print(f"best threshold={best} (precision>={min_p} if attainable, then F1, lowest churn, closest to 3.0) -> {last_best} ; table -> {docs_path}")
 
 
 @app.command("pipeline")

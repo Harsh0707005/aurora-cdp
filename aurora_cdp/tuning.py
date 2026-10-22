@@ -63,18 +63,30 @@ def sweep(cfg: Config | None = None, thresholds: list[float] | None = None, peop
     return pd.DataFrame(rows)
 
 
-def pick_best(table: pd.DataFrame) -> float:
-    ordered = table.sort_values(["f1", "id_churn_pct", "threshold"], ascending=[False, True, True])
+DOCUMENTED_DEFAULT = 3.0  # Amperity's documented default; used as the final tie-break (prefer the conservative, known setting)
+
+
+def pick_best(table: pd.DataFrame, min_precision: float | None = None) -> float:
+    """Among thresholds with precision >= min_precision (all, if none qualify): highest F1;
+    ties -> lowest ID churn -> closest to the documented default threshold."""
+    t = table.copy()
+    if min_precision is not None:
+        ok = t[t["precision"] >= float(min_precision)]
+        if len(ok):
+            t = ok
+    t["_f1"] = t["f1"].round(4)
+    t["_dist"] = (t["threshold"] - DOCUMENTED_DEFAULT).abs()
+    ordered = t.sort_values(["_f1", "id_churn_pct", "_dist", "threshold"], ascending=[False, True, True, True])
     return float(ordered.iloc[0]["threshold"])
 
 
-def write_results(table: pd.DataFrame, best: float, docs_path: Path, last_best_path: Path, people: int) -> None:
+def write_results(table: pd.DataFrame, best: float, docs_path: Path, last_best_path: Path, people: int, min_precision: float | None = None) -> None:
     cols = ["threshold", "precision", "recall", "f1", "false_merge_rate", "id_churn_pct", "ids_minted_run2", "clusters_run1", "edges_run1", "seconds"]
     lines = ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols)]
     for _, r in table.iterrows():
-        lines.append("| " + " | ".join(("**%s**" % r[c]) if (c == "threshold" and float(r[c]) == best) else str(r[c]) for c in cols) + " |")
+        lines.append("| " + " | ".join(f"**{r[c]}**" if (c == "threshold" and float(r[c]) == best) else str(r[c]) for c in cols) + " |")
     block = "\n".join(
-        [AUTOGEN_START, f"_Last sweep: {datetime.utcnow():%Y-%m-%d %H:%M} UTC, synthetic demo ({people} people, two runs: full + incremental). Best threshold (F1, then lowest churn): **{best}**._", "", *lines, AUTOGEN_END]
+        [AUTOGEN_START, f"_Last sweep: {datetime.utcnow():%Y-%m-%d %H:%M} UTC, synthetic demo ({people} people, two runs: full + incremental). Best threshold (precision ≥ {min_precision} if attainable, then F1, lowest churn, closest to 3.0): **{best}**._", "", *lines, AUTOGEN_END]
     )
     text = docs_path.read_text(encoding="utf-8") if docs_path.exists() else "# Tuning\n\n"
     if AUTOGEN_START in text and AUTOGEN_END in text:

@@ -24,3 +24,18 @@ python3 -m venv .venv && .venv/bin/pip install -e ".[spark,dev]"
 
 Docs: `docs/aurora/{runbook,architecture,data-model,config,evaluation}.md`,
 build history in `docs/build-log.md`. License: MIT.
+
+## `aurora_cdp` — DuckDB platform (local-first)
+
+The `aurora_cdp/` package is the CPU-only, DuckDB-backed platform: ingestion → semantic tagging →
+Stitch (blocking, scoring, conflict-aware clustering, stable IDs) → profiles → segments → exports, with a
+Typer CLI (`aurora`), a FastAPI service + minimal UI, a docker-compose stack and AWS deployment scripts.
+
+```bash
+make install && make test && make demo      # .aurora/aurora.duckdb + outputs/engaged_buyers.csv
+.venv/bin/aurora serve                      # http://127.0.0.1:8000/ui
+```
+
+Docs: `docs/README.md` (quickstart), `docs/architecture.md`, `docs/feature-parity.md`, `docs/decisions.md`,
+`docs/tuning.md`, `docs/interfaces.md` (stable `aurora resolve` contract), `docker/README.md`, `deploy/DEPLOY.md`.
+History: `CHANGELOG.md`.

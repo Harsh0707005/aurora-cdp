@@ -51,6 +51,11 @@ def _fks(rec: dict) -> dict[str, str]:
         return {}
 
 
+def _house_number(addr: str) -> str | None:
+    tok = addr.split(" ", 1)[0]
+    return tok if tok.isdigit() else None
+
+
 def _jw(a: str | None, b: str | None) -> float | None:
     if not a or not b:
         return None
@@ -75,12 +80,22 @@ def compute_features(a: dict, b: dict, cfg) -> dict[str, float | None]:
     f["name_both_present"] = 1.0 if (f["given_sim"] is not None and f["surname_sim"] is not None) else 0.0
     ea, eb = a.get("email_norm"), b.get("email_norm")
     f["email_exact"] = _exact(ea, eb)
-    f["email_sim"] = (
-        float(Levenshtein.normalized_similarity(ea, eb)) if ea and eb and ea != eb else (1.0 if ea and eb else None)
-    )
+    # Only near-identical emails (typo level) count as similar: name-derived emails of two different people with
+    # the same name look alike (ann.lee12@ vs ann.lee98@) and must not add evidence.
+    if ea and eb:
+        f["email_sim"] = 1.0 if ea == eb else float(Levenshtein.normalized_similarity(ea, eb))
+    else:
+        f["email_sim"] = None
     f["phone_exact"] = _exact(a.get("phone_match"), b.get("phone_match"))
     aa, ab = a.get("address_norm"), b.get("address_norm")
-    f["address_sim"] = float(fuzz.token_set_ratio(aa, ab)) / 100.0 if aa and ab else None
+    if aa and ab:
+        sim = float(fuzz.token_set_ratio(aa, ab)) / 100.0
+        na, nb = _house_number(aa), _house_number(ab)
+        if na and nb and na != nb:
+            sim = min(sim, 0.3)  # same street name but different house number is a different address
+        f["address_sim"] = sim
+    else:
+        f["address_sim"] = None
     f["postal_exact"] = _exact(a.get("postal_norm"), b.get("postal_norm"))
     ba, bb = a.get("birthdate_norm"), b.get("birthdate_norm")
     if ba and bb:

@@ -79,13 +79,18 @@ def score_features(f: dict[str, float | None], cfg) -> PairScore:
 
     # Probabilistic score.
     z = float(w.get("bias", -2.5))
-    for name in ("given_sim", "surname_sim", "email_exact", "phone_exact", "address_sim", "postal_exact", "birthdate_exact", "fk_shared"):
+    for name in ("given_sim", "surname_sim", "email_exact", "phone_exact", "postal_exact", "birthdate_exact", "fk_shared"):
         v = f.get(name)
         if v is not None:
             z += float(w.get(name, 0.0)) * v
+    addr = f.get("address_sim")
+    if addr is not None:
+        z += float(w.get("address_sim", 0.0)) * (2.0 * addr - 1.0)  # centred: dissimilar addresses count against
     es, ee = f.get("email_sim"), f.get("email_exact")
     if es is not None and ee == 0.0:
-        z += float(w.get("email_sim", 0.0)) * es
+        typo_floor = float(w.get("email_sim_min", 0.92))
+        if es >= typo_floor:
+            z += float(w.get("email_sim", 0.0)) * (es - typo_floor) / max(1e-9, 1.0 - typo_floor)
     if gs is not None and ss is not None and (gs < 0.6 or ss < 0.6):
         z += float(w.get("name_mismatch_penalty", -1.5))
     score = round(5.0 * _sigmoid(z), 3)

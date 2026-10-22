@@ -18,7 +18,6 @@ import shutil
 import sys
 import tempfile
 from dataclasses import dataclass, field
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -90,7 +89,6 @@ def resolve_records(
     import yaml
 
     from aurora_cdp.adapter import run_on_file
-    from aurora_cdp.storage.duck import connect, read_df
 
     if isinstance(config, Config):
         cfg = config

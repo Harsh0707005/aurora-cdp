@@ -40,7 +40,7 @@ NICK = {"James": "Jim", "Robert": "Bob", "John": "Jack", "Michael": "Mike", "Wil
         "Richard": "Rick", "Joseph": "Joe", "Thomas": "Tom", "Christopher": "Chris", "Daniel": "Dan", "Matthew": "Matt",
         "Anthony": "Tony", "Andrew": "Andy", "Steven": "Steve", "Edward": "Ed", "Katherine": "Kate", "Rebecca": "Becky",
         "Timothy": "Tim", "Abigail": "Abby", "Ronald": "Ron", "Allison": "Allie", "Margaret": "Peggy", "Patricia": "Pat",
-        "Jennifer": "Jen", "Susan": "Sue", "Charles": "Chuck", "Edward": "Ted"}
+        "Jennifer": "Jen", "Susan": "Sue", "Charles": "Chuck"}
 STREETS = ["Elm St", "Main St", "Oak Ave", "Pine Rd", "Maple Dr", "Cedar Ln", "1st Ave", "Lake Blvd", "Hill Ct", "Park Ave"]
 CITIES = [("Seattle", "WA", "98101"), ("Portland", "OR", "97201"), ("Austin", "TX", "78701"), ("Denver", "CO", "80202"),
           ("Boston", "MA", "02108"), ("Chicago", "IL", "60601"), ("Miami", "FL", "33101"), ("Phoenix", "AZ", "85001")]
@@ -87,28 +87,47 @@ def _fmt_phone(digits: str, rng: random.Random) -> str:
 
 
 def make_people(n: int, rng: random.Random) -> list[Person]:
+    """n simulated people. Every 12th person is a *look-alike* of the previous one (same name and postal code,
+    different email/phone/birthdate) and every 15th shares surname + street address with the previous one
+    (household member). These hard negatives make low thresholds produce measurable false merges."""
     people = []
     for i in range(n):
         first, last = rng.choice(FIRST), rng.choice(LAST)
         city, state, postal = rng.choice(CITIES)
+        lookalike = i > 0 and i % 12 == 0
+        household = i > 0 and i % 15 == 0 and not lookalike
+        if lookalike:
+            first, last = people[i - 1].first, people[i - 1].last
+            city, state, postal = people[i - 1].city, people[i - 1].state, people[i - 1].postal
+        if household:
+            last = people[i - 1].last
+            city, state, postal = people[i - 1].city, people[i - 1].state, people[i - 1].postal
         dom = rng.choice(DOMAINS)
         email = f"{first.lower()}.{last.lower()}{rng.randrange(1, 999)}@{dom}"
         alt = f"{first[0].lower()}{last.lower()}{rng.randrange(1, 99)}@{rng.choice(DOMAINS)}"
         phone = f"{rng.randrange(201, 989)}{rng.randrange(200, 999)}{rng.randrange(1000, 9999)}"
         bd = datetime(rng.randrange(1945, 2004), rng.randrange(1, 13), rng.randrange(1, 29)).strftime("%Y-%m-%d")
         loyalty = f"LOY{100000 + i}" if rng.random() < 0.6 else None
-        people.append(Person(f"P{i:05d}", first, last, email, alt, phone, f"{rng.randrange(1, 9999)} {rng.choice(STREETS)}", city, state, postal, bd, loyalty))
+        street = people[i - 1].street if household else f"{rng.randrange(1, 9999)} {rng.choice(STREETS)}"
+        people.append(Person(f"P{i:05d}", first, last, email, alt, phone, street, city, state, postal, bd, loyalty))
     return people
 
 
-def synthesize(people: list[Person], rng: random.Random, start_dt: datetime) -> dict[str, pd.DataFrame]:
+def synthesize(people: list[Person], rng: random.Random, start_dt: datetime, ids: dict[str, int] | None = None) -> dict[str, pd.DataFrame]:
+    """ids: per-source counters so primary keys are unique across batches (random ids collided)."""
+    ids = ids if ids is not None else {}
+
+    def nid(prefix: str) -> str:
+        ids[prefix] = ids.get(prefix, 0) + 1
+        return f"{prefix}{ids[prefix] + 1000 * (len(prefix) + 7):06d}"
+
     crm, ecom, loy, pos, orders = [], [], [], [], []
     for p in people:
         if rng.random() < 0.9:
             first = _typo(p.first, rng) if rng.random() < 0.08 else p.first
             last = _typo(p.last, rng) if rng.random() < 0.06 else p.last
             crm.append({
-                "customer_id": f"C{rng.randrange(10**6, 10**7)}", "first_name": first, "last_name": last,
+                "customer_id": nid("C"), "first_name": first, "last_name": last,
                 "email_address": p.email if rng.random() < 0.9 else "", "mobile": _fmt_phone(p.phone, rng) if rng.random() < 0.8 else "",
                 "addr1": p.street, "city": p.city, "state": p.state, "zip": p.postal,
                 "dob": p.birthdate if rng.random() < 0.7 else "", "loyalty_no": p.loyalty or "",
@@ -119,7 +138,7 @@ def synthesize(people: list[Person], rng: random.Random, start_dt: datetime) -> 
             for k in range(n_accounts):
                 use_nick = rng.random() < 0.3
                 ecom.append({
-                    "account_id": f"E{rng.randrange(10**6, 10**7)}", "name_first": NICK.get(p.first, p.first) if use_nick else p.first,
+                    "account_id": nid("E"), "name_first": NICK.get(p.first, p.first) if use_nick else p.first,
                     "name_last": p.last, "login_email": p.email if k == 0 and rng.random() < 0.85 else p.alt_email,
                     "phone_number": _fmt_phone(p.phone, rng) if rng.random() < 0.5 else "",
                     "ship_address": p.street.replace("St", "Street").replace("Ave", "Avenue") if rng.random() < 0.5 else p.street,
@@ -134,7 +153,7 @@ def synthesize(people: list[Person], rng: random.Random, start_dt: datetime) -> 
                 "enrolled_at": (start_dt - timedelta(days=rng.randrange(0, 900))).isoformat(), "truth_id": p.truth_id,
             })
         if rng.random() < 0.6:
-            pos_id = f"POS{rng.randrange(10**5, 10**6)}"
+            pos_id = nid("POS")
             pos.append({
                 "pos_customer_no": pos_id, "fname": p.first.upper(), "lname": p.last.upper(),
                 "tel": _fmt_phone(p.phone, rng) if rng.random() < 0.75 else "", "zipcode": p.postal if rng.random() < 0.8 else "",
@@ -142,7 +161,7 @@ def synthesize(people: list[Person], rng: random.Random, start_dt: datetime) -> 
             })
             for _ in range(rng.randrange(0, 4)):
                 orders.append({
-                    "order_id": f"O{rng.randrange(10**7, 10**8)}", "pos_customer_no": pos_id,
+                    "order_id": nid("O"), "pos_customer_no": pos_id,
                     "order_ts": (start_dt - timedelta(days=rng.randrange(0, 365), hours=rng.randrange(0, 24))).isoformat(),
                     "amount": round(rng.uniform(5, 400), 2), "store": rng.choice(["S01", "S02", "S03"]),
                 })
@@ -182,8 +201,9 @@ def write_demo_data(data_dir: Path, people_n: int, seed: int = 7) -> tuple[list[
     start = datetime(2026, 10, 1)
     people = make_people(people_n, rng)
     cut = int(len(people) * 0.85)
-    batch1 = synthesize(people[:cut], rng, start)
-    late = synthesize(people[cut:], rng, start + timedelta(days=7))
+    ids: dict[str, int] = {}
+    batch1 = synthesize(people[:cut], rng, start, ids)
+    late = synthesize(people[cut:], rng, start + timedelta(days=7), ids)
     # updates: re-send some batch-1 crm rows with refreshed timestamps / corrected emails
     upd = batch1["crm_customers"].sample(frac=0.1, random_state=seed).copy()
     upd["updated_at"] = (start + timedelta(days=7)).isoformat()
@@ -237,9 +257,13 @@ def run_demo(cfg: Config | None = None, people: int = 700, fast: bool = False, r
         people = min(people, 150)
     ws = cfg.workspace_path
     data_dir = ws / "demo"
+    last_best = ws / "last_best.yaml"
+    keep = last_best.read_text(encoding="utf-8") if last_best.exists() else None  # tuner output survives a reset
     if reset and ws.exists():
         shutil.rmtree(ws)
     ws.mkdir(parents=True, exist_ok=True)
+    if keep is not None:
+        last_best.write_text(keep, encoding="utf-8")
     write_demo_data(data_dir, people, seed)
     spec1 = pipeline_spec(data_dir, cfg.outputs_path, batch=1, mode="full")
     spec2 = pipeline_spec(data_dir, cfg.outputs_path, batch=2, mode="incremental")

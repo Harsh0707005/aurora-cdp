@@ -85,9 +85,10 @@ matcher:
     given_sim: 1.0
     surname_sim: 1.2
     email_exact: 3.0
-    email_sim: 0.8
+    email_sim: 0.5              # applied only above email_sim_min (typo-level similarity), scaled 0..1
+    email_sim_min: 0.92
     phone_exact: 2.5
-    address_sim: 1.2
+    address_sim: 1.2            # centred: contributes w*(2*sim-1), so dissimilar addresses count against a match
     postal_exact: 0.6
     birthdate_exact: 1.5
     fk_shared: 1.0
@@ -120,3 +121,5 @@ sources: {}                     # per-source semantic mappings; the demo registe
 
 tuning:
   thresholds: [2.0, 2.5, 3.0, 3.5, 4.0]
+  min_precision: 0.98         # [ASSUMPTION] only thresholds meeting this pairwise precision compete on F1 (false merges are
+                              # costlier than misses in a CDP); if none meet it, all compete

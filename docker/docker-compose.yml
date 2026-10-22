@@ -1,0 +1,67 @@
+# One-command local stack:  docker compose -f docker/docker-compose.yml up --build
+#   api     FastAPI + web UI            http://localhost:8000/ui   (Profile API / dashboard)
+#   runner  job runner (scheduler loop) re-runs the pipeline in /data/aurora/pipeline.yaml every INTERVAL seconds
+#   seed    one-shot: generates demo data and runs the end-to-end pipeline into the shared volume
+#   db      Postgres: serving / metadata store target for the AWS layout (RDS). The current release keeps all
+#           platform state in DuckDB on the shared `aurora-data` volume; Postgres is provisioned here so the stack
+#           shape matches deploy/ and is ready for the serving-layer sync (see docker/README.md, TODO).
+#
+# DuckDB is single-writer: the runner and the API's POST /runs/pipeline both take the write lock for the duration
+# of a run; read endpoints open short-lived read-only connections and return 503 "database busy" if a run holds it.
+name: aurora-cdp
+services:
+  seed:
+    build: { context: .., dockerfile: docker/Dockerfile }
+    image: aurora-cdp:local
+    command: ["bash", "/app/docker/seed.sh"]
+    environment:
+      AURORA_WORKSPACE: /data/aurora
+      AURORA_PEOPLE: ${AURORA_PEOPLE:-700}
+    volumes:
+      - aurora-data:/data
+      - ./seed.sh:/app/docker/seed.sh:ro
+    restart: "no"
+
+  api:
+    image: aurora-cdp:local
+    depends_on:
+      seed: { condition: service_completed_successfully }
+    environment:
+      AURORA_WORKSPACE: /data/aurora
+    volumes:
+      - aurora-data:/data
+    ports: ["8000:8000"]
+    restart: unless-stopped
+
+  runner:
+    image: aurora-cdp:local
+    depends_on:
+      seed: { condition: service_completed_successfully }
+    environment:
+      AURORA_WORKSPACE: /data/aurora
+      AURORA_INTERVAL: ${AURORA_INTERVAL:-900}
+    working_dir: /data/outputs
+    command: ["bash", "-lc", "aurora schedule /data/aurora/pipeline_batch2.yaml --interval $${AURORA_INTERVAL}"]
+    volumes:
+      - aurora-data:/data
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aurora}
+      POSTGRES_USER: ${POSTGRES_USER:-aurora}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aurora}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  aurora-data:
+  pg-data:
