@@ -90,6 +90,92 @@ def load_labels(path: str | Path | None) -> StitchLabels:
     return out
 
 
+def _pair(a_ds: str, a_pk: str, b_ds: str, b_pk: str) -> tuple[str, str]:
+    a, b = f"{a_ds}|{a_pk}", f"{b_ds}|{b_pk}"
+    return (a, b) if a < b else (b, a)
+
+
+def load_labels_table(con) -> StitchLabels:
+    """Active labels persisted in the workspace (``stitch_labels``); conflicting pairs are an error like in files."""
+    from aurora_cdp.storage.duck import table_exists
+
+    out = StitchLabels(source="stitch_labels")
+    if not table_exists(con, "stitch_labels"):
+        return out
+    seen: dict[tuple[str, str], str] = {}
+    rows = con.execute(
+        "SELECT left_datasource, left_pk, right_datasource, right_pk, lower(label) FROM stitch_labels WHERE active ORDER BY created_at, label_id"
+    ).fetchall()
+    for a_ds, a_pk, b_ds, b_pk, label in rows:
+        if label not in LABEL_VALUES:
+            raise ValueError(f"stitch_labels: label must be one of {LABEL_VALUES}, got {label!r}")
+        pair = _pair(a_ds, a_pk, b_ds, b_pk)
+        if pair[0] == pair[1]:
+            raise ValueError(f"stitch_labels: a record cannot be labelled against itself ({pair[0]})")
+        prev = seen.get(pair)
+        if prev is not None and prev != label:
+            raise ValueError(f"stitch_labels: pair {pair} is labelled both merge and split")
+        if prev is None:
+            seen[pair] = label
+            (out.merge if label == "merge" else out.split).append(pair)
+    return out
+
+
+def merge_labels(*parts: StitchLabels) -> StitchLabels:
+    """Union of label sets; a pair labelled both ways across sources is an error."""
+    out = StitchLabels(source=" + ".join(p.source for p in parts if p.source) or None)
+    seen: dict[tuple[str, str], str] = {}
+    for part in parts:
+        for label, items in (("merge", part.merge), ("split", part.split)):
+            for pair in items:
+                prev = seen.get(pair)
+                if prev is not None and prev != label:
+                    raise ValueError(f"labels: pair {pair} is labelled merge in one source and split in another")
+                if prev is None:
+                    seen[pair] = label
+                    (out.merge if label == "merge" else out.split).append(pair)
+    return out
+
+
+def add_label(con, left: tuple[str, str], right: tuple[str, str], label: str, created_by: str | None = None, note: str | None = None) -> str:
+    """Persist one label (idempotent on the pair+label; a contradicting active label is deactivated and replaced)."""
+    import uuid
+    from datetime import datetime
+
+    label = label.lower()
+    if label not in LABEL_VALUES:
+        raise ValueError(f"label must be one of {LABEL_VALUES}")
+    pair = _pair(left[0], left[1], right[0], right[1])
+    if pair[0] == pair[1]:
+        raise ValueError("a record cannot be labelled against itself")
+    a_ds, a_pk = pair[0].split("|", 1)
+    b_ds, b_pk = pair[1].split("|", 1)
+    existing = con.execute(
+        "SELECT label_id, lower(label) FROM stitch_labels WHERE active AND left_datasource = ? AND left_pk = ? AND right_datasource = ? AND right_pk = ?",
+        [a_ds, a_pk, b_ds, b_pk],
+    ).fetchall()
+    for lid, lab in existing:
+        if lab == label:
+            return lid
+        con.execute("UPDATE stitch_labels SET active = FALSE WHERE label_id = ?", [lid])
+    lid = str(uuid.uuid4())
+    con.execute(
+        "INSERT INTO stitch_labels VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)",
+        [lid, a_ds, a_pk, b_ds, b_pk, label, datetime.utcnow(), created_by, note],
+    )
+    return lid
+
+
+def import_labels_file(con, path: str | Path, created_by: str | None = None) -> int:
+    labels = load_labels(path)
+    n = 0
+    for label, items in (("merge", labels.merge), ("split", labels.split)):
+        for a, b in items:
+            add_label(con, tuple(a.split("|", 1)), tuple(b.split("|", 1)), label, created_by, note=f"import:{path}")
+            n += 1
+    return n
+
+
 @dataclass
 class ResolvedLabels:
     merge_left: np.ndarray  # record indices (idx), left < right

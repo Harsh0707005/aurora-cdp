@@ -194,7 +194,8 @@ cluster:
     contact: [email_norm, phone_match]   # list -> set-valued attribute
 
 labels:                         # [AMP: Stitch labels] operator-forced merges / splits, see stitch/labels.py
-  file: null                    # CSV: left_datasource,left_pk,right_datasource,right_pk,label (merge|split);
+  file: null                    # optional CSV overlay: left_datasource,left_pk,right_datasource,right_pk,label (merge|split)
+                                # persisted labels live in the workspace table stitch_labels (`aurora labels add|import|list`);
                                 # merge -> score-5 edge (match_type label_merge), split -> pair veto in clustering
 
 storage:

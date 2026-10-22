@@ -34,7 +34,7 @@ from aurora_cdp.storage.duck import apply_settings, latest_run_id, read_df, writ
 from .blocking import REC_COLUMNS, add_derived_columns, build_candidate_pairs
 from .cluster import _short_id, cluster_indices
 from .features import SIDE_COLUMNS, features_frame  # noqa: F401 - kept for callers
-from .labels import apply_split_labels, load_labels, resolve_labels
+from .labels import apply_split_labels, load_labels, load_labels_table, merge_labels, resolve_labels
 from .matcher import score_frame  # noqa: F401 - kept for callers
 from .ordinal import prepare_scorer
 from .stable_id import assign_stable_ids_duck
@@ -549,7 +549,7 @@ def run_stitch(
     rids: list[str] = [r[0] for r in con.execute("SELECT rid FROM _rec ORDER BY idx").fetchall()]
     # Stitch labels: forced merges become edges, splits drop edges and veto unions in clustering
     lcfg = cfg.get("labels") or {}
-    labels = load_labels(lcfg.get("file"))
+    labels = merge_labels(load_labels(lcfg.get("file")), load_labels_table(con))  # file (overlay) ∪ workspace table
     resolved = (
         resolve_labels(labels, {rid: i for i, rid in enumerate(rids)}) if len(labels) else None
     )

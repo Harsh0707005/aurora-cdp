@@ -24,6 +24,73 @@ _config_opt = typer.Option(None, "--config", "-c", help="Optional aurora.yaml ov
 _workspace_opt = typer.Option(None, "--workspace", "-w", help="Workspace dir (default .aurora)")
 
 
+labels_app = typer.Typer(help="Stitch labels: operator-forced merges / splits persisted in the workspace", pretty_exceptions_enable=False)
+app.add_typer(labels_app, name="labels")
+
+
+@labels_app.command("add")
+def labels_add(
+    left: str = typer.Argument(..., help="datasource|pk"),
+    right: str = typer.Argument(..., help="datasource|pk"),
+    label: str = typer.Argument(..., help="merge | split"),
+    note: str | None = typer.Option(None, "--note"),
+    by: str | None = typer.Option(None, "--by"),
+    config: str = _config_opt,
+    workspace: str = _workspace_opt,
+) -> None:
+    """Persist one label; it is applied by every following stitch run."""
+    from aurora_cdp.stitch.labels import add_label
+
+    cfg = _cfg(config, workspace)
+    con = connect(cfg.db_path)
+    try:
+        init_schema(con)
+        lid = add_label(con, tuple(left.split("|", 1)), tuple(right.split("|", 1)), label, by, note)
+        typer.echo(f"label {lid}: {left} {label} {right}")
+    finally:
+        con.close()
+
+
+@labels_app.command("import")
+def labels_import(path: str = typer.Argument(..., help="labels CSV"), by: str | None = typer.Option(None, "--by"), config: str = _config_opt, workspace: str = _workspace_opt) -> None:
+    from aurora_cdp.stitch.labels import import_labels_file
+
+    cfg = _cfg(config, workspace)
+    con = connect(cfg.db_path)
+    try:
+        init_schema(con)
+        typer.echo(f"imported {import_labels_file(con, path, by)} labels from {path}")
+    finally:
+        con.close()
+
+
+@labels_app.command("list")
+def labels_list(config: str = _config_opt, workspace: str = _workspace_opt, all: bool = typer.Option(False, "--all", help="include inactive")) -> None:
+    cfg = _cfg(config, workspace)
+    con = connect(cfg.db_path, read_only=True)
+    try:
+        rows = con.execute(
+            "SELECT label_id, left_datasource || '|' || left_pk, label, right_datasource || '|' || right_pk, created_at, active, note FROM stitch_labels"
+            + ("" if all else " WHERE active") + " ORDER BY created_at"
+        ).fetchall()
+        for r in rows:
+            typer.echo("\t".join(str(x) for x in r))
+        typer.echo(f"{len(rows)} labels")
+    finally:
+        con.close()
+
+
+@labels_app.command("remove")
+def labels_remove(label_id: str, config: str = _config_opt, workspace: str = _workspace_opt) -> None:
+    cfg = _cfg(config, workspace)
+    con = connect(cfg.db_path)
+    try:
+        con.execute("UPDATE stitch_labels SET active = FALSE WHERE label_id = ?", [label_id])
+        typer.echo(f"deactivated {label_id}")
+    finally:
+        con.close()
+
+
 def _cfg(config: str | None, workspace: str | None):
     overrides = {"workspace": workspace} if workspace else None
     return load_config(config, overrides=overrides)
