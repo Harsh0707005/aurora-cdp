@@ -94,6 +94,41 @@ def export_csv(
     return latest
 
 
+FILE_FORMATS = ("csv", "jsonl", "parquet")
+
+
+def export_file(
+    con: duckdb.DuckDBPyConnection,
+    segment_name: str,
+    members: pd.DataFrame,
+    outputs_dir: str | Path,
+    fmt: str = "jsonl",
+    columns: list[str] | None = None,
+) -> Path:
+    """File connector: ``jsonl`` (one profile per line) or ``parquet`` (columnar, for warehouses / S3 drops).
+    Writes a timestamped file plus a ``<segment>.<fmt>`` "latest" copy, like :func:`export_csv`."""
+    if fmt == "csv":
+        return export_csv(con, segment_name, members, outputs_dir)
+    if fmt not in FILE_FORMATS:
+        raise ValueError(f"destination kind must be one of {FILE_FORMATS}, got {fmt!r}")
+    outputs_dir = Path(outputs_dir)
+    outputs_dir.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.utcnow().strftime("%Y%m%dT%H%M%S")
+    cols = [c for c in (columns or EXPORT_COLUMNS) if c in members.columns]
+    frame = members[cols]
+    stamped = outputs_dir / f"{segment_name}_{stamp}.{fmt}"
+    latest = outputs_dir / f"{segment_name}.{fmt}"
+    for target in (stamped, latest):
+        if fmt == "jsonl":
+            with target.open("w", encoding="utf-8") as fh:
+                for rec in frame.to_dict(orient="records"):
+                    fh.write(json.dumps(rec, default=str) + "\n")
+        else:
+            frame.to_parquet(target, index=False)
+    _log(con, uuid.uuid4().hex[:16], segment_name, fmt, str(stamped), len(members), "succeeded")
+    return latest
+
+
 class WebhookDeliveryError(RuntimeError):
     """A webhook batch failed after the configured retries (or with a non-retryable error)."""
 

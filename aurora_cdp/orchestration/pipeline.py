@@ -30,7 +30,7 @@ from pathlib import Path
 import duckdb
 import yaml
 
-from aurora_cdp.audiences.destinations import WEBHOOK_OPTIONS, export_csv, send_webhook
+from aurora_cdp.audiences.destinations import FILE_FORMATS, WEBHOOK_OPTIONS, export_csv, export_file, send_webhook
 from aurora_cdp.audiences.segmenter import evaluate_segment, save_segment
 from aurora_cdp.config import Config
 from aurora_cdp.ingestion.landing import ingest_file, landing_frame
@@ -179,12 +179,15 @@ def run_pipeline(con: duckdb.DuckDBPyConnection, cfg: Config, spec: dict) -> Pip
 
             seg = load_segment(con, dest["segment"])
             members = evaluate_segment(con, seg, persist=False).members
-            if dest.get("kind", "csv") == "csv":
-                path = export_csv(
-                    con, dest["segment"], members, dest.get("dir") or cfg.outputs_path
+            kind = dest.get("kind", "csv")
+            if kind in FILE_FORMATS:
+                path = export_file(
+                    con, dest["segment"], members, dest.get("dir") or cfg.outputs_path, kind, dest.get("columns")
                 )
                 result.outputs.append(str(path))
                 return {"path": str(path), "rows": len(members)}
+            if kind != "webhook":
+                raise ValueError(f"destination kind must be one of {FILE_FORMATS + ('webhook',)}, got {kind!r}")
             options = {k: dest[k] for k in WEBHOOK_OPTIONS if k in dest}
             return send_webhook(
                 con,
