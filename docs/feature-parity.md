@@ -8,15 +8,16 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
 |---|---|---|
 | Semantic tagging per feed (given-name, surname, email, phone, address group, birthdate, loy_id, fk-*, pk, ck) | ✅ | `ingestion/semantics.py`; mapping per source in pipeline YAML |
 | Preprocessing: email canonicalisation, junk local parts, phone last-10, address abbreviations, nicknames | ✅ / 🟡 | address parsing is a stub with TODOs; nickname table is a small built-in dict |
-| Blocking strategies + size limits + persisted blocking keys | ✅ | defaults from docs (limit 100, fk 1000) |
-| Learned DNF blocking | ❌ | strategies are hand-configured |
+| Blocking strategies + size limits + persisted blocking keys | ✅ | documented strategies (e-mail, phone, name+postal, name+birthdate, loyalty, ck, fk) + a name-prefix key; limit 100 / fk 1000 define *oversized*, nothing is skipped |
+| Oversized (hot-key) blocks | ✅ | compared in full within `max_pairs_per_block`, else sub-blocked on composite secondary keys + sorted-neighbourhood sweep; `records_dropped_by_blocking == 0` asserted every run; `stitch_oversized_blocks` QA table |
+| Learned DNF blocking | 🟡 | strategy set and refinement cascade are configured (DNF of exact keys); budgets swept on held-out seeds (`tools/sweep_blocking.py`), not learned |
 | Pairwise scoring 0–5 with weak/moderate/high/excellent/exact bands, threshold 3.0 | ✅ | bands + threshold reproduced |
 | Ordinal-regression classifier trained without ground truth | ❌ | hand-set logistic weights + deterministic rules; see Assumptions |
 | Rules Editor (ordered deterministic rules, first match wins) | 🟡 | fixed rule order in `matcher.py`, scores configurable |
 | Hard conflicts (birthdate) with explicit refuse-to-merge | ✅ | pairwise label + cluster-time check |
 | Connected components → conflict-aware hierarchical clustering | 🟡 | deterministic conflict-free single-link; not the full HC_fusion |
 | Supersized / blackhole components (BFS partition) | ✅ | `cluster.py::_bfs_partition` |
-| Trivial duplicate groups | ✅ | `match_type = trivial_duplicate` |
+| Trivial duplicate groups | ✅ | identical records collapse to a representative for blocking/scoring and expand back in `stitch_scores`; `match_type = trivial_duplicate` |
 | Bad-value blocklist with automatic detection | ✅ | thresholds from docs; manual blocklist table ❌ |
 | Stitch labels (forced merge / split CSV) | ❌ | planned |
 | One-to-one (ck) Stitch mode | 🟡 | `ck_exact` is a deterministic rule; dedicated mode ❌ |
@@ -67,6 +68,11 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
 8. **Gmail dot folding** is an optional normalisation (default off); Amperity does not document it.
 9. **Segments** are a filter list (field / op / value) over `customer_360`, not full SQL.
 10. **Supersized threshold** defaults to 500 (docs are inconsistent between 64 and 500).
+13. **Oversized-block handling** (`max_pairs_per_block`, per-strategy budgets, `refine_target`, `sn_window`, the
+    `refine_keys` cascade and the `name` prefix strategy) is ours; Amperity skips such blocks. Defaults were chosen
+    by the held-out sweep in `reports/<date>/tuning/` and are evaluated on seeds the sweep never saw.
+14. **Memory bounds** (`storage.duckdb.*`, chunked scoring, integer union-find) are implementation choices with no
+    documented Amperity counterpart.
 11. **Adapter export** `(source_record_id, unified_id, run_date)` exists for the external scoring harness.
 12. **Jitter** is computed over records present in both runs (`records_changed / records_compared`), matching the
     docs' "percent of customer records assigned an updated ID".

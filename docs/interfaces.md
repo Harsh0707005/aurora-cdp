@@ -83,8 +83,14 @@ trivial_duplicate | carried), is_edge (bool; score ≥ threshold and not a hard 
 
 `records, pairs_blocked, pairs_scored, edges, clusters, multi_record_clusters, max_cluster_size,
 cluster_size_distribution{"1","2","3-5","6-10","11-50","50+"}, split_components, supersized_components,
-skipped_blocks, threshold, jitter{records_total, records_compared, records_changed, jitter_pct, ids_minted,
-ids_retired, alert}, timings_sec{load, blocking, scoring, clustering, stable_id, persist}`.
+skipped_blocks (always 0 since v1.1: blocks are never skipped), threshold, jitter{records_total, records_compared,
+records_changed, jitter_pct, ids_minted, ids_retired, alert}, timings_sec{load, blocking, scoring, clustering,
+stable_id, persist}`.
+
+Added in v1.1 (additive): `oversized_blocks, oversized_handling{full, refined}, oversized_pairs, dupe_groups,
+representatives, records_with_keys, records_without_any_blocking_key, records_in_multi_record_blocks,
+records_in_candidate_pairs, records_dropped_by_blocking (always 0 — asserted), pairs_scored_representative,
+pairs_expanded_total, pairs_expansion_truncated, peak_rss_mb, duckdb_settings`.
 
 ## 4. Mapping file (raw column names → semantics)
 
@@ -112,5 +118,5 @@ then reports `% of shared records whose unified_id changed`, `ids_minted`, `ids_
 
 ## 6. Versioning
 
-Interface version **1** (2026-10-22). Columns may be added, never removed or renamed; new CLI flags are optional.
+Interface version **1.1** (2026-10-22; v1 + additive metric keys). Columns may be added, never removed or renamed; new CLI flags are optional.
 Breaking changes would ship as `aurora resolve2` / `resolve_records_v2` rather than mutate this contract.

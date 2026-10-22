@@ -25,6 +25,12 @@ All notable changes to the `aurora_cdp` platform. Local-only history; one entry 
 - Tests: `tests/test_blocking_subblocks.py` (full comparison within budget, refinement keeps every record,
   duplicate-flood collapse, keyless records reported), `tests/test_scoring_vectorised.py` (reference
   equivalence, chunk invariance); the old "cap skips oversized blocks" test now asserts the opposite.
+- `name` blocking strategy (given₃ + surname₃) with its own `max_pairs_per_block`: records carrying only a name
+  (phone/birthdate are null on 51 % / 72 % of corpus rows) were unreachable by every other key.
+- Config hygiene: `name_mismatch_floor`, `address_house_number_mismatch_cap` and the refine-key fallback moved
+  into `defaults.yaml`; engine code carries no paths, seeds, tenant names or magic thresholds.
+- `tools/sweep_blocking.py`: held-out sweep (tune seeds 7/11, confirm medium seed 7) with search space, trial
+  count, noise band and confirmation; reported tiers (seed 42) are evaluated afterwards without re-tuning.
 
 ### 2026-10-22 — Step 1 scaffold (model: Claude Fable 5.1 via Claude Code)
 
