@@ -229,6 +229,7 @@ def run(cfg: TenantConfig, raw_path: str | Path, job_id: str | None = None, sink
     prev_pks: pd.DataFrame | None = None
     if lake.exists(TABLES["unified_customer"]):
         prev_pks = lake.read(TABLES["unified_customer"]).select("datasource", "pk", "aurora_id").toPandas()
+        prev_pks.to_parquet(runs_dir / "prev_assignments.parquet", index=False)
 
     # -- read + preprocess
     raw = spark.read.parquet(str(raw_path))
@@ -286,6 +287,14 @@ def run(cfg: TenantConfig, raw_path: str | Path, job_id: str | None = None, sink
         schema="rid long, cluster_id long, aurora_id string, is_supersized boolean, supersized_id long, rep_ds string, rep_pk string",
     )
     unified = std.join(a_sdf, "rid").withColumn("component_id", F.col("cluster_id")).withColumn("job_id", F.lit(job_id)).persist()
+
+    # -- CDC (computed before any serving table is overwritten, so a failed run cannot lose the previous state)
+    new_pks = assign[["datasource", "pk", "aurora_id"]]
+    clusters_tbl, pks_tbl = build_change_tables(sid.events, prev_pks, new_pks, job_id)
+    moved = int((pks_tbl["change_type"] == "moved").sum())
+    sid.jitter["moved_records"] = moved
+    sid.jitter["percent"] = round(100.0 * moved / n_records, 3) if prev_pks is not None else sid.jitter["percent"]
+    # -- serving tables
     lake.write(unified, TABLES["unified_coalesced"])
     lake.write(unified.select("datasource", "pk", "aurora_id", "cluster_id", "truth_id", "job_id",
                               *SEMANTIC_COLUMNS, *STD_COLUMNS, "is_supersized", "has_blv"),
@@ -293,13 +302,6 @@ def run(cfg: TenantConfig, raw_path: str | Path, job_id: str | None = None, sink
     merged = merged_customers(unified).persist()
     lake.write(merged, TABLES["merged_customers"])
     lake.write(customer360(merged, unified), TABLES["customer360"])
-
-    # -- CDC
-    new_pks = assign[["datasource", "pk", "aurora_id"]]
-    clusters_tbl, pks_tbl = build_change_tables(sid.events, prev_pks, new_pks, job_id)
-    moved = int((pks_tbl["change_type"] == "moved").sum())
-    sid.jitter["moved_records"] = moved
-    sid.jitter["percent"] = round(100.0 * moved / n_records, 3) if prev_pks is not None else sid.jitter["percent"]
     lake.write_pandas(clusters_tbl, TABLES["unified_changes_clusters"], mode="append")
     if not pks_tbl.empty:
         lake.write_pandas(pks_tbl, TABLES["unified_changes_pks"], mode="append")
