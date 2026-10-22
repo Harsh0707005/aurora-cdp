@@ -30,7 +30,7 @@ from pathlib import Path
 import duckdb
 import yaml
 
-from aurora_cdp.audiences.destinations import export_csv, send_webhook
+from aurora_cdp.audiences.destinations import WEBHOOK_OPTIONS, export_csv, send_webhook
 from aurora_cdp.audiences.segmenter import evaluate_segment, save_segment
 from aurora_cdp.config import Config
 from aurora_cdp.ingestion.landing import ingest_file, landing_frame
@@ -74,7 +74,9 @@ def load_pipeline(path: str | Path) -> dict:
         return yaml.safe_load(fh)
 
 
-def tag_feed(con: duckdb.DuckDBPyConnection, cfg: Config, source: str, feed: str, semantics: dict) -> int:
+def tag_feed(
+    con: duckdb.DuckDBPyConnection, cfg: Config, source: str, feed: str, semantics: dict
+) -> int:
     """Rebuild silver rows for a source from its current bronze rows (semantic tagging + preprocessing)."""
     df = landing_frame(con, source, feed)
     raw = apply_semantics(df, source, semantics)
@@ -95,33 +97,67 @@ def run_pipeline(con: duckdb.DuckDBPyConnection, cfg: Config, spec: dict) -> Pip
         t = time.perf_counter()
         try:
             detail = fn()
-            result.steps.append({"step": name, "status": "ok", "seconds": round(time.perf_counter() - t, 3), "detail": detail})
+            result.steps.append(
+                {
+                    "step": name,
+                    "status": "ok",
+                    "seconds": round(time.perf_counter() - t, 3),
+                    "detail": detail,
+                }
+            )
         except Exception as exc:  # noqa: BLE001
             log.exception("pipeline step %s failed", name)
-            result.steps.append({"step": name, "status": "failed", "seconds": round(time.perf_counter() - t, 3), "detail": str(exc)})
+            result.steps.append(
+                {
+                    "step": name,
+                    "status": "failed",
+                    "seconds": round(time.perf_counter() - t, 3),
+                    "detail": str(exc),
+                }
+            )
             raise
 
     if spec.get("databases"):
         step("databases", lambda: {"applied_versions": init_schema(con)})
 
     for feed in spec.get("feeds", []):
+
         def _ingest(feed=feed):
-            r = ingest_file(con, feed["path"], feed["source"], feed["feed"], feed.get("load_mode", "incremental"))
+            r = ingest_file(
+                con,
+                feed["path"],
+                feed["source"],
+                feed["feed"],
+                feed.get("load_mode", "incremental"),
+            )
             tagged = 0
             if feed.get("semantics"):
                 tagged = tag_feed(con, cfg, feed["source"], feed["feed"], feed["semantics"])
-            return {"batch_id": r.batch_id, "rows_loaded": r.rows_loaded, "rows_deduped": r.rows_deduped, "tagged": tagged}
+            return {
+                "batch_id": r.batch_id,
+                "rows_loaded": r.rows_loaded,
+                "rows_deduped": r.rows_deduped,
+                "tagged": tagged,
+            }
 
         step(f"feed:{feed['source']}/{feed['feed']}", _ingest)
 
     if spec.get("stitch"):
-        mode = (spec["stitch"] or {}).get("mode", "full") if isinstance(spec["stitch"], dict) else "full"
+        mode = (
+            (spec["stitch"] or {}).get("mode", "full")
+            if isinstance(spec["stitch"], dict)
+            else "full"
+        )
 
         def _stitch():
             r = run_stitch(con, cfg, mode=mode)
             result.stitch_run_id = r.run_id
             result.metrics = r.metrics
-            return {"run_id": r.run_id, "clusters": r.metrics["clusters"], "jitter_pct": r.metrics["jitter"].get("jitter_pct")}
+            return {
+                "run_id": r.run_id,
+                "clusters": r.metrics["clusters"],
+                "jitter_pct": r.metrics["jitter"].get("jitter_pct"),
+            }
 
         step("stitch", _stitch)
 
@@ -129,6 +165,7 @@ def run_pipeline(con: duckdb.DuckDBPyConnection, cfg: Config, spec: dict) -> Pip
         step("profile", lambda: build_profiles(con, cfg).__dict__)
 
     for seg in spec.get("segments", []):
+
         def _seg(seg=seg):
             save_segment(con, seg)
             return {"name": seg["name"], "members": len(evaluate_segment(con, seg).members)}
@@ -136,16 +173,27 @@ def run_pipeline(con: duckdb.DuckDBPyConnection, cfg: Config, spec: dict) -> Pip
         step(f"segment:{seg['name']}", _seg)
 
     for dest in spec.get("destinations", []):
+
         def _dest(dest=dest):
             from aurora_cdp.audiences.segmenter import load_segment
 
             seg = load_segment(con, dest["segment"])
             members = evaluate_segment(con, seg, persist=False).members
             if dest.get("kind", "csv") == "csv":
-                path = export_csv(con, dest["segment"], members, dest.get("dir") or cfg.outputs_path)
+                path = export_csv(
+                    con, dest["segment"], members, dest.get("dir") or cfg.outputs_path
+                )
                 result.outputs.append(str(path))
                 return {"path": str(path), "rows": len(members)}
-            return send_webhook(con, dest["segment"], members, dest["url"], dry_run=dest.get("dry_run", True))
+            options = {k: dest[k] for k in WEBHOOK_OPTIONS if k in dest}
+            return send_webhook(
+                con,
+                dest["segment"],
+                members,
+                dest["url"],
+                dry_run=dest.get("dry_run", True),
+                **options,
+            )
 
         step(f"destination:{dest['segment']}", _dest)
 
