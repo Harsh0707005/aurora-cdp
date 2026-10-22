@@ -26,6 +26,21 @@ FEATURE_NAMES = [
 ]
 
 
+def _nn(value):
+    """Normalise pandas NaN/NaT and blanks to None so missing values are 'not comparable'."""
+    if value is None:
+        return None
+    if isinstance(value, float) and value != value:
+        return None
+    if isinstance(value, str) and not value.strip():
+        return None
+    return value
+
+
+def sanitize(rec: dict) -> dict:
+    return {k: _nn(v) for k, v in rec.items()}
+
+
 def _fks(rec: dict) -> dict[str, str]:
     raw = rec.get("fk_json")
     if not raw:
@@ -51,6 +66,7 @@ def _exact(a, b) -> float | None:
 def compute_features(a: dict, b: dict, cfg) -> dict[str, float | None]:
     """None means 'not comparable' (one side missing); the scorer treats None as neutral."""
     tol = int(cfg.get("hard_conflicts", {}).get("birthdate_typo_tolerance", 2))
+    a, b = sanitize(a), sanitize(b)
     given_a = a.get("given_name_canon") or a.get("given_name_norm")
     given_b = b.get("given_name_canon") or b.get("given_name_norm")
     f: dict[str, float | None] = {}

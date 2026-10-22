@@ -34,3 +34,6 @@ tune:
 clean:
 	rm -rf .aurora outputs .pytest_cache .ruff_cache .mypy_cache
 	find . -name __pycache__ -type d -prune -exec rm -rf {} +
+
+# Targets of the sibling Spark package (aurora/), if present.
+-include aurora/Makefile

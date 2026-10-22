@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Aurora CDP{% endblock %}</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; margin: 2rem; color: #1b1b1f; }
+    h1, h2 { font-weight: 600; }
+    table { border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    th, td { border: 1px solid #d9d9e0; padding: 0.3rem 0.6rem; text-align: left; }
+    th { background: #f2f2f7; }
+    .cards { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .card { border: 1px solid #d9d9e0; border-radius: 8px; padding: 1rem; min-width: 10rem; }
+    .card .v { font-size: 1.6rem; font-weight: 600; }
+    .alert { color: #b00020; font-weight: 600; }
+    .ok { color: #1a7f37; font-weight: 600; }
+    code { background: #f2f2f7; padding: 0.1rem 0.3rem; border-radius: 4px; }
+    nav a { margin-right: 1rem; }
+  </style>
+</head>
+<body>
+<nav><a href="/ui">Dashboard</a><a href="/docs">API docs</a><a href="/profiles?limit=20">Profiles (JSON)</a></nav>
+{% block content %}{% endblock %}
+<footer><small>Aurora CDP v{{ version }}</small></footer>
+</body>
+</html>

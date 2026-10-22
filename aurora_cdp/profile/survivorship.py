@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
+import pandas as pd
+
 DEFAULT_PRIORITY = 999
 
 
@@ -28,10 +30,13 @@ def survive(records: list[dict], cfg, attributes: list[str]) -> tuple[dict, dict
         candidates = []
         for rec in records:
             v = rec.get(attr)
-            if v is None or (isinstance(v, float)) or str(v).strip() == "":
+            if v is None or (isinstance(v, float) and pd.isna(v)) or str(v).strip() == "":
                 continue
             upd = rec.get("update_dt")
-            upd_ts = upd.timestamp() if isinstance(upd, datetime) else 0.0
+            try:
+                upd_ts = upd.timestamp() if isinstance(upd, datetime) and not pd.isna(upd) else 0.0
+            except (ValueError, AttributeError):
+                upd_ts = 0.0
             candidates.append((_priority(attr, rec["datasource"], cfg), -upd_ts, rec["datasource"], rec["pk"], v))
         if not candidates:
             values[attr] = None

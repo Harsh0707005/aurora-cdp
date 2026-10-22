@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Aurora CDP — Identity dashboard{% endblock %}
+{% block content %}
+<h1>Identity dashboard</h1>
+{% if not metrics %}
+  <p>No successful Stitch run yet. Run <code>aurora demo</code> or <code>POST /runs/pipeline</code>.</p>
+{% else %}
+  <p>Latest run <code>{{ run_id }}</code> ({{ metrics.mode }}), threshold {{ metrics.threshold }}</p>
+  <div class="cards">
+    <div class="card"><div>Records</div><div class="v">{{ metrics.records }}</div></div>
+    <div class="card"><div>Clusters</div><div class="v">{{ metrics.clusters }}</div></div>
+    <div class="card"><div>Profiles</div><div class="v">{{ profiles_total }}</div></div>
+    <div class="card"><div>Pairs scored</div><div class="v">{{ metrics.pairs_scored }}</div></div>
+    <div class="card"><div>Edges</div><div class="v">{{ metrics.edges }}</div></div>
+    <div class="card"><div>Match rate</div><div class="v">{{ '%.1f' % (metrics.match_rate * 100) }}%</div></div>
+    <div class="card"><div>Jitter</div>
+      <div class="v {% if jitter and jitter.alert %}alert{% else %}ok{% endif %}">{{ jitter.jitter_pct if jitter else '—' }}%</div>
+      {% if jitter %}<small>{{ jitter.records_changed }} / {{ jitter.records_compared }} records moved; minted {{ jitter.ids_minted }}, retired {{ jitter.ids_retired }}</small>{% endif %}
+    </div>
+  </div>
+
+  <h2>Cluster size distribution</h2>
+  <table><tr><th>Size</th><th>Clusters</th></tr>
+  {% for k, v in metrics.cluster_size_distribution.items() %}<tr><td>{{ k }}</td><td>{{ v }}</td></tr>{% endfor %}
+  </table>
+  <p>Components: {{ metrics.components }} · split by hard conflicts: {{ metrics.split_components }} · supersized: {{ metrics.supersized_components }} · skipped blocks: {{ metrics.skipped_blocks }} · blocklisted values: {{ metrics.blocklisted_values }}</p>
+
+  <h2>Largest clusters</h2>
+  <table><tr><th>Aurora ID</th><th>Records</th></tr>
+  {% for row in largest %}<tr><td><a href="/ui/clusters/{{ row.aurora_id }}">{{ row.aurora_id }}</a></td><td>{{ row.n }}</td></tr>{% endfor %}
+  </table>
+{% endif %}
+
+<h2>Segments</h2>
+<table><tr><th>Name</th><th>Members</th><th>Definition</th></tr>
+{% for s in segments %}<tr><td>{{ s.segment_name }}</td><td>{{ s.members }}</td><td><code>{{ s.definition.filters }}</code></td></tr>{% endfor %}
+</table>
+
+<h2>Recent runs</h2>
+<table><tr><th>Run</th><th>Mode</th><th>Started</th><th>Status</th></tr>
+{% for r in runs %}<tr><td>{{ r.run_id }}</td><td>{{ r.mode }}</td><td>{{ r.started_at }}</td><td>{{ r.status }}</td></tr>{% endfor %}
+</table>
+{% endblock %}

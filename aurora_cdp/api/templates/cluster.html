@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Cluster {{ aurora_id }}{% endblock %}
+{% block content %}
+<h1>Cluster review <small>(placeholder: approve / split actions TODO)</small></h1>
+<p>Aurora ID <code>{{ aurora_id }}</code> · run <code>{{ cluster.run_id }}</code></p>
+{% if profile %}
+<h2>Golden record</h2>
+<table><tr>{% for k in ['given_name','surname','email','phone','address','city','state','postal','birthdate','order_count','total_spend'] %}<th>{{ k }}</th>{% endfor %}</tr>
+<tr>{% for k in ['given_name','surname','email','phone','address','city','state','postal','birthdate','order_count','total_spend'] %}<td>{{ profile.profile[k] }}</td>{% endfor %}</tr></table>
+<h2>Provenance</h2>
+<table><tr><th>Attribute</th><th>Source</th><th>PK</th><th>Rule</th></tr>
+{% for k, v in profile.profile.provenance.items() %}<tr><td>{{ k }}</td><td>{{ v.datasource }}</td><td>{{ v.pk }}</td><td>{{ v.rule }}</td></tr>{% endfor %}</table>
+{% endif %}
+<h2>Members</h2>
+<table><tr><th>Source</th><th>PK</th><th>Component</th><th>Supersized</th></tr>
+{% for m in cluster.members %}<tr><td>{{ m.datasource }}</td><td>{{ m.pk }}</td><td>{{ m.component_id }}</td><td>{{ m.is_supersized }}</td></tr>{% endfor %}</table>
+<h2>Pairwise scores</h2>
+<table><tr><th>Left</th><th>Right</th><th>Score</th><th>Category</th><th>Type</th><th>Edge</th></tr>
+{% for s in cluster.scores %}<tr><td>{{ s.left_datasource }}/{{ s.left_pk }}</td><td>{{ s.right_datasource }}/{{ s.right_pk }}</td><td>{{ s.score }}</td><td>{{ s.match_category }}</td><td>{{ s.match_type }}</td><td>{{ s.is_edge }}</td></tr>{% endfor %}</table>
+{% endblock %}

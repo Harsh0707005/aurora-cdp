@@ -79,7 +79,8 @@ def apply_blocklist(df: pd.DataFrame, cfg: Config) -> tuple[pd.DataFrame, list[d
     return df, flagged
 
 
-def _records_dict(df: pd.DataFrame) -> dict[str, dict]:
+def records_from_frame(df: pd.DataFrame) -> dict[str, dict]:
+    """silver_unified_preprocessed rows -> {rid: record} with NaN/NaT normalised to None."""
     recs = {}
     cols = list(df.columns)
     for row in df.itertuples(index=False):
@@ -117,7 +118,7 @@ def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", 
     t = time.perf_counter()
     df = load_current_records(con)
     df, flagged = apply_blocklist(df, cfg)
-    records = _records_dict(df)
+    records = records_from_frame(df)
     rids = sorted(records)
     timings["load"] = round(time.perf_counter() - t, 3)
 

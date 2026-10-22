@@ -45,7 +45,11 @@ def read_any(path: str | Path) -> pd.DataFrame:
         return pd.read_parquet(path)
     if path.suffix.lower() in {".csv", ".txt"}:
         return pd.read_csv(path, dtype=str, keep_default_na=False)
-    raise ValueError(f"Unsupported file type: {path}")
+    if path.suffix.lower() in {".jsonl", ".ndjson"}:
+        return pd.read_json(path, lines=True, dtype=False).astype(object)
+    if path.suffix.lower() == ".json":
+        return pd.read_json(path, dtype=False).astype(object)
+    raise ValueError(f"Unsupported file type: {path} (csv, parquet, jsonl, json)")
 
 
 def _canonical_row(row: dict) -> str:

@@ -12,19 +12,19 @@ normalize:
   phone_use_last10_for_match: true   # [AMP] identity resolution uses only the last 10 digits
   email_strip_plus_tag: true         # [AMP] derek+1234@ -> derek@
   email_strip_gmail_dots: false      # [ASSUMPTION] optional gmail-style dot folding; default off
-  email_junk_local_parts:            # [AMP] junk local-part patterns are NULLed for matching
-    - test
-    - no
-    - none
-    - reservation
-    - admin
-    - contact
-    - guest
-    - info
-    - noreply
-    - no-reply
-    - donotreply
-    - unknown
+  email_junk_local_parts:            # [AMP] junk local-part patterns are NULLed for matching (quoted: YAML 1.1 reads no/none as booleans)
+    - "test"
+    - "no"
+    - "none"
+    - "reservation"
+    - "admin"
+    - "contact"
+    - "guest"
+    - "info"
+    - "noreply"
+    - "no-reply"
+    - "donotreply"
+    - "unknown"
   address_abbreviations:             # [AMP] expand common abbreviations, strip punctuation, uppercase
     ST: STREET
     AVE: AVENUE
@@ -62,6 +62,10 @@ blocking:
       type: name_postal         # first3(given_name) + surname + postal   [AMP]
     - name: name_birthdate
       type: name_birthdate      # first3(given_name) + first(surname) + birthdate  [AMP]
+    - name: loy_id_exact
+      type: loy_id              # loyalty id exact (key-only matches must still be blocked together)
+    - name: ck_exact
+      type: ck                  # customer key exact (one-to-one / deterministic stitch)
     - name: fk
       type: fk                  # one strategy per fk-<namespace>; exact match on the key
 

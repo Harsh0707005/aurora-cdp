@@ -89,12 +89,26 @@ NICKNAMES: dict[str, str] = {
 }
 
 _GMAIL_LIKE = {"gmail.com", "googlemail.com"}
+
+
+def _missing(value) -> bool:
+    """True for None, NaN/NaT and blank strings (pandas leaks NaN into object columns)."""
+    if value is None:
+        return True
+    if isinstance(value, float) and value != value:
+        return True
+    try:
+        if pd.isna(value):
+            return True
+    except (TypeError, ValueError):
+        pass
+    return str(value).strip() == ""
 _NON_ALNUM = re.compile(r"[^A-Z0-9 ]+")
 _WS = re.compile(r"\s+")
 
 
 def canonical_name(value: str | None) -> str | None:
-    if not value:
+    if _missing(value):
         return None
     s = _NON_ALNUM.sub(" ", str(value).upper())
     s = _WS.sub(" ", s).strip()
@@ -111,7 +125,7 @@ def canonical_given_name(value: str | None) -> str | None:
 
 
 def canonical_email(value: str | None, cfg: Config | dict) -> str | None:
-    if not value:
+    if _missing(value):
         return None
     s = str(value).strip().lower()
     if "@" not in s:
@@ -133,7 +147,7 @@ def canonical_email(value: str | None, cfg: Config | dict) -> str | None:
 
 def canonical_phone(value: str | None, region: str = "US") -> tuple[str | None, str | None]:
     """Return (e164, last10) or (None, None) when unparseable."""
-    if not value:
+    if _missing(value):
         return None, None
     raw = str(value).strip()
     try:
@@ -152,7 +166,7 @@ def canonical_phone(value: str | None, region: str = "US") -> tuple[str | None, 
 
 def canonical_address(value: str | None, abbreviations: dict[str, str] | None = None) -> str | None:
     """Uppercase, strip punctuation, expand abbreviations. TODO: unit parsing, PO Box, directional suffixes."""
-    if not value:
+    if _missing(value):
         return None
     s = _NON_ALNUM.sub(" ", str(value).upper().replace(".", "").replace(",", " "))
     tokens = [t for t in _WS.split(s) if t]
@@ -162,7 +176,7 @@ def canonical_address(value: str | None, abbreviations: dict[str, str] | None = 
 
 
 def canonical_postal(value: str | None) -> str | None:
-    if not value:
+    if _missing(value):
         return None
     s = re.sub(r"[^A-Za-z0-9]", "", str(value)).upper()
     if not s:
@@ -173,7 +187,7 @@ def canonical_postal(value: str | None) -> str | None:
 
 
 def canonical_birthdate(value: str | None) -> str | None:
-    if not value:
+    if _missing(value):
         return None
     s = str(value).strip()
     try:
@@ -201,7 +215,7 @@ def preprocess_records(raw: pd.DataFrame, cfg: Config) -> pd.DataFrame:
     out["address_norm"] = raw["address"].map(lambda v: canonical_address(v, abbr))
     out["postal_norm"] = raw["postal"].map(canonical_postal)
     out["birthdate_norm"] = raw["birthdate"].map(canonical_birthdate)
-    out["loy_id_norm"] = raw["loy_id"].map(lambda v: canonical_name(v).replace(" ", "") if v else None)
+    out["loy_id_norm"] = raw["loy_id"].map(lambda v: (canonical_name(v) or "").replace(" ", "") or None)
     out["fk_json"] = raw["fk_json"]
     out["update_dt"] = raw["update_dt"]
     out["batch_id"] = raw["batch_id"]

@@ -58,6 +58,12 @@ def blocking_keys_for(record: dict, strategy: dict) -> list[tuple[str, str]]:
         if g and s and b:
             return [(name, f"{g[:3]}:{s[:1]}:{b}")]
         return []
+    if kind == "loy_id":
+        v = record.get("loy_id_norm")
+        return [(name, v)] if v else []
+    if kind == "ck":
+        v = record.get("ck")
+        return [(name, str(v))] if v else []
     if kind == "fk":
         return [(f"fk-{ns.removeprefix('fk-')}", f"{ns}:{v}") for ns, v in _fks(record).items()]
     raise ValueError(f"unknown blocking strategy type: {kind}")
