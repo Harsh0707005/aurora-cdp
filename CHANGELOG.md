@@ -65,6 +65,12 @@ Every new capability is opt-in; the default configuration produces byte-identica
 - `tools/sweep_blocking.py`: held-out sweep (tune seeds 7/11, confirm medium seed 7) with search space, trial
   count, noise band and confirmation; reported tiers (seed 42) are evaluated afterwards without re-tuning.
   (Sweep was started and stopped per the "no heavy local runs" instruction; 0 trials recorded.)
+- Held-out sweep (tune small seeds 7/11, confirm medium seed 7; 20 trials) chose `match_threshold: 3.25` and a
+  given-name hard conflict (`cluster.conflict_tolerances.given_name: jaro_winkler_min 0.6`) over the previous
+  3.0 / birthdate-only defaults. Seed-42 confirmation: small passes all five gates (false merges 2.51 % → 1.01 %,
+  P 0.999, F1 0.937, B³ 0.940, blocking recall 0.878); medium passes four and misses the false-merge ceiling
+  (2.51 % vs 2.0 %; P 0.990, F1 0.926, B³ 0.934, blocking recall 0.893). Ordinal did not win (no operating point
+  with P ≥ 0.98 and F1 ≥ 0.90) and stays selectable, not default. See `docs/tuning.md`.
 - Ordinal-regression scorer wired as `matcher.scorer: ordinal` (default stays `rules` until the harness
   comparison says otherwise): label-free self-training on the run's own candidate pairs or a saved
   `matcher.ordinal.model_file`; insufficient data / `retrain: never` without a model fall back to the rules scorer

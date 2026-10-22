@@ -1,0 +1,550 @@
+{
+  "summary": {
+    "overmerged_clusters": 733,
+    "profiles_in_overmerged": 8292,
+    "persons_in_overmerged": 1782,
+    "cross_person_edges": 33842,
+    "edge_feature_tally": {
+      "email": 0,
+      "phone": 0,
+      "dob": 0,
+      "postal": 0,
+      "name": 0,
+      "addr": 0,
+      "engine_deterministic": 964,
+      "engine_scored": 28590,
+      "engine_trivial_duplicate": 4288
+    },
+    "edge_feature_only_tally": {
+      "email": 0,
+      "phone": 0,
+      "dob": 0,
+      "postal": 0,
+      "name": 0,
+      "addr": 0,
+      "engine_deterministic": 964,
+      "engine_scored": 28590,
+      "engine_trivial_duplicate": 4288
+    }
+  },
+  "clusters": [
+    {
+      "cluster_id": "w0-97a10dbe96a1d761",
+      "persons": 32,
+      "profiles": 36,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0008394": [
+          "James"
+        ],
+        "ps_0011641": [
+          "JAMES"
+        ],
+        "ps_0019624": [
+          "James"
+        ],
+        "ps_0011128": [
+          "James"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-976b1b7fd1c5a4bd",
+      "persons": 24,
+      "profiles": 33,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0017090": [
+          "James Smith",
+          "james"
+        ],
+        "ps_0008688": [
+          "James Smith"
+        ],
+        "ps_0002773": [
+          "james smith"
+        ],
+        "ps_0012322": [
+          "James Smith"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-b2c6aba90a683270",
+      "persons": 14,
+      "profiles": 27,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0019771": [
+          "James Williams"
+        ],
+        "ps_0002350": [
+          "james williams"
+        ],
+        "ps_0006157": [
+          "James Williams"
+        ],
+        "ps_0019898": [
+          "James Williams"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w5-38ebf4b2512adfa2",
+      "persons": 14,
+      "profiles": 18,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0015918": [
+          "John Smith",
+          "john smith"
+        ],
+        "ps_0006835": [
+          "John Smith"
+        ],
+        "ps_0018869": [
+          "john smith"
+        ],
+        "ps_0007136": [
+          "john smith"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-e08048f04bbac63b",
+      "persons": 14,
+      "profiles": 14,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0009815": [
+          "Robert"
+        ],
+        "ps_0014943": [
+          "robert"
+        ],
+        "ps_0017285": [
+          "robert"
+        ],
+        "ps_0001224": [
+          "Robert"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-db9e0fcf7975c27b",
+      "persons": 13,
+      "profiles": 42,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0019014": [
+          "robert smith",
+          "robert smmith"
+        ],
+        "ps_0005925": [
+          "Robert Smith"
+        ],
+        "ps_0018244": [
+          "robert smith"
+        ],
+        "ps_0005506": [
+          "Robert Smith",
+          "robert smith"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-747a30cc17388b95",
+      "persons": 13,
+      "profiles": 14,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0000937": [
+          "John"
+        ],
+        "ps_0000524": [
+          "JOHN"
+        ],
+        "ps_0000702": [
+          "John"
+        ],
+        "ps_0002779": [
+          "John"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-da8cc3fa90b0ed1f",
+      "persons": 12,
+      "profiles": 26,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0004155": [
+          "james johnson"
+        ],
+        "ps_0003318": [
+          "james johnson"
+        ],
+        "ps_0008692": [
+          "James Johnson",
+          "james johnson"
+        ],
+        "ps_0003320": [
+          "James Johnson"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-2236c6133103bac3",
+      "persons": 11,
+      "profiles": 17,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0010098": [
+          "john johnson"
+        ],
+        "ps_0015281": [
+          "JOHN JOHNSON",
+          "John Johnson"
+        ],
+        "ps_0001914": [
+          "John Johnson",
+          "john johnson"
+        ],
+        "ps_0018731": [
+          "John Johnson",
+          "john johnson"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-b308bfc929c10b19",
+      "persons": 11,
+      "profiles": 12,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0003867": [
+          "William Smith"
+        ],
+        "ps_0005495": [
+          "william smith"
+        ],
+        "ps_0015391": [
+          "william smith"
+        ],
+        "ps_0017134": [
+          "William Smith"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-dcfab4cec522ea32",
+      "persons": 10,
+      "profiles": 12,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0008162": [
+          "michael"
+        ],
+        "ps_0001456": [
+          "michael"
+        ],
+        "ps_0002997": [
+          "Michael"
+        ],
+        "ps_0017785": [
+          "MICHAEL"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-23f1b84ca8585372",
+      "persons": 9,
+      "profiles": 22,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0006110": [
+          "James Miller",
+          "james miller"
+        ],
+        "ps_0012297": [
+          "James Miller",
+          "james miller"
+        ],
+        "ps_0003980": [
+          "James Miller"
+        ],
+        "ps_0007607": [
+          "james miller"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-2ac1c6579ed024dc",
+      "persons": 8,
+      "profiles": 18,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0011268": [
+          "James Jones"
+        ],
+        "ps_0014115": [
+          "james jones"
+        ],
+        "ps_0015889": [
+          "james jones"
+        ],
+        "ps_0015978": [
+          "James Jones"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-4a40c53d9ab87069",
+      "persons": 8,
+      "profiles": 16,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0010760": [
+          "Robert Jones",
+          "robert jones"
+        ],
+        "ps_0005715": [
+          "ROBERT JONES",
+          "Robert Jones"
+        ],
+        "ps_0012742": [
+          "Robert Jones"
+        ],
+        "ps_0017214": [
+          "Robert Jones"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-456d567e8dd0dda1",
+      "persons": 7,
+      "profiles": 51,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0003536": [
+          "Michael Smith",
+          "michael smith"
+        ],
+        "ps_0012367": [
+          "michael smith"
+        ],
+        "ps_0016789": [
+          "michael smith"
+        ],
+        "ps_0018192": [
+          "michael smith"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-14283ff0e37e0445",
+      "persons": 7,
+      "profiles": 25,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0006436": [
+          "Kevin Smith",
+          "kevin smith"
+        ],
+        "ps_0000744": [
+          "Kevin Smith",
+          "kevin smith"
+        ],
+        "ps_0017004": [
+          "kevin smith"
+        ],
+        "ps_0000575": [
+          "kevin smith"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-46156a155ef04d0b",
+      "persons": 7,
+      "profiles": 10,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0015497": [
+          "Richard",
+          "richard"
+        ],
+        "ps_0017779": [
+          "Richard"
+        ],
+        "ps_0013278": [
+          "richard"
+        ],
+        "ps_0010639": [
+          "richard"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w3-9109af14048b298b",
+      "persons": 7,
+      "profiles": 10,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0017817": [
+          "Michael Johnson"
+        ],
+        "ps_0000242": [
+          "Michael Johnson"
+        ],
+        "ps_0019514": [
+          "Michael Johnson"
+        ],
+        "ps_0001737": [
+          "michael johnson"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-7e045fa5742b1d91",
+      "persons": 6,
+      "profiles": 36,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0001068": [
+          "James Brown"
+        ],
+        "ps_0007969": [
+          "james brown"
+        ],
+        "ps_0016782": [
+          "JAMES BROWN"
+        ],
+        "ps_0010847": [
+          "james brown"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-154c211b150bffab",
+      "persons": 6,
+      "profiles": 34,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0015643": [
+          "James",
+          "James Garcia"
+        ],
+        "ps_0019123": [
+          "James Garcia"
+        ],
+        "ps_0001385": [
+          "james garcia"
+        ],
+        "ps_0010396": [
+          "James Garcia"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-13146d42b123a73c",
+      "persons": 6,
+      "profiles": 25,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0013961": [
+          "Robert Garcia"
+        ],
+        "ps_0014311": [
+          "robert garcia"
+        ],
+        "ps_0008330": [
+          "Robert Garcia"
+        ],
+        "ps_0013758": [
+          "robert garcia"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w4-fd5415846b9cef90",
+      "persons": 6,
+      "profiles": 10,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0011444": [
+          "David Smith",
+          "david smith"
+        ],
+        "ps_0016178": [
+          "DAVID SMITH"
+        ],
+        "ps_0002016": [
+          "david smith"
+        ],
+        "ps_0003650": [
+          "david smith"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-22a8b88eadc827d3",
+      "persons": 6,
+      "profiles": 8,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0008835": [
+          "james rodriguez"
+        ],
+        "ps_0001277": [
+          "James Rodriguez"
+        ],
+        "ps_0017021": [
+          "james rodriguez"
+        ],
+        "ps_0015242": [
+          "James Rodriguez"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w1-a321439acd1c1e90",
+      "persons": 6,
+      "profiles": 8,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0008325": [
+          "michael garcia"
+        ],
+        "ps_0011064": [
+          "Michael Garcia"
+        ],
+        "ps_0011774": [
+          "Michael Garcia"
+        ],
+        "ps_0019220": [
+          "michael garcia"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-21bd47f56720a388",
+      "persons": 6,
+      "profiles": 7,
+      "dominant_feature": "engine_trivial_duplicate",
+      "sample": {
+        "ps_0003898": [
+          "JOHN RODRIGUEZ"
+        ],
+        "ps_0010838": [
+          "john rodriguez"
+        ],
+        "ps_0002770": [
+          "John Rodriguez"
+        ],
+        "ps_0008555": [
+          "John Rodriguez"
+        ]
+      }
+    }
+  ]
+}
