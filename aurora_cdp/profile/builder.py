@@ -88,6 +88,10 @@ def build_profiles(con: duckdb.DuckDBPyConnection, cfg: Config, run_id: str | No
         inserted = write_df(con, "gold_merged_customers", ins)
 
     events = build_events(con, cfg, run_id)
+    if (cfg.get("identity") or {}).get("email_ampid_assignment", True):
+        from aurora_cdp.profile.ampid import assign_email_ampids
+
+        log.info("email AmpID assignment: %s", assign_email_ampids(con, cfg, run_id))
     return ProfileBuildResult(run_id, len(rows), inserted, int(closed or 0), events)
 
 

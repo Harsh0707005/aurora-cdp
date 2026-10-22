@@ -109,7 +109,13 @@ def resolve_records(
         prev_path = None
         if previous is not None:
             prev_path = tmp / "previous.csv"
-            (previous if isinstance(previous, pd.DataFrame) else _as_frame(previous)).to_csv(prev_path, index=False)
+            prev_df = previous if isinstance(previous, pd.DataFrame) else _as_frame(previous)
+            if "unified_id" not in prev_df.columns:  # AmpID compatibility: accept the external id column
+                for alt in ((cfg.get("identity") or {}).get("external_id_name", "amperity_id"), "aurora_id"):
+                    if alt in prev_df.columns:
+                        prev_df = prev_df.rename(columns={alt: "unified_id"})
+                        break
+            prev_df.to_csv(prev_path, index=False)
         map_path = None
         if mapping is not None:
             if isinstance(mapping, (str, Path)):
@@ -124,7 +130,8 @@ def resolve_records(
         )
         assignments = pd.read_csv(tmp / "assignments.csv", dtype=str)
         scores = pd.read_csv(tmp / "scores.csv", dtype={"left_record_id": str, "right_record_id": str}) if (tmp / "scores.csv").exists() else pd.DataFrame(columns=SCORE_COLUMNS)
-        return ResolveResult(assignments[ASSIGNMENT_COLUMNS], scores, out["metrics"], out["run_id"])
+        extra = [c for c in assignments.columns if c not in ASSIGNMENT_COLUMNS]  # e.g. amperity_id (identity.ampid_mode)
+        return ResolveResult(assignments[ASSIGNMENT_COLUMNS + extra], scores, out["metrics"], out["run_id"])
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

@@ -105,7 +105,7 @@ def test_adapter_contract(workspace, tmp_path):
     pd.DataFrame(rows).to_csv(inp, index=False)
     res = run_on_file(cfg, inp, tmp_path / "assign.csv", scores_out=tmp_path / "scores.csv")
     assign = pd.read_csv(tmp_path / "assign.csv")
-    assert list(assign.columns) == ASSIGNMENT_COLUMNS
+    assert list(assign.columns)[: len(ASSIGNMENT_COLUMNS)] == ASSIGNMENT_COLUMNS  # additive columns (amperity_id) may follow
     assert len(assign) == 3 and res["rows"] == 3
     by_id = assign.set_index("source_record_id")["unified_id"]
     assert by_id["a1"] == by_id["b1"] != by_id["c1"]

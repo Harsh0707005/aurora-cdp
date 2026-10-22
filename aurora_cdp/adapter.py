@@ -71,9 +71,11 @@ def run_on_file(
         run_date = datetime.utcnow().strftime("%Y-%m-%d")
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
+        ident = cfg.get("identity") or {}
+        ext = f", aurora_id AS {ident.get('external_id_name', 'amperity_id')}" if ident.get("ampid_mode", True) else ""
         rows = _copy_query(
             con,
-            f"SELECT pk AS source_record_id, aurora_id AS unified_id, '{run_date}' AS run_date, datasource, pk, cluster_id, run_id "
+            f"SELECT pk AS source_record_id, aurora_id AS unified_id, '{run_date}' AS run_date, datasource, pk, cluster_id, run_id{ext} "
             "FROM stitch_clusters WHERE run_id = ? ORDER BY datasource, pk",
             [result.run_id], out_path,
         )
@@ -108,7 +110,7 @@ def _seed_ledger(con, path: Path) -> None:
     cols = {c.lower(): c for c in prev.columns}
     ledger = pd.DataFrame(
         {
-            "aurora_id": prev[cols["unified_id"]].astype(str),
+            "aurora_id": prev[cols.get("unified_id") or cols.get("amperity_id") or cols["aurora_id"]].astype(str),
             "datasource": prev[cols["datasource"]].astype(str) if "datasource" in cols else "input",
             "pk": prev[cols.get("source_record_id", cols.get("pk"))].astype(str),
             "run_id": "seed",

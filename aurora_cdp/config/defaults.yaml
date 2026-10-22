@@ -193,6 +193,11 @@ cluster:
     loy_id: loy_id_norm
     contact: [email_norm, phone_match]   # list -> set-valued attribute
 
+identity:                       # AmpID compatibility (profile/ampid.py)
+  ampid_mode: true              # exports carry <external_id_name> = the stable id; previous assignments may use that column
+  external_id_name: amperity_id
+  email_ampid_assignment: true  # [AMP: Email AmpID Assignment] gold_email_ampid narrows e-mail -> customer to 1:1 at profile build
+
 household:                      # [AMP: Merged Households] owned entity with persistent ids and evidence edges (profile/households.py)
   min_evidence_weight: 1.0      # summed active evidence a customer pair needs to share a household
   evidence_ttl_days: 365        # evidence stays active this long after it was last observed (moves do not churn households)
