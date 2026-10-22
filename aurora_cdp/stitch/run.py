@@ -609,6 +609,7 @@ def run_stitch(
     clusters = cluster_indices(
         n, left, right, score, conflict_values, ccfg,
         forbidden=resolved.forbidden if resolved is not None else None,
+        forced=list(zip(resolved.merge_left.tolist(), resolved.merge_right.tolist(), strict=True)) if resolved is not None else None,
     )
     del conflict_values, left, right, score
     cluster_tables(con, clusters, rids)

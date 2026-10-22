@@ -152,6 +152,7 @@ def cluster_indices(
     conflict_values: list[dict[str, list[str | None]]] | dict[str, list],
     cfg,
     forbidden: list[tuple[int, int]] | None = None,
+    forced: list[tuple[int, int]] | None = None,
 ) -> ClusterResult:
     """Integer core. ``left/right/score`` are parallel edge arrays over indices 0..n-1;
     ``conflict_values`` maps attr -> list (length n) of that record's value (or None).
@@ -229,20 +230,28 @@ def cluster_indices(
         return fb is not None and any(uf2.find(x) == ra for x in fb)
 
     size = np.ones(n, dtype=np.int64)  # live cluster sizes by root
-    counters = {"rejected": 0, "rejected_label": 0, "deferred_fusion": 0, "fused_multi": 0}
+    counters = {"rejected": 0, "rejected_label": 0, "deferred_fusion": 0, "fused_multi": 0, "label_overrode_conflict": 0}
 
-    def try_union(a: int, b: int) -> bool:
-        """Union a and b unless a hard conflict / split label forbids it. Returns True when merged."""
+    def try_union(a: int, b: int, check_conflicts: bool = True) -> bool:
+        """Union a and b unless a hard conflict / split label forbids it. Returns True when merged.
+        ``check_conflicts=False`` is used for operator merge labels: an explicit label outranks inferred
+        attribute conflicts (a contradicting split label still wins and is counted)."""
         ra, rb = uf2.find(a), uf2.find(b)
         if ra == rb:
             return True
         if forbid and label_blocks(ra, rb):
             counters["rejected_label"] += 1
             return False
-        for attr in conflict_attrs:
-            if not _values_compatible(attr, vals_of(ra, attr), vals_of(rb, attr), tol):
-                counters["rejected"] += 1
-                return False
+        if check_conflicts:
+            for attr in conflict_attrs:
+                if not _values_compatible(attr, vals_of(ra, attr), vals_of(rb, attr), tol):
+                    counters["rejected"] += 1
+                    return False
+        else:
+            for attr in conflict_attrs:
+                if not _values_compatible(attr, vals_of(ra, attr), vals_of(rb, attr), tol):
+                    counters["label_overrode_conflict"] += 1
+                    break
         merged = {attr: vals_of(ra, attr) | vals_of(rb, attr) for attr in conflict_attrs}
         root = uf2.union(a, b)
         other = rb if root == ra else ra
@@ -256,6 +265,9 @@ def cluster_indices(
                 forbid[root] = fa | fb
         return True
 
+    for a, b in forced or ():  # operator merge labels first: explicit knowledge beats inferred conflicts
+        if group[a] == group[b]:
+            try_union(int(a), int(b), check_conflicts=False)
     same_group = group[left] == group[right]
     if linkage == "single" or m == 0:
         order = np.lexsort((right, left, -score))
@@ -358,6 +370,7 @@ def cluster_indices(
         "edges_rejected_by_label": rejected_label,
         "fusion_deferred_edges": counters["deferred_fusion"],  # weak edges that would have fused two formed entities
         "fusion_multi_merges": counters["fused_multi"],
+        "labels_merge_overrode_conflict": counters["label_overrode_conflict"],
         "carved_clusters": carved_clusters,
         "carved_records": int(np.sum(carved >= 0)),
         "linkage": linkage,
