@@ -595,23 +595,18 @@ def run_stitch(
     timings["scoring"] = round(time.perf_counter() - t, 3)
 
     t = time.perf_counter()
-    birthdates = [
-        r[0] for r in con.execute("SELECT birthdate_norm FROM _rec ORDER BY idx").fetchall()
-    ]
     ccfg = dict(cfg.cluster)
-    ccfg["birthdate_typo_tolerance"] = cfg.matcher.get("hard_conflicts", {}).get(
-        "birthdate_typo_tolerance", 2
-    )
+    ccfg["birthdate_typo_tolerance"] = cfg.matcher.get("hard_conflicts", {}).get("birthdate_typo_tolerance", 2)
+    columns = {"birthdate": "birthdate_norm", "given_name": "given_name_canon", **(ccfg.get("conflict_columns") or {})}
+    conflict_values = {
+        attr: [r[0] for r in con.execute(f"SELECT {columns[attr]} FROM _rec ORDER BY idx").fetchall()]
+        for attr in ccfg.get("conflict_attributes", ["birthdate"])
+    }
     clusters = cluster_indices(
-        n,
-        left,
-        right,
-        score,
-        {"birthdate": birthdates},
-        ccfg,
+        n, left, right, score, conflict_values, ccfg,
         forbidden=resolved.forbidden if resolved is not None else None,
     )
-    del birthdates, left, right, score
+    del conflict_values, left, right, score
     cluster_tables(con, clusters, rids)
     del rids
     timings["clustering"] = round(time.perf_counter() - t, 3)
