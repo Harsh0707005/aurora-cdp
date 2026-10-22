@@ -1,0 +1,163 @@
+{
+  "stages": {
+    "load": {
+      "status": "complete",
+      "at": "2026-10-22T08:35:25+00:00",
+      "profiles": 20000
+    },
+    "resolve": {
+      "status": "complete",
+      "at": "2026-10-22T08:36:02+00:00",
+      "elapsed_s": 36.41,
+      "clusters": 2827
+    },
+    "metrics": {
+      "status": "complete",
+      "at": "2026-10-22T08:36:04+00:00",
+      "summary": "pairwise P=0.983 R=0.914 F1=0.947 | B3 F1=0.944 | false-merge clusters=2.51% (profiles 5.41%) | split persons=35.55% | ID churn/30d mean=1.33% max=1.77% | AUC-ROC=0.936 AP=0.977 blocking-recall=0.878"
+    },
+    "report": {
+      "status": "complete",
+      "at": "2026-10-22T08:36:05+00:00",
+      "report": "/Users/harshmaster/Desktop/Projects/aurora-cdp/reports/2026-10-22/small-v2/report.md"
+    }
+  },
+  "status": "complete",
+  "run_name": "small-v2",
+  "input_hash": "f863010d321026aaa9ec",
+  "dataset": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/small",
+  "adapter": "aurora_cdp",
+  "report_dir": "/Users/harshmaster/Desktop/Projects/aurora-cdp/reports/2026-10-22/small-v2",
+  "spec": {
+    "dataset": "small",
+    "adapter": "aurora_cdp",
+    "run_name": "small-v2",
+    "seed": 20261022,
+    "adapter_kwargs": {
+      "max_stored_pairs": 20000000,
+      "threshold": null,
+      "windows": "replay",
+      "config": null,
+      "cdp_path": null,
+      "isolate_windows": false,
+      "deterministic_ids": true,
+      "datasource_column": "source",
+      "timeout_s": null
+    },
+    "data_dir": null,
+    "reports_root": "/Users/harshmaster/Desktop/Projects/aurora-cdp/reports",
+    "date": "2026-10-22",
+    "runs_dir": "/Users/harshmaster/Desktop/Projects/aurora-eval-harness/runs",
+    "link_dir": "/Users/harshmaster/Desktop/Projects/aurora-eval-harness/reports/engine",
+    "resume": true,
+    "force": true,
+    "rebuild_report": false,
+    "sweep": true,
+    "sweep_grid": "0.3:0.95:0.05",
+    "sample": null,
+    "top_k": 25,
+    "notes": [],
+    "limitations": [],
+    "resource_interval": 1.0,
+    "retries": 1,
+    "argv": [
+      "--adapter",
+      "aurora_cdp",
+      "--dataset",
+      "small",
+      "--seed",
+      "20261022",
+      "--run-name",
+      "small-v2",
+      "--date",
+      "2026-10-22",
+      "--reports-root",
+      "/Users/harshmaster/Desktop/Projects/aurora-cdp/reports",
+      "--force"
+    ]
+  },
+  "pid": 55483,
+  "summary": "pairwise P=0.983 R=0.914 F1=0.947 | B3 F1=0.944 | false-merge clusters=2.51% (profiles 5.41%) | split persons=35.55% | ID churn/30d mean=1.33% max=1.77% | AUC-ROC=0.936 AP=0.977 blocking-recall=0.878",
+  "finished_at": "2026-10-22T08:36:05+00:00",
+  "resources": {
+    "wall_s": 38.63,
+    "samples": 38,
+    "interval_s": 1.0,
+    "peak_rss_mb": 709.2,
+    "mean_rss_mb": 506.1,
+    "mean_cpu_pct": 99.3,
+    "peak_cpu_pct": 117.4,
+    "cpu_count": 8,
+    "stage_wall_s": {
+      "init": 0.0,
+      "load": 0.22,
+      "resolve": 0.04,
+      "resolve:w0": 1.5,
+      "resolve:w1": 2.43,
+      "resolve:w2": 4.28,
+      "resolve:w3": 6.45,
+      "resolve:w4": 9.19,
+      "resolve:w5": 11.42,
+      "assemble": 0.3,
+      "persist": 0.81,
+      "metrics": 1.99,
+      "report": 0.01
+    },
+    "per_stage": {
+      "resolve:w0": {
+        "samples": 1,
+        "peak_rss_mb": 265.9,
+        "mean_cpu_pct": 80.3,
+        "wall_s": 1.5
+      },
+      "resolve:w1": {
+        "samples": 3,
+        "peak_rss_mb": 360.6,
+        "mean_cpu_pct": 99.0,
+        "wall_s": 2.43
+      },
+      "resolve:w2": {
+        "samples": 4,
+        "peak_rss_mb": 412.6,
+        "mean_cpu_pct": 99.2,
+        "wall_s": 4.28
+      },
+      "resolve:w3": {
+        "samples": 6,
+        "peak_rss_mb": 498.9,
+        "mean_cpu_pct": 98.9,
+        "wall_s": 6.45
+      },
+      "resolve:w4": {
+        "samples": 9,
+        "peak_rss_mb": 545.1,
+        "mean_cpu_pct": 99.3,
+        "wall_s": 9.19
+      },
+      "resolve:w5": {
+        "samples": 11,
+        "peak_rss_mb": 599.6,
+        "mean_cpu_pct": 102.0,
+        "wall_s": 11.42
+      },
+      "assemble": {
+        "samples": 1,
+        "peak_rss_mb": 673.1,
+        "mean_cpu_pct": 113.4,
+        "wall_s": 0.3
+      },
+      "metrics": {
+        "samples": 2,
+        "peak_rss_mb": 709.2,
+        "mean_cpu_pct": 90.8,
+        "wall_s": 1.99
+      },
+      "report": {
+        "samples": 1,
+        "peak_rss_mb": 708.1,
+        "mean_cpu_pct": 96.4,
+        "wall_s": 0.01
+      }
+    }
+  }
+}
