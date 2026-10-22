@@ -108,6 +108,23 @@ blocking:
 
 matcher:
   match_threshold: 3.0          # [AMP] default pairwise scoring threshold is 3.0 on a 0-5 scale
+  scorer: rules                 # rules (hand-set logistic + deterministic rules) | ordinal (learned, label-free; see stitch/ordinal.py)
+  ordinal:                      # learned ordinal-regression scorer (Amperity SIGMOD 2020 §2.5-2.6 analogue)
+    model_file: null            # json written by tools/train_ordinal.py or by a run; null -> train on this run's candidates
+    retrain: auto               # auto (train when no usable model file) | always | never (model_file required; else fall back)
+    save_model: true            # persist the trained model under <workspace>/models/ordinal-<run_id>.json
+    apply_rules_first: true     # deterministic rules / hard conflicts / trivial dupes still take precedence
+    levels: 3                   # ordered labels: 0 non-match, 1 weak/moderate, 2 match
+    self_train_rounds: 3
+    confidence_margin: 1.0      # z beyond a threshold by this margin -> confident self-label
+    negatives_per_positive: 2.0 # random non-candidate pairs sampled per rule positive
+    max_train_pairs: 40000      # candidate-pair sample used for training
+    min_positive_pairs: 300     # fewer rule positives -> fall back to the rules scorer (counted in metrics)
+    min_negative_pairs: 300
+    l2: 0.001
+    lr: 0.05
+    epochs: 300
+    sample_seed: 0              # sampling seed (documented; training is otherwise deterministic)
   score_chunk_size: 250000      # candidate pairs scored per chunk (bounds memory; results are chunk-invariant)
   persist_features: false       # keep per-pair features_json in stitch_scores (QA; large: ~300 B per pair)
   export_expanded_dupe_pairs: true   # expand collapsed trivial-dupe groups back into every member pair in stitch_scores

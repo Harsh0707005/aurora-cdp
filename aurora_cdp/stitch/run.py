@@ -34,7 +34,8 @@ from aurora_cdp.storage.duck import apply_settings, latest_run_id, read_df, writ
 from .blocking import REC_COLUMNS, add_derived_columns, build_candidate_pairs
 from .cluster import _short_id, cluster_indices
 from .features import SIDE_COLUMNS, features_frame
-from .matcher import score_frame
+from .matcher import score_frame  # noqa: F401 - kept for callers
+from .ordinal import prepare_scorer
 from .stable_id import assign_stable_ids_duck
 
 log = logging.getLogger(__name__)
@@ -194,9 +195,14 @@ def resolve_strategies(cfg: Config) -> tuple[dict, dict]:
 
 
 # ----------------------------------------------------------------------------------------- scoring
-def score_candidates(con: duckdb.DuckDBPyConnection, cfg: Config) -> dict:
-    """Stream ``_pairs`` through the vectorised scorer in chunks into ``_scores``. Returns counters."""
+def score_candidates(con: duckdb.DuckDBPyConnection, cfg: Config, scorer=None) -> dict:
+    """Stream ``_pairs`` through the vectorised scorer in chunks into ``_scores``. Returns counters.
+    ``scorer`` is a RulesScorer / OrdinalScorer (see stitch/ordinal.py); None = rules."""
     mcfg = cfg.matcher
+    if scorer is None:
+        from .ordinal import RulesScorer
+
+        scorer = RulesScorer(mcfg)
     chunk = int(mcfg.get("score_chunk_size", 250_000))
     keep_features = bool(mcfg.get("persist_features", False))
     con.execute("CREATE OR REPLACE TEMP TABLE _pairs_n AS SELECT (ROW_NUMBER() OVER (ORDER BY l, r) - 1) AS n, l, r FROM _pairs")
@@ -217,8 +223,7 @@ def score_candidates(con: duckdb.DuckDBPyConnection, cfg: Config) -> dict:
         ).df()
         left = df[[f"l_{c}" for c in SIDE_COLUMNS]].rename(columns=lambda c: c[2:])
         right = df[[f"r_{c}" for c in SIDE_COLUMNS]].rename(columns=lambda c: c[2:])
-        F = features_frame(left, right, mcfg)
-        S = score_frame(F, mcfg)
+        F, S = scorer.score_pairs(left, right)
         out = pd.DataFrame({"l": df["l"].to_numpy(), "r": df["r"].to_numpy(), "score": S["score"].to_numpy(),
                             "match_category": S["match_category"].to_numpy(), "match_type": S["match_type"].to_numpy(),
                             "is_edge": S["is_edge"].to_numpy()})
@@ -345,7 +350,8 @@ def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", 
     timings["blocking"] = round(time.perf_counter() - t, 3)
 
     t = time.perf_counter()
-    scoring = score_candidates(con, cfg)
+    scorer, scorer_info = prepare_scorer(con, cfg, run_id, getattr(cfg, "workspace_path", None))
+    scoring = score_candidates(con, cfg, scorer)
     expansion = expand_scores(con, run_id, cfg)
     left, right, score = edge_arrays(con)
     rids: list[str] = [r[0] for r in con.execute("SELECT rid FROM _rec ORDER BY idx").fetchall()]
@@ -397,6 +403,7 @@ def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", 
         "carried_edges": len(carried),
         "match_rate": round(scoring["edges_representative"] / scoring["pairs_scored_representative"], 4) if scoring["pairs_scored_representative"] else 0.0,
         "match_category_counts": scoring["match_category_counts"],
+        **scorer_info,
         "clusters": clusters.qa["clusters"],
         "multi_record_clusters": int((sizes > 1).sum()),
         "records_in_multi_record_clusters_pct": round(100.0 * int(sizes[sizes > 1].sum()) / max(1, n), 2),

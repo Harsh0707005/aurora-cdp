@@ -374,3 +374,79 @@ def sample_training_pairs(con, cfg, context: dict, rec_table: str = "_rec") -> t
 def train_from_candidates(con, cfg, context: dict) -> tuple[OrdinalModel | None, TrainingReport]:
     F_cand, F_neg = sample_training_pairs(con, cfg, context)
     return self_train(F_cand, F_neg, cfg.matcher, cfg.matcher.get("ordinal", {}) or {})
+
+
+# ----------------------------------------------------------------------------------------- scorer objects
+class RulesScorer:
+    """Baseline: hand-set logistic weights + deterministic rules (matcher.score_frame)."""
+
+    name = "rules"
+
+    def __init__(self, matcher_cfg):
+        self.cfg = matcher_cfg
+
+    def score_pairs(self, left: pd.DataFrame, right: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+        F = features_frame(left, right, self.cfg)
+        return F, score_frame(F, self.cfg)
+
+
+class OrdinalScorer:
+    name = "ordinal"
+
+    def __init__(self, matcher_cfg, model: OrdinalModel, context: dict):
+        self.cfg = matcher_cfg
+        self.model = model
+        self.context = context
+
+    def score_pairs(self, left: pd.DataFrame, right: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+        F = all_features(left, right, self.cfg, self.context)
+        return F, score_frame_ordinal(F, self.model, self.cfg)
+
+
+def prepare_scorer(con, cfg, run_id: str, workspace: Path | None = None) -> tuple[object, dict]:
+    """Build the scorer selected by ``matcher.scorer``; never raises on insufficient training data.
+
+    Returns ``(scorer, info)`` where ``info`` carries ``scorer_requested``, ``scorer_used``,
+    ``scorer_fallback_reason`` (and, for ordinal, the training report / model file). Requires ``_rec`` and
+    ``_pairs`` to exist (called after blocking)."""
+    mcfg = cfg.matcher
+    requested = str(mcfg.get("scorer", "rules"))
+    info = {"scorer_requested": requested, "scorer_used": "rules", "scorer_fallback_reason": None}
+    if requested == "rules":
+        return RulesScorer(mcfg), info
+    if requested != "ordinal":
+        info["scorer_fallback_reason"] = f"unknown matcher.scorer {requested!r}"
+        return RulesScorer(mcfg), info
+    ocfg = dict(mcfg.get("ordinal") or {})
+    retrain = str(ocfg.get("retrain", "auto"))
+    model_file = ocfg.get("model_file")
+    context = corpus_context(con)
+    model = None
+    if model_file and Path(model_file).exists() and retrain != "always":
+        try:
+            model = OrdinalModel.load(model_file)
+            info["ordinal_model_file"] = str(model_file)
+            info["ordinal_model_source"] = "file"
+        except Exception as exc:  # noqa: BLE001 - a corrupt file must not kill the run
+            info["scorer_fallback_reason"] = f"could not load model_file {model_file!r}: {exc}"
+            return RulesScorer(mcfg), info
+    if model is None:
+        if retrain == "never":
+            info["scorer_fallback_reason"] = f"retrain=never and no usable model_file ({model_file!r})"
+            return RulesScorer(mcfg), info
+        model, rep = train_from_candidates(con, cfg, context)
+        info["ordinal_training"] = rep.as_metrics()
+        if model is None:
+            info["scorer_fallback_reason"] = rep.fallback_reason
+            return RulesScorer(mcfg), info
+        info["ordinal_model_source"] = "trained"
+        if bool(ocfg.get("save_model", True)):
+            target = Path(model_file) if model_file else Path(workspace or ".") / "models" / f"ordinal-{run_id}.json"
+            try:
+                model.save(target)
+                info["ordinal_model_file"] = str(target)
+            except OSError as exc:
+                info["ordinal_model_save_error"] = str(exc)
+    info["scorer_used"] = "ordinal"
+    info["ordinal_thresholds"] = [round(float(t), 4) for t in model.thresholds]
+    return OrdinalScorer(mcfg, model, context), info

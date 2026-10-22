@@ -93,3 +93,27 @@ def test_self_training_falls_back_gracefully():
     model, rep = self_train(F, F, CFG.matcher, {"min_positive_pairs": 300})
     assert model is None and rep.fallback_reason.startswith("insufficient positives")
     assert rep.as_metrics()["ordinal_fallback_reason"]
+
+
+def test_scorer_ordinal_end_to_end_and_fallback(tmp_path):
+    from aurora_cdp.adapters import resolve_records
+
+    recs = _records(persons=500, copies=4, seed=7)
+    df = pd.DataFrame([{"source_record_id": r["pk"], "given_name": r["given_name_canon"], "surname": r["surname_norm"], "email": r["email_norm"],
+                        "phone": r["phone_match"], "postal": r["postal_norm"], "birthdate": r["birthdate_norm"], "address": r["address_norm"]} for r in recs.values()])
+    ocfg = {"min_positive_pairs": 50, "min_negative_pairs": 50, "epochs": 120, "max_train_pairs": 5000, "model_file": str(tmp_path / "m.json")}
+    res = resolve_records(df, config={"matcher": {"scorer": "ordinal", "ordinal": ocfg}}, datasource="s")
+    m = res.metrics
+    assert m["scorer_requested"] == "ordinal" and m["scorer_used"] == "ordinal" and m["scorer_fallback_reason"] is None
+    assert m["ordinal_model_source"] == "trained" and (tmp_path / "m.json").exists()
+    assert set(res.scores["match_type"]) <= {"scored", "deterministic", "trivial_duplicate", "carried"}
+    assert m["clusters"] > 0 and m["records_dropped_by_blocking"] == 0
+    # reuse the saved model without retraining
+    res2 = resolve_records(df, config={"matcher": {"scorer": "ordinal", "ordinal": {**ocfg, "retrain": "never"}}}, datasource="s")
+    assert res2.metrics["ordinal_model_source"] == "file" and res2.metrics["scorer_used"] == "ordinal"
+    # insufficient positives -> rules fallback with a reason, never a crash
+    res3 = resolve_records(df.head(40), config={"matcher": {"scorer": "ordinal", "ordinal": {**ocfg, "model_file": None}}}, datasource="s")
+    assert res3.metrics["scorer_used"] == "rules" and res3.metrics["scorer_fallback_reason"].startswith("insufficient")
+    # retrain=never without a model -> fallback
+    res4 = resolve_records(df, config={"matcher": {"scorer": "ordinal", "ordinal": {"retrain": "never", "model_file": None}}}, datasource="s")
+    assert res4.metrics["scorer_used"] == "rules" and "retrain=never" in res4.metrics["scorer_fallback_reason"]
