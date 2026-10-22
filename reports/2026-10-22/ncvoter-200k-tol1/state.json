@@ -1,0 +1,155 @@
+{
+  "stages": {
+    "load": {
+      "status": "complete",
+      "at": "2026-10-22T13:49:47+00:00",
+      "profiles": 200003
+    },
+    "resolve": {
+      "status": "complete",
+      "at": "2026-10-22T13:50:38+00:00",
+      "elapsed_s": 50.32,
+      "clusters": 74746
+    },
+    "metrics": {
+      "status": "complete",
+      "at": "2026-10-22T13:50:42+00:00",
+      "summary": "pairwise P=0.999 R=0.990 F1=0.994 | B3 F1=0.997 | false-merge clusters=0.09% (profiles 0.14%) | split persons=1.31% | ID churn/30d mean=0.14% max=0.24% | AUC-ROC=1.000 AP=1.000 blocking-recall=0.994"
+    },
+    "report": {
+      "status": "complete",
+      "at": "2026-10-22T13:50:43+00:00",
+      "report": "../aurora-cdp/reports/2026-10-22/ncvoter-200k-tol1/report.md"
+    }
+  },
+  "status": "complete",
+  "run_name": "ncvoter-200k-tol1",
+  "input_hash": "69956b4372d3e351b1cf",
+  "dataset": "/home/ubuntu/data/aurora-testdata/ncvoter-200k",
+  "adapter": "aurora_cdp",
+  "report_dir": "../aurora-cdp/reports/2026-10-22/ncvoter-200k-tol1",
+  "spec": {
+    "dataset": "/home/ubuntu/data/aurora-testdata/ncvoter-200k",
+    "adapter": "aurora_cdp",
+    "run_name": "ncvoter-200k-tol1",
+    "seed": 20261022,
+    "adapter_kwargs": {
+      "max_stored_pairs": 20000000,
+      "threshold": null,
+      "windows": "replay",
+      "config": {
+        "matcher": {
+          "hard_conflicts": {
+            "birthdate_typo_tolerance": 1
+          }
+        }
+      },
+      "cdp_path": null,
+      "isolate_windows": false,
+      "deterministic_ids": true,
+      "datasource_column": "source",
+      "timeout_s": null
+    },
+    "data_dir": null,
+    "reports_root": "../aurora-cdp/reports",
+    "date": "2026-10-22",
+    "runs_dir": "/home/ubuntu/Projects/aurora-eval-harness/runs",
+    "link_dir": "/home/ubuntu/Projects/aurora-eval-harness/reports/engine",
+    "resume": true,
+    "force": false,
+    "rebuild_report": false,
+    "sweep": true,
+    "sweep_grid": "0.3:0.95:0.05",
+    "sample": null,
+    "top_k": 25,
+    "notes": [],
+    "limitations": [],
+    "resource_interval": 1.0,
+    "retries": 1,
+    "argv": [
+      "--adapter",
+      "aurora_cdp",
+      "--dataset",
+      "/home/ubuntu/data/aurora-testdata/ncvoter-200k",
+      "--seed",
+      "20261022",
+      "--run-name",
+      "ncvoter-200k-tol1",
+      "--date",
+      "2026-10-22",
+      "--cdp-config",
+      "{\"matcher\": {\"hard_conflicts\": {\"birthdate_typo_tolerance\": 1}}}",
+      "--reports-root",
+      "../aurora-cdp/reports"
+    ]
+  },
+  "pid": 7104,
+  "summary": "pairwise P=0.999 R=0.990 F1=0.994 | B3 F1=0.997 | false-merge clusters=0.09% (profiles 0.14%) | split persons=1.31% | ID churn/30d mean=0.14% max=0.24% | AUC-ROC=1.000 AP=1.000 blocking-recall=0.994",
+  "finished_at": "2026-10-22T13:50:43+00:00",
+  "resources": {
+    "wall_s": 54.54,
+    "samples": 39,
+    "interval_s": 1.0,
+    "peak_rss_mb": 1599.4,
+    "mean_rss_mb": 1198.4,
+    "mean_cpu_pct": 109.7,
+    "peak_cpu_pct": 157.9,
+    "cpu_count": 32,
+    "stage_wall_s": {
+      "init": 0.0,
+      "load": 0.1,
+      "resolve": 0.01,
+      "resolve:w0": 8.69,
+      "resolve:w1": 15.04,
+      "resolve:w2": 23.22,
+      "assemble": 1.22,
+      "persist": 2.17,
+      "metrics": 4.08,
+      "report": 0.01
+    },
+    "per_stage": {
+      "resolve:w0": {
+        "samples": 6,
+        "peak_rss_mb": 940.2,
+        "mean_cpu_pct": 104.6,
+        "wall_s": 8.69
+      },
+      "resolve:w1": {
+        "samples": 11,
+        "peak_rss_mb": 1297.9,
+        "mean_cpu_pct": 110.1,
+        "wall_s": 15.04
+      },
+      "resolve:w2": {
+        "samples": 15,
+        "peak_rss_mb": 1599.4,
+        "mean_cpu_pct": 113.8,
+        "wall_s": 23.22
+      },
+      "assemble": {
+        "samples": 1,
+        "peak_rss_mb": 1478.1,
+        "mean_cpu_pct": 127.8,
+        "wall_s": 1.22
+      },
+      "persist": {
+        "samples": 1,
+        "peak_rss_mb": 1280.2,
+        "mean_cpu_pct": 102.1,
+        "wall_s": 2.17
+      },
+      "metrics": {
+        "samples": 4,
+        "peak_rss_mb": 1323.3,
+        "mean_cpu_pct": 100.8,
+        "wall_s": 4.08
+      },
+      "report": {
+        "samples": 1,
+        "peak_rss_mb": 1261.0,
+        "mean_cpu_pct": 99.8,
+        "wall_s": 0.01
+      }
+    }
+  }
+}

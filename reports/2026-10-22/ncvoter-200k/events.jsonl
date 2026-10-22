@@ -1,0 +1,13 @@
+{"t": 1792676805.917267, "ts": "2026-10-22T13:46:45", "kind": "run_start", "pid": 5601, "run_name": "ncvoter-200k", "input_hash": "3fc4039f9a895c4c51cd", "completed_stages": []}
+{"t": 1792676805.9245267, "ts": "2026-10-22T13:46:45", "kind": "stage_start", "pid": 5601, "stage": "load", "attempt": 0}
+{"t": 1792676806.0200772, "ts": "2026-10-22T13:46:46", "kind": "stage_end", "pid": 5601, "stage": "load", "attempt": 0, "elapsed_s": 0.095}
+{"t": 1792676806.33579, "ts": "2026-10-22T13:46:46", "kind": "stage_start", "pid": 5601, "stage": "resolve:w0", "attempt": 0}
+{"t": 1792676814.6177914, "ts": "2026-10-22T13:46:54", "kind": "stage_end", "pid": 5601, "stage": "resolve:w0", "attempt": 0, "elapsed_s": 8.282}
+{"t": 1792676815.2774985, "ts": "2026-10-22T13:46:55", "kind": "stage_start", "pid": 5601, "stage": "resolve:w1", "attempt": 0}
+{"t": 1792676829.977509, "ts": "2026-10-22T13:47:09", "kind": "stage_end", "pid": 5601, "stage": "resolve:w1", "attempt": 0, "elapsed_s": 14.7}
+{"t": 1792676830.880621, "ts": "2026-10-22T13:47:10", "kind": "stage_start", "pid": 5601, "stage": "resolve:w2", "attempt": 0}
+{"t": 1792676853.2261546, "ts": "2026-10-22T13:47:33", "kind": "stage_end", "pid": 5601, "stage": "resolve:w2", "attempt": 0, "elapsed_s": 22.345}
+{"t": 1792676856.6590352, "ts": "2026-10-22T13:47:36", "kind": "stage_start", "pid": 5601, "stage": "metrics", "attempt": 0}
+{"t": 1792676860.7861404, "ts": "2026-10-22T13:47:40", "kind": "stage_end", "pid": 5601, "stage": "metrics", "attempt": 0, "elapsed_s": 4.127}
+{"t": 1792676860.7867246, "ts": "2026-10-22T13:47:40", "kind": "stage_start", "pid": 5601, "stage": "report"}
+{"t": 1792676861.9258995, "ts": "2026-10-22T13:47:41", "kind": "run_complete", "pid": 5601, "report": "../aurora-cdp/reports/2026-10-22/ncvoter-200k/report.md"}

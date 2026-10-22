@@ -138,3 +138,28 @@ windows), `tests/test_runner_resilience.py` (SIGKILL mid-run → resume equals a
 outputs untouched; retries logged), `tests/test_edge_cases.py` (null-heavy, extreme duplicates, supersized cluster,
 adversarial strings) and `tests/test_properties.py` (Hypothesis: never drops keys, permutation-stable ids, no crash
 on hostile Unicode). Run `make test` in the harness.
+
+## Real-PII corpus: North Carolina voter registration snapshots (`tools/build_ncvoter_corpus.py`)
+
+The synthetic tiers cannot say how the matcher behaves on real names, real street addresses and real year-over-year
+drift. The NC State Board of Elections publishes statewide point-in-time voter-registration snapshots as public
+record (`https://s3.amazonaws.com/dl.ncsbe.gov/data/Snapshots/VR_Snapshot_YYYYMMDD.zip`, UTF-16LE TSV, ~1.2 GB each,
+~17 M rows incl. removed voters). Each snapshot becomes one *source*, the NCID is the ground-truth person, so the
+corpus measures: same person across sources with real moves (~9 % of pairs), surname changes (~1 %), corrections,
+real households, and real name frequency. Build (snapshots a year apart ⇒ one harness window per snapshot):
+
+```bash
+tools/ncvoter_fetch.sh ~/ncvoter 20230101 20240101 20250101          # download + convert to UTF-8 (3.7 GB zipped)
+tools/build_ncvoter_corpus.py --tsv vr2023=~/ncvoter/VR_Snapshot_20230101.tsv --tsv vr2024=... --tsv vr2025=... \
+    --out $AURORA_DATA_DIR/ncvoter-7m --target-profiles 7000000 --seed 42 --window-days 365     # or --target-profiles 200000
+aurora-eval run --adapter aurora_cdp --dataset $AURORA_DATA_DIR/ncvoter-7m --isolate-windows --max-stored-pairs 80000000 \
+    --cdp-config '{"matcher": {"max_expanded_pairs": 300000000}}' ...
+```
+
+Mapping: `first_name`/`last_name` as published (name suffix dropped), `phone` = area code + number when 10 digits
+(47 % of rows), `dob` = `(snapshot year − age)-01-01` (year granularity; within a person the derived year agrees in
+99.99 % of pairs), `address` = house number + direction + street + type + unit, `postal_code` = 5-digit ZIP, no e-mail.
+Only ACTIVE / INACTIVE voters are kept (`--statuses all` keeps REMOVED etc., which only adds frozen identical rows).
+Limitations: no e-mail, year-only birthdate (two same-name people born in the same year cannot be separated by the
+birthdate conflict), and the corpus has at most one record per person per source, so it does not exercise
+within-source duplicates or hot keys the way the synthetic tiers do. Results: `reports/2026-10-22/ncvoter-*`.

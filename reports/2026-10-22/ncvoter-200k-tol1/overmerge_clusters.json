@@ -1,0 +1,382 @@
+{
+  "summary": {
+    "overmerged_clusters": 68,
+    "profiles_in_overmerged": 277,
+    "persons_in_overmerged": 136,
+    "cross_person_edges": 9961,
+    "edge_feature_tally": {
+      "email": 0,
+      "phone": 0,
+      "dob": 0,
+      "postal": 0,
+      "name": 0,
+      "addr": 0,
+      "engine_deterministic": 0,
+      "engine_scored": 9961,
+      "engine_trivial_duplicate": 0
+    },
+    "edge_feature_only_tally": {
+      "email": 0,
+      "phone": 0,
+      "dob": 0,
+      "postal": 0,
+      "name": 0,
+      "addr": 0,
+      "engine_deterministic": 0,
+      "engine_scored": 9961,
+      "engine_trivial_duplicate": 0
+    }
+  },
+  "clusters": [
+    {
+      "cluster_id": "w0-05685f4d5fd89511",
+      "persons": 2,
+      "profiles": 6,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "BW10116": [
+          "TONY MATTHEWS"
+        ],
+        "DH12021": [
+          "ANTHONY MATTHEWS"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-145b866ec2c801fa",
+      "persons": 2,
+      "profiles": 6,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "BC50462": [
+          "MARY SHIPMAN"
+        ],
+        "BC62972": [
+          "MARGARET SIMMONS"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-2fc51aaad3ff6cc3",
+      "persons": 2,
+      "profiles": 6,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "BD93119": [
+          "WILLIAM DAVIS"
+        ],
+        "BF21821": [
+          "BILLY DAVIS"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-32ef9ae40a7e11fa",
+      "persons": 2,
+      "profiles": 6,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "AX9214": [
+          "JAMES POLLARD"
+        ],
+        "CJ11085": [
+          "JAMES POLLARD"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-375de31d4e111bf9",
+      "persons": 2,
+      "profiles": 6,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "AW154082": [
+          "RANDALL PAINTER"
+        ],
+        "AW173476": [
+          "MALINDA PAINTER"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-486bba5c8e46829a",
+      "persons": 2,
+      "profiles": 6,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "BL555589": [
+          "AUSTIN BROWN"
+        ],
+        "EH1370567": [
+          "AUSTIN BROWN"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-62e9a1304a641371",
+      "persons": 2,
+      "profiles": 6,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "EP72888": [
+          "PATRICIA JOSEPH"
+        ],
+        "EP77130": [
+          "PATRICIA JONES"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-67702d3dd0e64665",
+      "persons": 2,
+      "profiles": 6,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "AX17760": [
+          "MICHAEL BAKER"
+        ],
+        "AX17767": [
+          "PAMELA BAKER"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-792518d1b3596e2b",
+      "persons": 2,
+      "profiles": 6,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "AL269992": [
+          "RYAN SMITH"
+        ],
+        "CG120556": [
+          "RYAN SMITH"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-8bce905242e0960e",
+      "persons": 2,
+      "profiles": 6,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "BN177488": [
+          "MICHAEL BROWN"
+        ],
+        "BN223493": [
+          "MIKE BROWN"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-a535b31a6e32ddd1",
+      "persons": 2,
+      "profiles": 6,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "CJ129924": [
+          "MICHAEL HAMMER"
+        ],
+        "CJ129925": [
+          "MELISSA HAMMER"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-dc9af7d4b2274f03",
+      "persons": 2,
+      "profiles": 6,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "CN81712": [
+          "MICHAEL EDWARDS"
+        ],
+        "DB155049": [
+          "MICHAEL EDWARDS"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-09bf45ec5afd1f41",
+      "persons": 2,
+      "profiles": 4,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "CJ126235": [
+          "AARON PARNELL"
+        ],
+        "AW172341": [
+          "AARON PANNELL"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-09ee1f836308983a",
+      "persons": 2,
+      "profiles": 4,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "AW235722": [
+          "RICHARD BENNETT"
+        ],
+        "BE30720": [
+          "RICHARD BENNETT"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-1350c63a303820c7",
+      "persons": 2,
+      "profiles": 4,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "EH1040520": [
+          "BRITTANY MARSHALL"
+        ],
+        "AN265391": [
+          "BRITTNEY MARSHALL"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-23c370f14b7b2081",
+      "persons": 2,
+      "profiles": 4,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "BR235318": [
+          "JIMMY SMITH"
+        ],
+        "EH1322110": [
+          "JAMES SMITH"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-2a324d0dfc880598",
+      "persons": 2,
+      "profiles": 4,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "CN72939": [
+          "SARA HENDERSON"
+        ],
+        "BN373975": [
+          "SARA HENDERSON"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-2a4181d26b256324",
+      "persons": 2,
+      "profiles": 4,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "CM52940": [
+          "DAVID ROUSE"
+        ],
+        "EF212566": [
+          "DAVID ROSE"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-348214d3a355e7b5",
+      "persons": 2,
+      "profiles": 4,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ER28845": [
+          "DAVID WILLIAMS"
+        ],
+        "DY44646": [
+          "DAVID WILLIAMS"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-37a3671a55ce5dba",
+      "persons": 2,
+      "profiles": 4,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "AN129395": [
+          "TERRY BENJAMIN"
+        ],
+        "CW1550307": [
+          "TERRY BENJAMIN"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-3cd220f4d20d8870",
+      "persons": 2,
+      "profiles": 4,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "BY690816": [
+          "DEVONDRE WILLIAMS"
+        ],
+        "CG232691": [
+          "DEVON WILLIAMS"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-3d46d7f06e72ba2e",
+      "persons": 2,
+      "profiles": 4,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "EH148897": [
+          "MARILYN COOK"
+        ],
+        "EC3425": [
+          "MARY COOK"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-3f6473d7e85903b8",
+      "persons": 2,
+      "profiles": 4,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "BL8488": [
+          "JEFFREY BRITT"
+        ],
+        "DN181704": [
+          "JEFFERY BRITT"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-4e412c06084c0067",
+      "persons": 2,
+      "profiles": 4,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "DN137292": [
+          "TYEISHA WILLIAMS"
+        ],
+        "BM65251": [
+          "TYEISHA WILLIAMS"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-61159e855815807d",
+      "persons": 2,
+      "profiles": 4,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "AR2613": [
+          "ROBERT HARRIS"
+        ],
+        "CJ224125": [
+          "ROBERT HARRIS"
+        ]
+      }
+    }
+  ]
+}
