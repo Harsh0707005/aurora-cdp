@@ -65,6 +65,14 @@ Every new capability is opt-in; the default configuration produces byte-identica
 - `tools/sweep_blocking.py`: held-out sweep (tune seeds 7/11, confirm medium seed 7) with search space, trial
   count, noise band and confirmation; reported tiers (seed 42) are evaluated afterwards without re-tuning.
   (Sweep was started and stopped per the "no heavy local runs" instruction; 0 trials recorded.)
+- **HC_fusion clustering** (`cluster.linkage: fusion`): edges are applied in score tiers (strong structure first);
+  below `fusion.strong_edge_score` two formed clusters fuse only with corroborating cross edges
+  (`min_cross_edges`, `min_cross_edge_ratio`); hard conflicts are checked at every union, including a set-valued
+  `contact` (e-mail ∪ phone, `any_overlap`) conflict; clusters above `carve.max_cluster_size` lose their weakest
+  tiers until the pieces fit and the separated members are surfaced (`carved_records`, `supersized_id`).
+  Bookkeeping is numpy arrays + per-root value sets; `linkage: single` keeps the previous behaviour.
+- Trivial dupes (`matcher.trivial_dupe`) now require an agreeing identifier and compare birthdate: name-only
+  "trivial duplicates" had bridged different people with the same common name on the medium tier.
 - Held-out sweep (tune small seeds 7/11, confirm medium seed 7; 20 trials) chose `match_threshold: 3.25` and a
   given-name hard conflict (`cluster.conflict_tolerances.given_name: jaro_winkler_min 0.6`) over the previous
   3.0 / birthdate-only defaults. Seed-42 confirmation: small passes all five gates (false merges 2.51 % → 1.01 %,
