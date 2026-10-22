@@ -4,7 +4,36 @@ _Date 2026-10-22 · engine commit `95fc88d4b56d762d384dc952d63d9d1ecca37add` (cl
 
 Evidence: `reports/2026-10-22/{small,medium,large}/`, `reports/2026-10-22/public-*/`, `reports/2026-10-22/stress/`. Every report carries a provenance block (engine commit, fully expanded config, seed, dataset path, run time, host), a resource section and a *Metric validation* section. How to reproduce: `docs/evaluation.md`.
 
-## Verdict
+## Addendum 2026-10-22 (engine `6d2cf9b`) — blocking-recall defect closed; large tier moved to AWS
+
+The block-size cap no longer discards anything: oversized blocks are compared in full within a pair budget or
+sub-blocked on composite secondary keys plus a sorted-neighbourhood sweep, identical records are collapsed into
+trivial-dupe groups, a name-prefix strategy covers records that carry only a name, and every run asserts
+`records_dropped_by_blocking == 0`. Scoring is vectorised and streamed in chunks, clustering runs on integer
+union-find, and stable IDs / change feeds / the ledger are computed inside DuckDB under an explicit memory limit.
+
+| gate | before (`08be538`, small) | after (`6d2cf9b`, `reports/2026-10-22/small-v3`) |
+|---|---|---|
+| Pairwise P / R / F1 | 0.980 / 0.649 / 0.781 | **0.983 / 0.914 / 0.947** |
+| B³ P / R / F1 | 0.987 / 0.881 / 0.931 | **0.983 / 0.908 / 0.944** |
+| Blocking recall (≥ 0.85) | 0.537 | **0.878** |
+| False-merge clusters / profiles / pairs | 1.75 % / 4.54 % / 1.96 % | 2.51 % / 5.41 % / 1.74 % (cluster-weighted now over the 2 % ceiling — recall was bought with the documented default weights; the threshold must be re-tuned on held-out seeds, see below) |
+| ID churn mean / max per window | 1.65 % / 2.10 % | 1.33 % / 1.77 % |
+| Records dropped by blocking | 5 skipped blocks | **0** (asserted) |
+| Wall / peak RSS (20k, 6 windows) | 19 s / 0.87 GB | 18 s / 0.72 GB |
+
+Medium and large were **not** re-run on this laptop (instruction: no heavy local runs); the large tier is owned by
+the AWS task. A 1M-row blocking-only probe with the new engine was interrupted before completing, so no 1M
+number is claimed here. Tuning protocol: `tools/sweep_blocking.py` (held-out seeds 7/11, confirm medium seed 7)
+was started and stopped for the same reason — the shipped defaults are the documented Amperity values plus
+budgets chosen by reasoning, not by a sweep; that is recorded in `docs/feature-parity.md` (assumption 13) and is
+the first thing to run on the AWS box.
+
+Handed over to the Amperity-gap worker (not evaluated here): learned DNF blocking (`stitch/dnf.py`; on held-out
+seed 7 the learned disjunction reaches PC 0.68 self-labelled / 0.79 truth-labelled vs 0.90 for the fixed list),
+the ordinal scorer (`stitch/ordinal.py`, unit-tested, not wired), HC_fusion, stitch labels, households.
+
+## Verdict (original, engine `95fc88d`)
 
 **Not production-grade yet — conditional PASS on robustness, FAIL on recall at scale.**
 
@@ -94,9 +123,12 @@ These are pipeline sanity checks, not accuracy benchmarks: the corpora have no n
 
 ## 6. Large tier (1M profiles / 100k persons)
 
-Status: **PENDING — see the line below, updated when the run finishes.**
-
-LARGE_STATUS_PLACEHOLDER
+Status: **PENDING — moved to the AWS evaluation box (2026-10-22).** The laptop (8.6 GB) did not complete the
+1M run with the old engine and heavy local runs were stopped by instruction. The new engine's memory profile at
+200k is 0.7 GB (small) and the per-record Python state is gone; the 1M/10M resource curve must come from the
+AWS run. AWS prerequisites verified read-only on this machine: `aws` CLI 2.27, default profile (account
+014490262341, region ap-south-1 — a **root** principal; use an IAM role on the box), SSH keys present; Docker
+daemon not running locally; no terraform/cdk.
 
 Resume if interrupted: `cd aurora-eval-harness && .venv/bin/aurora-eval run --adapter aurora_cdp --dataset large --seed 20261022 --run-name large --date 2026-10-22 --isolate-windows --resource-interval 2 --timeout-s 7200` (per-window checkpoints under `runs/large/checkpoints/`).
 

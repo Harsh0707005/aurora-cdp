@@ -72,6 +72,17 @@ file contract (`assignments.csv`, `pairs.csv`) is written in both paths.
    `--no-deterministic-ids` disables this.
 5. Checkpoints each window; the runner resumes from the last good stage and never recomputes identical inputs.
 
+## Run names in this repo
+
+`reports/2026-10-22/{small,medium}` are the baseline (engine `08be538`, blocks over the cap skipped);
+`small-v2` (`42bd18e`) and `small-v3` (`6d2cf9b`) are the zero-discard engine. Use a new run name per engine
+revision so before/after stay side by side; the stress report's "throughput per window" section reads the runs
+named `small`/`medium`/`large` only.
+
+Known harness-side expectation that is now obsolete: `tests/test_edge_cases.py` asserts
+`engine.skipped_blocks >= 1` for the supersized-cluster case; the engine never skips a block any more
+(`skipped_blocks` is always 0, `oversized_blocks` / `records_dropped_by_blocking` report what happened instead).
+
 ## Metric validation and stress tests
 
 ```bash
