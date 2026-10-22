@@ -72,6 +72,22 @@ file contract (`assignments.csv`, `pairs.csv`) is written in both paths.
    `--no-deterministic-ids` disables this.
 5. Checkpoints each window; the runner resumes from the last good stage and never recomputes identical inputs.
 
+## Metric validation and stress tests
+
+```bash
+.venv/bin/aurora-eval validate                       # 17 golden/sanity cases, 91 hand-computed checks; exit 1 on any failure
+.venv/bin/aurora-eval stress --dataset large --seed 20261022 --date 2026-10-22 \
+    --sizes 20000,50000,100000,200000,400000 --conc-levels 1,2,4 --max-parallel 4 --flood-scale 20000 --timeout-s 1800
+#   -> reports/<date>/stress/{report.md,stress.json}: size ramp to the ceiling actually hit (wall limit / RSS budget),
+#      concurrency + backpressure, malformed/partial + duplicate floods, timeout kill path, throughput per 30-day window
+```
+
+Every evaluation report embeds the validation result (section *Metric validation*): each reported metric is
+**validated** (golden case reproduced through `aurora_eval.score`), **cross-checked** (engine jitter vs harness
+churn on the same windows), an **approximation** (threshold sweep) or **untrusted** (no independent check). A failed
+golden case puts a red UNTRUSTED banner at the top of the report. `--rebuild-report` recomputes metrics and report
+from saved resolve outputs; `--timeout-s` (with `--isolate-windows`) kills and retries a window that exceeds the limit.
+
 ## Metrics in every report
 
 Pairwise precision / recall / F1 (exact, via contingency arithmetic), B³ precision / recall / F1, false-merge rate
