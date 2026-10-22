@@ -32,6 +32,11 @@ All notable changes to the `aurora_cdp` platform. Local-only history; one entry 
 - `tools/sweep_blocking.py`: held-out sweep (tune seeds 7/11, confirm medium seed 7) with search space, trial
   count, noise band and confirmation; reported tiers (seed 42) are evaluated afterwards without re-tuning.
   (Sweep was started and stopped per the "no heavy local runs" instruction; 0 trials recorded.)
+- Stable-ID assignment, change feeds, jitter and the SCD2 ledger now run inside DuckDB (`stable_id.py`
+  `assign_stable_ids_duck`): unambiguous 1-to-1 overlaps are assigned in SQL, only the split/merge subset goes
+  through the greedy loop; `stitch_clusters` / `unified_changes_*` / `id_ledger` are `INSERT … SELECT`s, so no
+  per-record Python dict survives the run (cluster ids are strings per cluster, integers per record).
+  `tests/test_stable_id_sql.py` checks the SQL core against a brute-force greedy reference on random histories.
 - Learned DNF blocking scaffold (`stitch/dnf.py`, `tools/learn_dnf.py`, `dnf` strategy type, config
   `blocking.strategy_source/learned_strategies_file/dnf.*`) and an ordinal-regression scorer module
   (`stitch/ordinal.py`, `tools/train_ordinal.py`, tests) — **handed over**: a separate worker now owns the

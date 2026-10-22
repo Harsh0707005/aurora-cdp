@@ -32,13 +32,14 @@ from aurora_cdp.config import Config
 from aurora_cdp.storage.duck import apply_settings, latest_run_id, read_df, write_df
 
 from .blocking import REC_COLUMNS, add_derived_columns, build_candidate_pairs
-from .cluster import attach_rids, cluster_indices
+from .cluster import _short_id, cluster_indices
 from .features import SIDE_COLUMNS, features_frame
 from .matcher import score_frame
-from .stable_id import assign_stable_ids
+from .stable_id import assign_stable_ids_duck
 
 log = logging.getLogger(__name__)
-TEMP_TABLES = ("_rec", "_bk", "_blk", "_blk_full", "_budget", "_pairs", "_pairs_n", "_scores", "_gs", "_changed")
+TEMP_TABLES = ("_rec", "_bk", "_blk", "_blk_full", "_budget", "_pairs", "_pairs_n", "_scores", "_gs", "_changed",
+               "_clu", "_cid", "_cur", "_prev", "_cmap", "_rid_map", "_pkchg", "_cluchg")
 
 
 @dataclass
@@ -317,11 +318,13 @@ def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", 
     t = time.perf_counter()
     bcfg, strategy_source = resolve_strategies(cfg)
     bstats = build_candidate_pairs(con, bcfg)
-    previous = {
-        f"{r[0]}|{r[1]}": r[2]
-        for r in con.execute("SELECT datasource, pk, aurora_id FROM id_ledger WHERE is_current").fetchall()
-    }
     carried: list[tuple[str, str, float]] = []
+    previous: dict[str, str] = {}
+    if mode == "incremental":
+        previous = {
+            f"{r[0]}|{r[1]}": r[2]
+            for r in con.execute("SELECT datasource, pk, aurora_id FROM id_ledger WHERE is_current").fetchall()
+        }
     if mode == "incremental" and previous:
         changed = _changed_rids(con, prev_run_id)
         if changed is not None:
@@ -360,19 +363,24 @@ def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", 
     birthdates = [r[0] for r in con.execute("SELECT birthdate_norm FROM _rec ORDER BY idx").fetchall()]
     ccfg = dict(cfg.cluster)
     ccfg["birthdate_typo_tolerance"] = cfg.matcher.get("hard_conflicts", {}).get("birthdate_typo_tolerance", 2)
-    clusters = attach_rids(cluster_indices(n, left, right, score, {"birthdate": birthdates}, ccfg), rids)
+    clusters = cluster_indices(n, left, right, score, {"birthdate": birthdates}, ccfg)
     del birthdates, left, right, score
+    cluster_tables(con, clusters, rids)
+    del rids
     timings["clustering"] = round(time.perf_counter() - t, 3)
 
     t = time.perf_counter()
-    stable = assign_stable_ids(clusters.assignment, previous, float(cfg.stable_id.get("jitter_alert_pct", 2.0)))
+    con.execute("CREATE OR REPLACE TEMP TABLE _prev AS SELECT datasource || '|' || pk AS rid, datasource, pk, aurora_id FROM id_ledger WHERE is_current")
+    jitter = assign_stable_ids_duck(con, float(cfg.stable_id.get("jitter_alert_pct", 2.0)))
     timings["stable_id"] = round(time.perf_counter() - t, 3)
 
     t = time.perf_counter()
     now = datetime.utcnow()
-    _persist(con, run_id, now, cfg, bstats, flagged, carried, clusters, stable)
+    _persist(con, run_id, now, cfg, bstats, flagged, carried, jitter)
     timings["persist"] = round(time.perf_counter() - t, 3)
 
+    sizes = np.bincount(clusters.cluster_idx, minlength=n)
+    sizes = sizes[sizes > 0]
     edges_total = int(clusters.qa.get("edges", 0))
     metrics = {
         "records": n,
@@ -390,12 +398,10 @@ def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", 
         "match_rate": round(scoring["edges_representative"] / scoring["pairs_scored_representative"], 4) if scoring["pairs_scored_representative"] else 0.0,
         "match_category_counts": scoring["match_category_counts"],
         "clusters": clusters.qa["clusters"],
-        "multi_record_clusters": sum(1 for m in clusters.members.values() if len(m) > 1),
-        "records_in_multi_record_clusters_pct": round(
-            100.0 * sum(len(m) for m in clusters.members.values() if len(m) > 1) / max(1, n), 2
-        ),
+        "multi_record_clusters": int((sizes > 1).sum()),
+        "records_in_multi_record_clusters_pct": round(100.0 * int(sizes[sizes > 1].sum()) / max(1, n), 2),
         **{k: v for k, v in clusters.qa.items() if k not in ("clusters", "edges")},
-        "jitter": stable.jitter.as_dict() if stable.jitter else {},
+        "jitter": jitter.as_dict(),
         "timings_sec": timings,
         "threshold": cfg.matcher.get("match_threshold"),
         "peak_rss_mb": _peak_rss_mb(),
@@ -410,7 +416,32 @@ def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", 
     return StitchRunResult(run_id, mode, metrics)
 
 
-def _persist(con, run_id, now, cfg, bstats, flagged, carried, clusters, stable):
+def cluster_tables(con: duckdb.DuckDBPyConnection, clusters, rids: list[str]) -> None:
+    """``_clu(idx, cluster_root, comp_root, sup_root)`` (integers per record) + ``_cid(root, cluster_id,
+    component_id)`` (strings per cluster) + ``_cur(rid, datasource, pk, cid, component_id, supersized_id, is_supersized)``."""
+    cl, comp, sup = clusters.cluster_idx, clusters.component_idx, clusters.supersized_idx
+    con.register("_clu_src", pd.DataFrame({"idx": np.arange(len(cl), dtype=np.int64), "cluster_root": cl.astype(np.int64),
+                                           "comp_root": comp.astype(np.int64), "sup_root": sup.astype(np.int64)}))
+    con.execute("CREATE OR REPLACE TEMP TABLE _clu AS SELECT * FROM _clu_src")
+    con.unregister("_clu_src")
+    roots = np.unique(np.concatenate([cl, comp, sup[sup >= 0]])).astype(np.int64)
+    con.register("_cid_src", pd.DataFrame({"root": roots, "cluster_id": [_short_id("cluster:" + rids[int(r)]) for r in roots],
+                                           "component_id": [_short_id(rids[int(r)]) for r in roots]}))
+    con.execute("CREATE OR REPLACE TEMP TABLE _cid AS SELECT * FROM _cid_src")
+    con.unregister("_cid_src")
+    con.execute(
+        """
+        CREATE OR REPLACE TEMP TABLE _cur AS
+        SELECT r.rid, r.datasource, r.pk, c1.cluster_id AS cid, c2.component_id, c3.component_id AS supersized_id,
+               l.sup_root >= 0 AS is_supersized
+        FROM _clu l JOIN _rec r USING (idx)
+        JOIN _cid c1 ON c1.root = l.cluster_root JOIN _cid c2 ON c2.root = l.comp_root
+        LEFT JOIN _cid c3 ON c3.root = l.sup_root
+        """
+    )
+
+
+def _persist(con, run_id, now, cfg, bstats, flagged, carried, jitter):
     if cfg.blocking.get("persist_blocking_keys", True):
         con.execute(
             "INSERT INTO stitch_blocking_keys (run_id, bk, datasource, pk, strategy) "
@@ -439,55 +470,46 @@ def _persist(con, run_id, now, cfg, bstats, flagged, carried, clusters, stable):
         )
         write_df(con, "stitch_scores", cr)
 
-    rids = clusters.rids
-    ds = [r.split("|", 1)[0] for r in rids]
-    pk = [r.split("|", 1)[1] for r in rids]
-    cluster_id = [clusters.assignment[r] for r in rids]
-    rows = pd.DataFrame({
-        "run_id": run_id, "datasource": ds, "pk": pk, "cluster_id": cluster_id,
-        "aurora_id": [stable.cluster_to_id[c] for c in cluster_id],
-        "component_id": [clusters.component.get(r) for r in rids],
-        "supersized_id": [clusters.supersized.get(r) for r in rids],
-        "is_supersized": [r in clusters.supersized for r in rids],
-    })
-    write_df(con, "stitch_clusters", rows)
-    del rows, ds, pk, cluster_id
-
+    con.execute(
+        """
+        INSERT INTO stitch_clusters (run_id, datasource, pk, cluster_id, aurora_id, component_id, supersized_id, is_supersized)
+        SELECT ?, c.datasource, c.pk, c.cid, m.aurora_id, c.component_id, c.supersized_id, c.is_supersized
+        FROM _cur c JOIN _cmap m USING (cid)
+        """,
+        [run_id],
+    )
     # SCD2 ledger: close rows whose id changed or whose record disappeared, open rows for new/changed.
-    changed_rids = [c["rid"] for c in stable.pk_changes]
-    if changed_rids:
-        ch = pd.DataFrame(
-            [{"datasource": rid.split("|", 1)[0], "pk": rid.split("|", 1)[1]} for rid in changed_rids]
-        )
-        con.register("_aurora_changed", ch)
-        con.execute(
-            """
-            UPDATE id_ledger SET valid_to = ?, is_current = FALSE
-            WHERE is_current AND (datasource, pk) IN (SELECT datasource, pk FROM _aurora_changed)
-            """,
-            [now],
-        )
-        con.unregister("_aurora_changed")
-        opens = [
-            {"aurora_id": c["aurora_id"], "datasource": c["rid"].split("|", 1)[0], "pk": c["rid"].split("|", 1)[1],
-             "run_id": run_id, "valid_from": now, "valid_to": None, "is_current": True}
-            for c in stable.pk_changes if c["change_type"] != "deleted"
-        ]
-        write_df(con, "id_ledger", pd.DataFrame(opens))
-        pkc = pd.DataFrame(
-            [
-                {"run_id": run_id, "datasource": c["rid"].split("|", 1)[0], "pk": c["rid"].split("|", 1)[1],
-                 "aurora_id": c["aurora_id"], "aurora_id_prev": c["aurora_id_prev"], "change_type": c["change_type"], "changed_at": now}
-                for c in stable.pk_changes
-            ]
-        )
-        write_df(con, "unified_changes_pk", pkc)
-    if stable.cluster_changes:
-        cc = pd.DataFrame(stable.cluster_changes)
-        cc["run_id"] = run_id
-        cc["changed_at"] = now
-        write_df(con, "unified_changes_clusters", cc, ["run_id", "aurora_id", "aurora_id_prev", "change_type", "pk_count", "pk_count_prev", "changed_at"])
-    j = stable.jitter
+    con.execute(
+        """
+        UPDATE id_ledger SET valid_to = ?, is_current = FALSE
+        WHERE is_current AND datasource || '|' || pk IN (SELECT rid FROM _pkchg)
+        """,
+        [now],
+    )
+    con.execute(
+        """
+        INSERT INTO id_ledger (aurora_id, datasource, pk, run_id, valid_from, valid_to, is_current)
+        SELECT g.aurora_id, c.datasource, c.pk, ?, ?, NULL, TRUE
+        FROM _pkchg g JOIN _cur c USING (rid) WHERE g.change_type <> 'deleted'
+        """,
+        [run_id, now],
+    )
+    con.execute(
+        """
+        INSERT INTO unified_changes_pk (run_id, datasource, pk, aurora_id, aurora_id_prev, change_type, changed_at)
+        SELECT ?, COALESCE(c.datasource, p.datasource), COALESCE(c.pk, p.pk), g.aurora_id, g.aurora_id_prev, g.change_type, ?
+        FROM _pkchg g LEFT JOIN _cur c USING (rid) LEFT JOIN _prev p USING (rid)
+        """,
+        [run_id, now],
+    )
+    con.execute(
+        """
+        INSERT INTO unified_changes_clusters (run_id, aurora_id, aurora_id_prev, change_type, pk_count, pk_count_prev, changed_at)
+        SELECT ?, aurora_id, aurora_id_prev, change_type, pk_count, pk_count_prev, ? FROM _cluchg
+        """,
+        [run_id, now],
+    )
+    j = jitter
     prev_run = latest_run_id(con)
     con.execute(
         "INSERT INTO jitter_reports VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
