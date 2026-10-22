@@ -32,6 +32,11 @@ All notable changes to the `aurora_cdp` platform. Local-only history; one entry 
 - `tools/sweep_blocking.py`: held-out sweep (tune seeds 7/11, confirm medium seed 7) with search space, trial
   count, noise band and confirmation; reported tiers (seed 42) are evaluated afterwards without re-tuning.
   (Sweep was started and stopped per the "no heavy local runs" instruction; 0 trials recorded.)
+- Ordinal-regression scorer wired as `matcher.scorer: ordinal` (default stays `rules` until the harness
+  comparison says otherwise): label-free self-training on the run's own candidate pairs or a saved
+  `matcher.ordinal.model_file`; insufficient data / `retrain: never` without a model fall back to the rules scorer
+  with `scorer_fallback_reason` in the metrics. `tools/sweep_blocking.py` now sweeps scorer × threshold × name
+  budget on held-out seeds 7/11 with per-corpus gates incl. B³ F1.
 - Stable-ID assignment, change feeds, jitter and the SCD2 ledger now run inside DuckDB (`stable_id.py`
   `assign_stable_ids_duck`): unambiguous 1-to-1 overlaps are assigned in SQL, only the split/merge subset goes
   through the greedy loop; `stitch_clusters` / `unified_changes_*` / `id_ledger` are `INSERT … SELECT`s, so no

@@ -41,12 +41,25 @@ SEMANTIC_MAP = {"first_name": "given_name", "last_name": "surname", "email": "em
 
 # search space: documented defaults are the centre; every axis is auditable from the sweep report
 SPACE: dict[str, list] = {
-    "blocking.max_pairs_per_block": [100_000, 500_000, 2_000_000],
+    "matcher.scorer": ["rules", "ordinal"],
+    "matcher.match_threshold": [2.5, 3.0, 3.5, 4.0],
     "blocking.name_budget": [20_000, 50_000, 200_000],
-    "blocking.sn_window": [10, 25, 50],
-    "matcher.match_threshold": [3.0, 3.5, 4.0],
+    "blocking.max_pairs_per_block": [500_000],
+    "blocking.sn_window": [25],
 }
-GATES = {"precision": 0.98, "f1": 0.90, "blocking_recall": 0.85, "false_merge_clusters": 0.02}
+GATES = {"precision": 0.98, "f1": 0.90, "bcubed_f1": 0.93, "blocking_recall": 0.85, "false_merge_clusters": 0.02}
+
+
+def bcubed_f1(res, truth: pd.Series, ids: pd.Series) -> float:
+    a = res.assignments[["source_record_id", "unified_id"]].merge(pd.DataFrame({"source_record_id": ids.astype(str), "truth": truth.to_numpy()}), on="source_record_id")
+    both = a.groupby(["unified_id", "truth"]).size().rename("n").reset_index()
+    cs = a.groupby("unified_id").size().rename("cs")
+    ts = a.groupby("truth").size().rename("ts")
+    both = both.join(cs, on="unified_id").join(ts, on="truth")
+    n = len(a)
+    p = float((both["n"] ** 2 / both["cs"]).sum() / n)
+    r = float((both["n"] ** 2 / both["ts"]).sum() / n)
+    return round(2 * p * r / (p + r), 4) if p + r else 0.0
 
 
 def load_corpus(path: Path) -> tuple[pd.DataFrame, pd.Series, dict]:
@@ -103,7 +116,7 @@ def overlay(trial: dict) -> dict:
             s["max_pairs_per_block"] = int(trial["blocking.name_budget"])
     return {"blocking": {"max_pairs_per_block": int(trial["blocking.max_pairs_per_block"]), "sn_window": int(trial["blocking.sn_window"]),
                          "strategies": strategies},
-            "matcher": {"match_threshold": float(trial["matcher.match_threshold"])}}
+            "matcher": {"match_threshold": float(trial["matcher.match_threshold"]), "scorer": str(trial.get("matcher.scorer", "rules"))}}
 
 
 def run_trial(trial: dict, corpora: list[tuple[str, pd.DataFrame, pd.Series, dict]]) -> dict:
@@ -115,12 +128,18 @@ def run_trial(trial: dict, corpora: list[tuple[str, pd.DataFrame, pd.Series, dic
         m["wall_s"] = round(time.time() - t0, 1)
         m["engine_peak_rss_mb"] = res.metrics.get("peak_rss_mb")
         m["records_dropped_by_blocking"] = res.metrics.get("records_dropped_by_blocking")
+        m["scorer_used"] = res.metrics.get("scorer_used")
+        m["scorer_fallback_reason"] = res.metrics.get("scorer_fallback_reason")
+        m["bcubed_f1"] = bcubed_f1(res, truth, rec["source_record_id"])
         out["per_corpus"][name] = m
-    keys = ["precision", "recall", "f1", "blocking_recall", "false_merge_clusters", "pairs_scored", "wall_s"]
+    keys = ["precision", "recall", "f1", "bcubed_f1", "blocking_recall", "false_merge_clusters", "pairs_scored", "wall_s"]
     out["mean"] = {k: round(float(np.mean([c[k] for c in out["per_corpus"].values()])), 4) for k in keys}
     g = out["mean"]
-    out["gates_pass"] = bool(g["precision"] >= GATES["precision"] and g["f1"] >= GATES["f1"] and g["blocking_recall"] >= GATES["blocking_recall"]
-                             and g["false_merge_clusters"] <= GATES["false_merge_clusters"])
+    def passes(m):
+        return bool(m["precision"] >= GATES["precision"] and m["f1"] >= GATES["f1"] and m["bcubed_f1"] >= GATES["bcubed_f1"]
+                    and m["blocking_recall"] >= GATES["blocking_recall"] and m["false_merge_clusters"] <= GATES["false_merge_clusters"])
+
+    out["gates_pass"] = all(passes(c) for c in out["per_corpus"].values())  # every tuning corpus, not just the mean
     return out
 
 
@@ -194,10 +213,10 @@ def markdown(r: dict) -> str:
     L += [f"| `{k}` | {v} |" for k, v in r["search_space"].items()]
     L += ["", f"Gates (means over tuning corpora): precision ≥ {r['gates']['precision']}, F1 ≥ {r['gates']['f1']}, blocking recall ≥ {r['gates']['blocking_recall']}, false-merge clusters ≤ {r['gates']['false_merge_clusters']}.", "",
           "## Ranking (gates first, then F1, then fewer scored pairs)", "",
-          "| # | max_pairs_per_block | name budget | sn_window | threshold | P | R | F1 | blocking R | false-merge | pairs | wall s | gates |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+          "| # | scorer | threshold | name budget | max_pairs_per_block | sn_window | P | R | F1 | B³ F1 | blocking R | false-merge | pairs | wall s | gates (all tune corpora) |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for t in r["ranked"]:
         tr, g = t["trial"], t["mean"]
-        L.append(f"| {t['i']} | {tr['blocking.max_pairs_per_block']:,} | {tr['blocking.name_budget']:,} | {tr['blocking.sn_window']} | {tr['matcher.match_threshold']} | {g['precision']} | {g['recall']} | {g['f1']} | {g['blocking_recall']} | {g['false_merge_clusters']} | {int(g['pairs_scored']):,} | {g['wall_s']} | {'✅' if t['gates_pass'] else '❌'} |")
+        L.append(f"| {t['i']} | {tr.get('matcher.scorer', 'rules')} | {tr['matcher.match_threshold']} | {tr['blocking.name_budget']:,} | {tr['blocking.max_pairs_per_block']:,} | {tr['blocking.sn_window']} | {g['precision']} | {g['recall']} | {g['f1']} | {g['bcubed_f1']} | {g['blocking_recall']} | {g['false_merge_clusters']} | {int(g['pairs_scored']):,} | {g['wall_s']} | {'✅' if t['gates_pass'] else '❌'} |")
     n = r["noise"]
     L += ["", f"**Noise band:** top-{len(n['top_f1'])} F1 = {n['top_f1']}, spread {n['spread_top']} → " + ("the top configs are within noise of each other; the chosen one is the cheapest of them, not a clear winner." if n["within_noise"] else "the top config is separated from the runners-up by more than the noise band."), "",
           "## Confirmation on held-out corpora", "", "| config | tune F1 / blocking R / false-merge | confirm F1 / blocking R / false-merge | gates on confirm |", "|---|---|---|---|"]
