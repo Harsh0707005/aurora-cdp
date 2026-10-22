@@ -97,7 +97,9 @@ def metrics(res, truth: pd.Series, ids: pd.Series, true_pairs_total: int) -> dic
     f1 = 2 * p * r / (p + r) if p + r else 0.0
     sizes = df.groupby("unified_id").agg(n=("truth", "size"), k=("truth", "nunique"))
     multi = sizes[sizes["n"] > 1]
-    fm = float((multi["k"] > 1).mean()) if len(multi) else 0.0
+    over = int((sizes["k"] > 1).sum())
+    fm = over / len(sizes) if len(sizes) else 0.0  # harness definition: over-merged clusters / all predicted clusters
+    fm_multi = over / len(multi) if len(multi) else 0.0
     # blocking recall: true pairs among scored candidate pairs / all true pairs
     s = res.scores
     tr = dict(zip(t["source_record_id"], t["truth"], strict=True))
@@ -105,6 +107,7 @@ def metrics(res, truth: pd.Series, ids: pd.Series, true_pairs_total: int) -> dic
     rt = s["right_record_id"].astype(str).map(tr)
     pos = int(((lt == rt) & lt.notna()).sum())
     return {"precision": round(p, 4), "recall": round(r, 4), "f1": round(f1, 4), "false_merge_clusters": round(fm, 4),
+            "false_merge_multi": round(fm_multi, 4), "over_merged_clusters": over,
             "blocking_recall": round(min(1.0, pos / true_pairs_total), 4), "pairs_scored": int(len(s)),
             "clusters": int(df["unified_id"].nunique()), "true_pairs": true}
 
@@ -156,7 +159,11 @@ def main() -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--top", type=int, default=3)
     ap.add_argument("--max-trials", type=int, default=None)
+    ap.add_argument("--space", default=None, help="JSON object overriding the search space (recorded in the report)")
     a = ap.parse_args()
+    if a.space:
+        SPACE.clear()
+        SPACE.update(json.loads(a.space))
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     tune = [(Path(p).name, *load_corpus(Path(p))) for p in a.tune]
