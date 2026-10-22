@@ -65,6 +65,8 @@ blocking:
   refine_target: 100            # sub-blocks are refined until they are at most this big (or keys run out)
   sn_window: 25                 # sorted-neighbourhood window swept over every refined oversized block (cross-sub-block recall)
   collapse_trivial_dupes: true  # [AMP] trivial dupe groups: identical records are blocked/scored once via a representative
+  dupe_group_requires_identifier: true   # [ASSUMPTION] a group needs an identifier in common; name-only records never collapse
+  dupe_group_identifier_fields: [email_norm, phone_match, address_norm, loy_id_norm, ck]
   persist_blocking_keys: true   # write stitch_blocking_keys (QA); costs ~1 row per record per strategy
   strategy_source: fixed        # fixed | learned | union  (learned = DNF strategies from learned_strategies_file)
   learned_strategies_file: null # YAML written by `tools/learn_dnf.py` ({strategies: [...]})

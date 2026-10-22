@@ -17,7 +17,7 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
 | Hard conflicts with explicit refuse-to-merge | ✅ | pairwise (birthdate) + cluster-time per-attribute tolerances checked at every union: birthdate (Levenshtein ≤ 2), given name (JW ≥ 0.6, swept on held-out seeds), optional set-valued contact (`any_overlap`); forced merge labels outrank inferred conflicts |
 | Connected components → conflict-aware hierarchical clustering | ✅ | `cluster.linkage: fusion`: tiered, evidence-gated fusion with per-attribute hard conflicts (birthdate, given name, set-valued contact) checked at every union; `single` = conflict-aware single link |
 | Supersized / blackhole components (BFS partition) | ✅ | BFS partition of oversized components before fusion + `cluster.carve` trimming weak tiers of oversized clusters after it (members surfaced as `carved_records`) |
-| Trivial duplicate groups | ✅ | identical records collapse to a representative for blocking/scoring and expand back in `stitch_scores`; `match_type = trivial_duplicate` |
+| Trivial duplicate groups | ✅ | identical records collapse to a representative for blocking/scoring and expand back in `stitch_scores`; `match_type = trivial_duplicate`; a group must share an identifier (`blocking.dupe_group_requires_identifier`, assumption 19) |
 | Bad-value blocklist with automatic detection + manual blocklist | ✅ | thresholds from docs; `blocklist.manual {email, phone, address}` values (raw or normalised) are NULLed before blocking and listed in `stitch_blocklist_values` with reason `manual` (config, not a tenant table) |
 | Stitch labels (forced merge / split) | ✅ | CSV overlay (`labels.file`) **and** persisted `stitch_labels` table (`aurora labels add|import|list|remove`, survive runs); merge → score-5 `label_merge` edge that outranks attribute conflicts, split → scored edge dropped + transitive pair veto; group-id label form not reproduced (pairs only) |
 | One-to-one (ck) Stitch mode | 🟡 | `ck_exact` is a deterministic rule; dedicated mode ❌ |
@@ -83,6 +83,10 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
     minted first (ledger `MIN(valid_from)`), then the larger current cluster (more records keep their id), and only
     then the documented order; `documented` restores the original rule. Jitter counts are unchanged on the small
     tier (churn mean / max 1.53 % / 2.19 % either way); only which id survives differs.
+19. **Dupe groups need an identifier** (`blocking.dupe_group_requires_identifier`, default on): records identical on
+    every key field collapse into one group only if they share an e-mail, phone, address, loyalty id or ck; name-only
+    records never collapse (at 1M they formed clusters of up to 158 different people). Medium-tier false merges
+    2.22 % → 0.83 %, small 1.04 % → 0.75 %, recall unchanged (`reports/2026-10-22/*-dupefix`).
 17. **Learned scorer monotonicity** (`matcher.ordinal.monotone`) is a projected-gradient sign constraint on the
     feature weights; it is off by default so the unconstrained fit used in the ordinal evaluation runs stays
     reproducible.

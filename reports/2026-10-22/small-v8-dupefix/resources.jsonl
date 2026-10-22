@@ -1,0 +1,12 @@
+{"t": 1.013, "stage": "resolve:w0", "cpu_pct": 58.9, "rss_mb": 257.1, "procs": 1, "sys_mem_used_pct": 83.4}
+{"t": 2.023, "stage": "resolve:w1", "cpu_pct": 100.1, "rss_mb": 334.3, "procs": 1, "sys_mem_used_pct": 83.7}
+{"t": 3.035, "stage": "resolve:w2", "cpu_pct": 101.8, "rss_mb": 304.6, "procs": 1, "sys_mem_used_pct": 85.0}
+{"t": 4.05, "stage": "resolve:w3", "cpu_pct": 99.4, "rss_mb": 356.7, "procs": 1, "sys_mem_used_pct": 84.7}
+{"t": 5.063, "stage": "resolve:w3", "cpu_pct": 103.6, "rss_mb": 433.7, "procs": 1, "sys_mem_used_pct": 83.7}
+{"t": 6.074, "stage": "resolve:w4", "cpu_pct": 103.1, "rss_mb": 481.3, "procs": 1, "sys_mem_used_pct": 84.2}
+{"t": 7.108, "stage": "resolve:w4", "cpu_pct": 106.1, "rss_mb": 472.7, "procs": 1, "sys_mem_used_pct": 84.6}
+{"t": 8.118, "stage": "resolve:w5", "cpu_pct": 99.7, "rss_mb": 414.7, "procs": 1, "sys_mem_used_pct": 84.9}
+{"t": 9.133, "stage": "resolve:w5", "cpu_pct": 103.8, "rss_mb": 413.6, "procs": 1, "sys_mem_used_pct": 84.4}
+{"t": 10.172, "stage": "persist", "cpu_pct": 116.9, "rss_mb": 503.6, "procs": 1, "sys_mem_used_pct": 83.8}
+{"t": 11.184, "stage": "metrics", "cpu_pct": 87.3, "rss_mb": 537.1, "procs": 1, "sys_mem_used_pct": 83.6}
+{"t": 11.416, "stage": "report", "cpu_pct": 98.1, "rss_mb": 537.3, "procs": 1, "sys_mem_used_pct": 83.8}

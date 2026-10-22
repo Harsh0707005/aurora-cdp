@@ -1,0 +1,19 @@
+{"t": 1792673485.3085551, "ts": "2026-10-22T18:21:25", "kind": "run_start", "pid": 84078, "run_name": "small-v8-dupefix", "input_hash": "adfdec19c3ee97c8d9f0", "completed_stages": []}
+{"t": 1792673485.347542, "ts": "2026-10-22T18:21:25", "kind": "stage_start", "pid": 84078, "stage": "load", "attempt": 0}
+{"t": 1792673485.620623, "ts": "2026-10-22T18:21:25", "kind": "stage_end", "pid": 84078, "stage": "load", "attempt": 0, "elapsed_s": 0.273}
+{"t": 1792673485.698624, "ts": "2026-10-22T18:21:25", "kind": "stage_start", "pid": 84078, "stage": "resolve:w0", "attempt": 0}
+{"t": 1792673486.573478, "ts": "2026-10-22T18:21:26", "kind": "stage_end", "pid": 84078, "stage": "resolve:w0", "attempt": 0, "elapsed_s": 0.875}
+{"t": 1792673486.599081, "ts": "2026-10-22T18:21:26", "kind": "stage_start", "pid": 84078, "stage": "resolve:w1", "attempt": 0}
+{"t": 1792673487.418983, "ts": "2026-10-22T18:21:27", "kind": "stage_end", "pid": 84078, "stage": "resolve:w1", "attempt": 0, "elapsed_s": 0.82}
+{"t": 1792673487.4545221, "ts": "2026-10-22T18:21:27", "kind": "stage_start", "pid": 84078, "stage": "resolve:w2", "attempt": 0}
+{"t": 1792673488.731624, "ts": "2026-10-22T18:21:28", "kind": "stage_end", "pid": 84078, "stage": "resolve:w2", "attempt": 0, "elapsed_s": 1.277}
+{"t": 1792673488.776948, "ts": "2026-10-22T18:21:28", "kind": "stage_start", "pid": 84078, "stage": "resolve:w3", "attempt": 0}
+{"t": 1792673490.501546, "ts": "2026-10-22T18:21:30", "kind": "stage_end", "pid": 84078, "stage": "resolve:w3", "attempt": 0, "elapsed_s": 1.724}
+{"t": 1792673490.5604968, "ts": "2026-10-22T18:21:30", "kind": "stage_start", "pid": 84078, "stage": "resolve:w4", "attempt": 0}
+{"t": 1792673492.557303, "ts": "2026-10-22T18:21:32", "kind": "stage_end", "pid": 84078, "stage": "resolve:w4", "attempt": 0, "elapsed_s": 1.997}
+{"t": 1792673492.616427, "ts": "2026-10-22T18:21:32", "kind": "stage_start", "pid": 84078, "stage": "resolve:w5", "attempt": 0}
+{"t": 1792673495.204427, "ts": "2026-10-22T18:21:35", "kind": "stage_end", "pid": 84078, "stage": "resolve:w5", "attempt": 0, "elapsed_s": 2.588}
+{"t": 1792673495.766976, "ts": "2026-10-22T18:21:35", "kind": "stage_start", "pid": 84078, "stage": "metrics", "attempt": 0}
+{"t": 1792673496.7540648, "ts": "2026-10-22T18:21:36", "kind": "stage_end", "pid": 84078, "stage": "metrics", "attempt": 0, "elapsed_s": 0.987}
+{"t": 1792673496.754818, "ts": "2026-10-22T18:21:36", "kind": "stage_start", "pid": 84078, "stage": "report"}
+{"t": 1792673497.351659, "ts": "2026-10-22T18:21:37", "kind": "run_complete", "pid": 84078, "report": "/Users/harshmaster/Desktop/Projects/aurora-cdp/reports/2026-10-22/small-v8-dupefix/report.md"}

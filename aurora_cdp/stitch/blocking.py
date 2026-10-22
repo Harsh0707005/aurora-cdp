@@ -211,10 +211,18 @@ class BlockingStats:
 
 
 # ----------------------------------------------------------------------------------------- dupe groups
-def assign_dupe_groups(con: duckdb.DuckDBPyConnection, collapse: bool, rec_table: str = "_rec") -> None:
-    """Add ``dupe_group`` (idx of the group's representative) and ``is_rep`` to the record table."""
+# a dupe group must share at least one of these (a name with nothing else is not "the same record": at 1M records the
+# name-only "James" / "John Smith" groups collapsed up to 158 different people into one cluster before scoring)
+DUPE_IDENTIFIER_FIELDS = ["email_norm", "phone_match", "address_norm", "loy_id_norm", "ck"]
+
+
+def assign_dupe_groups(con: duckdb.DuckDBPyConnection, collapse: bool, rec_table: str = "_rec",
+                       identifier_fields: list[str] | None = None) -> None:
+    """Add ``dupe_group`` (idx of the group's representative) and ``is_rep`` to the record table.
+    ``identifier_fields``: a record joins a group only if one of these is present (None = any key field)."""
     key = ", ".join(DUPE_KEY_FIELDS)
-    nonnull = " OR ".join(f"{c} IS NOT NULL" for c in DUPE_KEY_FIELDS)
+    witness = [c for c in (identifier_fields or DUPE_KEY_FIELDS) if c in DUPE_KEY_FIELDS] or DUPE_KEY_FIELDS
+    nonnull = " OR ".join(f"{c} IS NOT NULL" for c in witness)
     con.execute(f"ALTER TABLE {rec_table} ADD COLUMN IF NOT EXISTS dupe_group INTEGER")
     con.execute(f"ALTER TABLE {rec_table} ADD COLUMN IF NOT EXISTS is_rep BOOLEAN")
     if not collapse:
@@ -327,13 +335,14 @@ def build_candidate_pairs(con: duckdb.DuckDBPyConnection, cfg, rec_table: str = 
     target = int(cfg.get("refine_target", limit))
     window = int(cfg.get("sn_window", 25))
     collapse = bool(cfg.get("collapse_trivial_dupes", True))
+    ident = list(cfg.get("dupe_group_identifier_fields") or DUPE_IDENTIFIER_FIELDS) if bool(cfg.get("dupe_group_requires_identifier", True)) else None
     refine_keys = cfg.get("refine_keys", {}) or {}
     strategies = list(cfg.get("strategies", []))
     kinds = {s.get("name", s["type"]): s["type"] for s in strategies}
     budgets = {s.get("name", s["type"]): int(s.get("max_pairs_per_block", budget)) for s in strategies}
 
     stats = BlockingStats()
-    assign_dupe_groups(con, collapse, rec_table)
+    assign_dupe_groups(con, collapse, rec_table, identifier_fields=ident)
     build_keys(con, strategies, rec_table)
     con.register("_budget_src", pd.DataFrame({"strategy": list(budgets), "budget": list(budgets.values())}))
     con.execute("CREATE OR REPLACE TEMP TABLE _budget AS SELECT * FROM _budget_src")

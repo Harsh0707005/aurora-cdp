@@ -25,6 +25,20 @@ final window, laptop (`cProfile`, same 2,676,111 blocked / 6,737,512 scored pair
   several features), and the element-wise equality loops (`_exact_vec`, birthdate, house number, trivial dupe) use
   array comparisons. The memo is keyed by `id(frame)` rather than stored in `DataFrame.attrs` (pandas deep-copies
   `attrs` into every derived Series, which cost 200 s on its own).
+- **Dupe-group collapse requires an identifier** (`blocking.dupe_group_requires_identifier: true`,
+  `dupe_group_identifier_fields`). The blocking-stage trivial-duplicate collapse grouped records that agreed on every
+  key field *including when every field but the name was blank*, so name-only records ("James", "John Smith") were
+  forced into one score-5 cluster before scoring ever ran; the scorer's own `trivial_dupe.requires_identifier` rule
+  could not undo it. First visible at 1M records (`reports/2026-10-22/large`: the 25 worst over-merged clusters,
+  up to 158 persons each, all `trivial_duplicate`). A group now needs a shared e-mail, phone, address, loyalty id
+  or ck. Held-out seed-42 confirmation (harness, every window):
+
+  | tier | before (`small-v5` / `medium-v3`) | after (`small-v8-dupefix` / `medium-v4-dupefix`) |
+  |---|---|---|
+  | small 20k | P 0.998 / F1 0.931 / B³ 0.937 / false merges 1.04 % | P 0.998 / F1 0.931 / B³ 0.937 / **0.75 %** |
+  | medium 200k | P 0.994 / F1 0.923 / B³ 0.932 / false merges 2.22 % ❌ | P 0.996 / F1 0.923 / B³ 0.934 / **0.83 %** ✅ (all five gates) |
+
+  Medium wall 708 s → 120 s on the laptop (perf fixes above). Recall and churn unchanged.
 - **Stable-ID tie-break (memo R3)**: `stable_id.tie_break` (`stable`, default | `documented`). Equal-overlap ties were
   broken by the previous id *string*, i.e. randomly with uuid4 ids; `stable` prefers the previous id minted first
   (`id_ledger` `MIN(valid_from)`), then the larger current cluster, then the documented order. Small tier through the
