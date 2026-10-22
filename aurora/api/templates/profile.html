@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Profile {{ p.aurora_id }}{% endblock %}
+{% block content %}
+<h2>{{ p.golden.given_name or "" }} {{ p.golden.surname or "" }} <small class="muted">{{ p.aurora_id }}</small></h2>
+{% if p.is_supersized %}<p class="warn">supersized cluster — review recommended</p>{% endif %}
+<div class="grid">
+  <section>
+    <h3>Golden record</h3>
+    <dl>
+      {% for k in ["email","phone","address","city","state","postal","birthdate","loyalty_id","first_seen","last_seen","record_count","sources"] %}
+      <dt>{{ k }}</dt><dd>{{ p.golden.get(k) if p.golden.get(k) is not none else "—" }}</dd>
+      {% endfor %}
+    </dl>
+  </section>
+  <section>
+    <h3>Source records ({{ p.record_count }}) · <a href="/ui/cluster/{{ p.aurora_id }}">cluster view</a></h3>
+    <table>
+      <tr><th>source</th><th>pk</th><th>name</th><th>email</th><th>phone</th><th>dob</th><th>updated</th></tr>
+      {% for r in p.records %}
+      <tr><td>{{ r.datasource }}</td><td>{{ r.pk }}</td><td>{{ r.given_name or "" }} {{ r.surname or "" }}</td>
+          <td>{{ r.email or "" }}</td><td>{{ r.phone or "" }}</td><td>{{ r.birthdate or "" }}</td><td>{{ r.updated_at or "" }}</td></tr>
+      {% endfor %}
+    </table>
+    <h3>Lineage</h3>
+    {% if p.lineage %}
+    <table><tr><th>job</th><th>change</th><th>previous id</th></tr>
+      {% for l in p.lineage %}<tr><td>{{ l.job_id }}</td><td>{{ l.change_type }}</td><td>{{ l.previous_id or "—" }}</td></tr>{% endfor %}
+    </table>
+    {% else %}<p class="muted">no lineage rows</p>{% endif %}
+  </section>
+</div>
+{% endblock %}

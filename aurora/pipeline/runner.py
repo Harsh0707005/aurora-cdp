@@ -287,8 +287,8 @@ def run(cfg: TenantConfig, raw_path: str | Path, job_id: str | None = None, sink
     )
     unified = std.join(a_sdf, "rid").withColumn("component_id", F.col("cluster_id")).withColumn("job_id", F.lit(job_id)).persist()
     lake.write(unified, TABLES["unified_coalesced"])
-    lake.write(unified.select("datasource", "pk", "aurora_id", "cluster_id", "truth_id", "job_id", "updated_at",
-                              *SEMANTIC_COLUMNS[:14], *STD_COLUMNS, "is_supersized", "has_blv"),
+    lake.write(unified.select("datasource", "pk", "aurora_id", "cluster_id", "truth_id", "job_id",
+                              *SEMANTIC_COLUMNS, *STD_COLUMNS, "is_supersized", "has_blv"),
                TABLES["unified_customer"])
     merged = merged_customers(unified).persist()
     lake.write(merged, TABLES["merged_customers"])
@@ -305,6 +305,9 @@ def run(cfg: TenantConfig, raw_path: str | Path, job_id: str | None = None, sink
         lake.write_pandas(pks_tbl, TABLES["unified_changes_pks"], mode="append")
     mapping = sid.events[sid.events["current_id"].notna()][["cluster_id", "current_id", "previous_id", "change_type"]]
     mapping = mapping.rename(columns={"current_id": "aurora_id"}).assign(job_id=job_id)
+    mapping["cluster_id"] = mapping["cluster_id"].astype("int64")
+    for c in ("overlap", "new_size", "previous_size", "fragments", "absorbed"):
+        clusters_tbl[c] = clusters_tbl[c].fillna(0).astype("int64")
     lake.write_pandas(mapping, TABLES["stable_id_mapping"], mode="append")
     lineage = assign[["aurora_id", "datasource", "pk", "cluster_id", "supersized_id"]].assign(job_id=job_id)
     lineage["lineage"] = "lineage:" + job_id + ":" + lineage["aurora_id"]

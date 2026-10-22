@@ -1,0 +1,31 @@
+# Aurora CDP API + Spark driver image (Python 3.11, JDK 17, PySpark + Delta jars pre-fetched).
+FROM python:3.11-slim
+
+ENV DEBIAN_FRONTEND=noninteractive PYTHONUNBUFFERED=1 \
+    PYSPARK_PYTHON=/usr/local/bin/python PYSPARK_DRIVER_PYTHON=/usr/local/bin/python \
+    JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+RUN apt-get update && apt-get install -y --no-install-recommends openjdk-17-jre-headless procps curl \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY pyproject.toml README.md ./
+COPY aurora ./aurora
+COPY aurora_cdp ./aurora_cdp
+COPY configs ./configs
+RUN pip install --no-cache-dir -e ".[spark]"
+
+# Warm the Ivy cache so Delta works offline inside the container.
+RUN python - <<'PY'
+from pyspark.sql import SparkSession
+from delta import configure_spark_with_delta_pip
+b = (SparkSession.builder.master("local[1]").appName("warm")
+     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"))
+s = configure_spark_with_delta_pip(b).getOrCreate()
+s.createDataFrame([(1,)], ["x"]).write.format("delta").mode("overwrite").save("/tmp/warm")
+s.stop()
+PY
+
+EXPOSE 8000
+CMD ["uvicorn", "aurora.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

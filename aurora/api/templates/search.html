@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<section>
+  <p class="muted">job <code>{{ job or "none" }}</code> · {{ records }} records · {{ clusters }} identities</p>
+  {% if not ready %}<p class="warn">No lake tables yet. Run <code>make run-pipeline</code> then <code>POST /admin/reload</code>.</p>{% endif %}
+  <input type="search" name="q" placeholder="email, phone, 'given surname' or aurora_id"
+         hx-get="/ui/search" hx-trigger="keyup changed delay:300ms, search" hx-target="#results" autofocus>
+  <div id="results"></div>
+</section>
+{% endblock %}

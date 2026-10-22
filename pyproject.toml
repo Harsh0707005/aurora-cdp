@@ -38,6 +38,7 @@ dev = [
 ]
 # Optional Spark/Delta backend used by the sibling `aurora` package (not required for aurora_cdp).
 spark = [
+  "setuptools>=68",  # distutils shim needed by pyspark 3.5 on Python 3.12
   "pyspark>=3.5,<4.0",
   "delta-spark>=3.2,<4.0",
   "pyarrow>=14",
@@ -57,6 +58,9 @@ include = ["aurora*"]
 "aurora_cdp.config" = ["*.yaml"]
 "aurora_cdp.storage" = ["*.sql", "migrations/*.sql"]
 "aurora_cdp.api" = ["templates/*.html"]
+"aurora.config" = ["*.yaml"]
+"aurora.api" = ["templates/*.html", "static/*"]
+"aurora.io" = ["snowflake_ddl/*.sql", "delta_sql/*.sql"]
 
 [tool.black]
 line-length = 100

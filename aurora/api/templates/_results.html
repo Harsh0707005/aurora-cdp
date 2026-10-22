@@ -1,0 +1,12 @@
+{% if hits %}
+<table>
+  <tr><th>aurora_id</th><th>name</th><th>email</th><th>phone</th><th>records</th></tr>
+  {% for h in hits %}
+  <tr>
+    <td><a href="/ui/profile/{{ h.aurora_id }}">{{ h.aurora_id }}</a></td>
+    <td>{{ h.given_name or "" }} {{ h.surname or "" }}</td>
+    <td>{{ h.email or "" }}</td><td>{{ h.phone or "" }}</td><td>{{ h.record_count }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% elif q %}<p class="muted">No matches for "{{ q }}".</p>{% endif %}

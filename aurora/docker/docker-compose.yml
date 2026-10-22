@@ -1,0 +1,26 @@
+# Aurora CDP: API (+ Spark driver) and an optional single-node Spark cluster.
+#   docker compose -f aurora/docker/docker-compose.yml up --build -d
+# The API runs Spark as local[*] by default. To use the cluster instead:
+#   AURORA_SPARK_MASTER=spark://spark:7077 docker compose -f aurora/docker/docker-compose.yml up -d
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: aurora/docker/Dockerfile.api
+    ports: ["8000:8000"]
+    volumes:
+      - ../..:/app            # bind-mount the repo so data/lake and data/cdc land on the host
+    environment:
+      AURORA_CONFIG: configs/tenants/demo.yaml
+      AURORA_SPARK_MASTER: ${AURORA_SPARK_MASTER:-local[*]}
+    depends_on: []
+  spark:
+    image: apache/spark:3.5.1-python3
+    command: ["/opt/spark/sbin/start-master.sh", "-h", "spark", "--no-daemonize"]
+    ports: ["7077:7077", "8081:8080"]
+    profiles: ["cluster"]
+  spark-worker:
+    image: apache/spark:3.5.1-python3
+    command: ["/opt/spark/sbin/start-worker.sh", "spark://spark:7077", "--no-daemonize"]
+    depends_on: [spark]
+    profiles: ["cluster"]

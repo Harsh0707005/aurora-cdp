@@ -78,14 +78,21 @@ class LakeIO:
         p = self.path(table)
         w = df.write.format(self.format).mode(mode)
         if self.format == "delta":
-            w = w.option("overwriteSchema", "true")
+            w = w.option("overwriteSchema", "true") if mode == "overwrite" else w.option("mergeSchema", "true")
         if partition_by:
             w = w.partitionBy(*partition_by)
         w.save(str(p))
         return p
 
     def write_pandas(self, pdf: pd.DataFrame, table: str, mode: str = "overwrite") -> Path:
+        from pyspark.sql import functions as F
+        from pyspark.sql import types as T
+
         sdf = self.spark.createDataFrame(pdf.astype(object).where(pd.notna(pdf), None))
+        # all-null pandas columns arrive as NullType; Delta refuses to append void columns later
+        for f in sdf.schema.fields:
+            if isinstance(f.dataType, T.NullType):
+                sdf = sdf.withColumn(f.name, F.col(f.name).cast("string"))
         return self.write(sdf, table, mode=mode)
 
     def read(self, table: str):

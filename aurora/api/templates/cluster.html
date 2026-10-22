@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Cluster {{ c.cluster_id }}{% endblock %}
+{% block content %}
+<h2>Cluster {{ c.cluster_id }} <small class="muted"><a href="/ui/profile/{{ c.aurora_id }}">{{ c.aurora_id }}</a></small></h2>
+<div class="grid">
+  <section><h3>Records</h3>
+    <table><tr><th>source</th><th>pk</th><th>name</th><th>email</th><th>phone</th></tr>
+    {% for r in c.records %}<tr><td>{{ r.datasource }}</td><td>{{ r.pk }}</td><td>{{ r.given_name or "" }} {{ r.surname or "" }}</td><td>{{ r.email or "" }}</td><td>{{ r.phone or "" }}</td></tr>{% endfor %}
+    </table></section>
+  <section><h3>Edges ({{ c.edges|length }})</h3>
+    <table><tr><th>left</th><th>right</th><th>score</th><th>category</th><th>type</th></tr>
+    {% for e in c.edges %}<tr><td>{{ e.datasource_l }}/{{ e.pk_l }}</td><td>{{ e.datasource_r }}/{{ e.pk_r }}</td><td>{{ "%.2f"|format(e.score) }}</td><td>{{ e.match_category }}</td><td>{{ e.match_type }}</td></tr>{% endfor %}
+    </table></section>
+</div>
+{% endblock %}
