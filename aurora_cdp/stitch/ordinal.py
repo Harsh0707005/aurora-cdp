@@ -40,32 +40,63 @@ from .features import FEATURE_NAMES, SIDE_COLUMNS, features_frame
 from .matcher import CATEGORY_BANDS, score_frame
 
 EXTENDED_FEATURE_NAMES = [
-    "name_email_closeness",   # best Jaro-Winkler between either side's names and the other side's e-mail local part
-    "given_popularity",       # log-frequency of the shared given name in the corpus (common names are weak evidence)
-    "postal_population",      # log-frequency of the shared postal code in the corpus
+    "name_email_closeness",  # best Jaro-Winkler between either side's names and the other side's e-mail local part
+    "given_popularity",  # log-frequency of the shared given name in the corpus (common names are weak evidence)
+    "postal_population",  # log-frequency of the shared postal code in the corpus
     "address_token_jaccard",  # Jaccard over address tokens
-    "phone_hamming",          # 1 - normalised Hamming distance over equal-length phone digits
-    "token_agreement",        # share of comparable fields (both present) that agree exactly
-    "null_pattern_agreement", # share of fields with the same presence pattern on both sides
-    "email_domain_exact",     # same e-mail domain
-    "surname_jaccard",        # Jaccard over surname tokens (compound surnames)
+    "phone_hamming",  # 1 - normalised Hamming distance over equal-length phone digits
+    "token_agreement",  # share of comparable fields (both present) that agree exactly
+    "null_pattern_agreement",  # share of fields with the same presence pattern on both sides
+    "email_domain_exact",  # same e-mail domain
+    "surname_jaccard",  # Jaccard over surname tokens (compound surnames)
 ]
 ALL_FEATURE_NAMES = FEATURE_NAMES + EXTENDED_FEATURE_NAMES
-_FIELDS = ("given_name_canon", "surname_norm", "email_norm", "phone_match", "address_norm", "postal_norm", "birthdate_norm")
+# Orientation of every feature: +1 = "more agreement" (a larger value is more evidence for a match), -1 = evidence
+# against. With ``matcher.ordinal.monotone: true`` the fit constrains each weight to that sign, so more agreement can
+# never lower the score (missing-value indicators stay unconstrained: absence is neither agreement nor conflict).
+FEATURE_ORIENTATION: dict[str, int] = {
+    **{f: 1 for f in ALL_FEATURE_NAMES},
+    "birthdate_conflict": -1,
+}
+_FIELDS = (
+    "given_name_canon",
+    "surname_norm",
+    "email_norm",
+    "phone_match",
+    "address_norm",
+    "postal_norm",
+    "birthdate_norm",
+)
 
 
 # ----------------------------------------------------------------------------------------- features
 def corpus_context(con, rec_table: str = "_rec") -> dict:
     """Corpus statistics the extended features need (given-name and postal frequencies as fractions)."""
     n = max(1, con.execute(f"SELECT COUNT(*) FROM {rec_table}").fetchone()[0])
-    given = dict(con.execute(f"SELECT given_name_canon, COUNT(*) FROM {rec_table} WHERE given_name_canon IS NOT NULL GROUP BY 1").fetchall())
-    postal = dict(con.execute(f"SELECT postal_norm, COUNT(*) FROM {rec_table} WHERE postal_norm IS NOT NULL GROUP BY 1").fetchall())
-    return {"n": n, "given_pop": {k: v / n for k, v in given.items()}, "postal_pop": {k: v / n for k, v in postal.items()}}
+    given = dict(
+        con.execute(
+            f"SELECT given_name_canon, COUNT(*) FROM {rec_table} WHERE given_name_canon IS NOT NULL GROUP BY 1"
+        ).fetchall()
+    )
+    postal = dict(
+        con.execute(
+            f"SELECT postal_norm, COUNT(*) FROM {rec_table} WHERE postal_norm IS NOT NULL GROUP BY 1"
+        ).fetchall()
+    )
+    return {
+        "n": n,
+        "given_pop": {k: v / n for k, v in given.items()},
+        "postal_pop": {k: v / n for k, v in postal.items()},
+    }
 
 
 def context_from_frame(df: pd.DataFrame) -> dict:
     n = max(1, len(df))
-    g = df["given_name_canon"].dropna().value_counts() if "given_name_canon" in df else pd.Series(dtype=float)
+    g = (
+        df["given_name_canon"].dropna().value_counts()
+        if "given_name_canon" in df
+        else pd.Series(dtype=float)
+    )
     p = df["postal_norm"].dropna().value_counts() if "postal_norm" in df else pd.Series(dtype=float)
     return {"n": n, "given_pop": (g / n).to_dict(), "postal_pop": (p / n).to_dict()}
 
@@ -78,15 +109,28 @@ def _tokens(v) -> set[str]:
     return set(v.split()) if _s(v) else set()
 
 
-def extended_features(left: pd.DataFrame, right: pd.DataFrame, context: dict | None) -> pd.DataFrame:
+def extended_features(
+    left: pd.DataFrame, right: pd.DataFrame, context: dict | None
+) -> pd.DataFrame:
     """Vectorised-enough extended features for aligned frames (NaN = not comparable)."""
     n = len(left)
     ctx = context or {"given_pop": {}, "postal_pop": {}, "n": 1}
-    L = {c: (left[c].to_numpy(dtype=object) if c in left else np.full(n, None, dtype=object)) for c in _FIELDS}
-    R = {c: (right[c].to_numpy(dtype=object) if c in right else np.full(n, None, dtype=object)) for c in _FIELDS}
+    L = {
+        c: (left[c].to_numpy(dtype=object) if c in left else np.full(n, None, dtype=object))
+        for c in _FIELDS
+    }
+    R = {
+        c: (right[c].to_numpy(dtype=object) if c in right else np.full(n, None, dtype=object))
+        for c in _FIELDS
+    }
     out = {k: np.full(n, np.nan) for k in EXTENDED_FEATURE_NAMES}
     for i in range(n):
-        ga, gb, sa, sb = _s(L["given_name_canon"][i]), _s(R["given_name_canon"][i]), _s(L["surname_norm"][i]), _s(R["surname_norm"][i])
+        ga, gb, sa, sb = (
+            _s(L["given_name_canon"][i]),
+            _s(R["given_name_canon"][i]),
+            _s(L["surname_norm"][i]),
+            _s(R["surname_norm"][i]),
+        )
         ea, eb = _s(L["email_norm"][i]), _s(R["email_norm"][i])
         # name <-> email closeness: either side's name tokens vs the other side's e-mail local part
         best = None
@@ -94,15 +138,23 @@ def extended_features(left: pd.DataFrame, right: pd.DataFrame, context: dict | N
             if email and any(name_side):
                 local = email.split("@", 1)[0]
                 compact = "".join(x for x in name_side if x)
-                cand = [JaroWinkler.normalized_similarity(x, local) for x in (name_side[0], name_side[1], compact) if x]
+                cand = [
+                    JaroWinkler.normalized_similarity(x, local)
+                    for x in (name_side[0], name_side[1], compact)
+                    if x
+                ]
                 best = max([best or 0.0] + cand)
         if best is not None:
             out["name_email_closeness"][i] = best
         if ga and gb and ga == gb:
-            out["given_popularity"][i] = -math.log(max(ctx["given_pop"].get(ga, 1.0 / ctx["n"]), 1e-9)) / 10.0
+            out["given_popularity"][i] = (
+                -math.log(max(ctx["given_pop"].get(ga, 1.0 / ctx["n"]), 1e-9)) / 10.0
+            )
         pa, pb = _s(L["postal_norm"][i]), _s(R["postal_norm"][i])
         if pa and pb and pa == pb:
-            out["postal_population"][i] = -math.log(max(ctx["postal_pop"].get(pa, 1.0 / ctx["n"]), 1e-9)) / 10.0
+            out["postal_population"][i] = (
+                -math.log(max(ctx["postal_pop"].get(pa, 1.0 / ctx["n"]), 1e-9)) / 10.0
+            )
         aa, ab = _tokens(L["address_norm"][i]), _tokens(R["address_norm"][i])
         if aa and ab:
             out["address_token_jaccard"][i] = len(aa & ab) / len(aa | ab)
@@ -127,7 +179,9 @@ def extended_features(left: pd.DataFrame, right: pd.DataFrame, context: dict | N
     return pd.DataFrame(out, columns=EXTENDED_FEATURE_NAMES)
 
 
-def all_features(left: pd.DataFrame, right: pd.DataFrame, matcher_cfg, context: dict | None) -> pd.DataFrame:
+def all_features(
+    left: pd.DataFrame, right: pd.DataFrame, matcher_cfg, context: dict | None
+) -> pd.DataFrame:
     base = features_frame(left, right, matcher_cfg)
     ext = extended_features(left, right, context)
     return pd.concat([base.reset_index(drop=True), ext.reset_index(drop=True)], axis=1)
@@ -137,8 +191,8 @@ def all_features(left: pd.DataFrame, right: pd.DataFrame, matcher_cfg, context: 
 @dataclass
 class OrdinalModel:
     feature_names: list[str]
-    w: np.ndarray              # weights over [standardised features, missing indicators]
-    thresholds: np.ndarray     # increasing, length levels-1
+    w: np.ndarray  # weights over [standardised features, missing indicators]
+    thresholds: np.ndarray  # increasing, length levels-1
     mean: np.ndarray
     std: np.ndarray
     levels: int = 3
@@ -166,12 +220,27 @@ class OrdinalModel:
         return np.round(np.where(z < t1, low, np.where(z < t2, mid, high)), 3)
 
     def to_json(self) -> dict:
-        return {"feature_names": self.feature_names, "w": self.w.tolist(), "thresholds": self.thresholds.tolist(), "mean": self.mean.tolist(),
-                "std": self.std.tolist(), "levels": self.levels, "meta": self.meta}
+        return {
+            "feature_names": self.feature_names,
+            "w": self.w.tolist(),
+            "thresholds": self.thresholds.tolist(),
+            "mean": self.mean.tolist(),
+            "std": self.std.tolist(),
+            "levels": self.levels,
+            "meta": self.meta,
+        }
 
     @classmethod
     def from_json(cls, d: dict) -> OrdinalModel:
-        return cls(list(d["feature_names"]), np.array(d["w"]), np.array(d["thresholds"]), np.array(d["mean"]), np.array(d["std"]), int(d.get("levels", 3)), dict(d.get("meta", {})))
+        return cls(
+            list(d["feature_names"]),
+            np.array(d["w"]),
+            np.array(d["thresholds"]),
+            np.array(d["mean"]),
+            np.array(d["std"]),
+            int(d.get("levels", 3)),
+            dict(d.get("meta", {})),
+        )
 
     def save(self, path: str | Path) -> None:
         Path(path).parent.mkdir(parents=True, exist_ok=True)
@@ -182,10 +251,24 @@ class OrdinalModel:
         return cls.from_json(json.loads(Path(path).read_text()))
 
 
-def fit_ordinal(F: pd.DataFrame, y: np.ndarray, levels: int = 3, l2: float = 1e-3, lr: float = 0.05, epochs: int = 300,
-                feature_names: list[str] | None = None, seed: int = 0) -> OrdinalModel:
-    """All-threshold logistic ordinal regression by full-batch Adam; thresholds kept ordered via softplus gaps."""
+def fit_ordinal(
+    F: pd.DataFrame,
+    y: np.ndarray,
+    levels: int = 3,
+    l2: float = 1e-3,
+    lr: float = 0.05,
+    epochs: int = 300,
+    feature_names: list[str] | None = None,
+    seed: int = 0,
+    monotone: bool = False,
+) -> OrdinalModel:
+    """All-threshold logistic ordinal regression by full-batch Adam; thresholds kept ordered via softplus gaps.
+
+    ``monotone=True`` projects the feature weights onto their :data:`FEATURE_ORIENTATION` sign after every step
+    (projected gradient descent), which makes ``z`` — and therefore the 0–5 score — non-decreasing in every
+    agreement feature and non-increasing in every conflict feature."""
     names = feature_names or ALL_FEATURE_NAMES
+    orient = np.array([FEATURE_ORIENTATION.get(f, 0) for f in names], dtype=np.float64)
     X = F[names].to_numpy(dtype=np.float64)
     miss = np.isnan(X)
     mean = np.nanmean(np.where(miss, np.nan, X), axis=0)
@@ -223,24 +306,51 @@ def fit_ordinal(F: pd.DataFrame, y: np.ndarray, levels: int = 3, l2: float = 1e-
         gth = -(g_marg * s).sum(axis=0)
         gt0 = float(gth.sum())
         sp = 1.0 / (1.0 + np.exp(-gaps))  # d softplus
-        ggaps = np.array([gth[k + 1:].sum() * sp[k] for k in range(K - 1)])
+        ggaps = np.array([gth[k + 1 :].sum() * sp[k] for k in range(K - 1)])
         return L, gw, gt0, ggaps
 
-    params = np.concatenate([w, [t0], gaps])
+    nf = len(names)
+
+    def project(p: np.ndarray) -> np.ndarray:
+        if not monotone:
+            return p
+        wf = p[:nf]
+        wf = np.where(
+            orient > 0, np.maximum(wf, 0.0), np.where(orient < 0, np.minimum(wf, 0.0), wf)
+        )
+        return np.concatenate([wf, p[nf:]])
+
+    params = project(np.concatenate([w, [t0], gaps]))
     hist = []
     for it in range(1, epochs + 1):
-        w, t0, gaps = params[:d], params[d], params[d + 1:]
+        w, t0, gaps = params[:d], params[d], params[d + 1 :]
         L, gw, gt0, gg = loss_grad(w, t0, gaps)
         g = np.concatenate([gw, [gt0], gg])
         m = b1 * m + (1 - b1) * g
         v = b2 * v + (1 - b2) * g * g
-        mh, vh = m / (1 - b1 ** it), v / (1 - b2 ** it)
-        params = params - lr * mh / (np.sqrt(vh) + eps)
+        mh, vh = m / (1 - b1**it), v / (1 - b2**it)
+        params = project(params - lr * mh / (np.sqrt(vh) + eps))
         hist.append(L)
-    w, t0, gaps = params[:d], params[d], params[d + 1:]
+    w, t0, gaps = params[:d], params[d], params[d + 1 :]
     th = thresholds(t0, gaps)
-    model = OrdinalModel(list(names), w, th, mean, std, levels, {"loss_first": round(hist[0], 5), "loss_last": round(hist[-1], 5), "epochs": epochs, "n_train": int(n),
-                                                                    "class_counts": np.bincount(y, minlength=levels).tolist(), "l2": l2, "lr": lr})
+    model = OrdinalModel(
+        list(names),
+        w,
+        th,
+        mean,
+        std,
+        levels,
+        {
+            "loss_first": round(hist[0], 5),
+            "loss_last": round(hist[-1], 5),
+            "epochs": epochs,
+            "n_train": int(n),
+            "class_counts": np.bincount(y, minlength=levels).tolist(),
+            "l2": l2,
+            "lr": lr,
+            "monotone": bool(monotone),
+        },
+    )
     return model
 
 
@@ -255,7 +365,9 @@ def score_frame_ordinal(F: pd.DataFrame, model: OrdinalModel, cfg) -> pd.DataFra
     match_type = np.full(len(F), "scored", dtype=object)
     if bool(ocfg.get("apply_rules_first", True)):
         rules = score_frame(F, cfg)
-        take = (rules["match_type"] != "scored").to_numpy() | (rules["match_category"] == "hard_conflict").to_numpy()
+        take = (rules["match_type"] != "scored").to_numpy() | (
+            rules["match_category"] == "hard_conflict"
+        ).to_numpy()
         score = np.where(take, rules["score"].to_numpy(), score)
         match_type = np.where(take, rules["match_type"].to_numpy(), "scored")
         conflict = (rules["match_category"] == "hard_conflict").to_numpy()
@@ -265,8 +377,15 @@ def score_frame_ordinal(F: pd.DataFrame, model: OrdinalModel, cfg) -> pd.DataFra
     for floor, name in reversed(CATEGORY_BANDS):
         cat[score >= floor] = name
     cat[conflict] = "hard_conflict"
-    return pd.DataFrame({"score": score, "match_category": cat, "match_type": match_type, "hard_conflict": conflict,
-                         "is_edge": (~conflict) & (score >= threshold)})
+    return pd.DataFrame(
+        {
+            "score": score,
+            "match_category": cat,
+            "match_type": match_type,
+            "hard_conflict": conflict,
+            "is_edge": (~conflict) & (score >= threshold),
+        }
+    )
 
 
 # ----------------------------------------------------------------------------------------- training data
@@ -280,45 +399,86 @@ class TrainingReport:
     model_meta: dict = field(default_factory=dict)
 
     def as_metrics(self) -> dict:
-        return {"ordinal_positives": self.positives, "ordinal_negatives": self.negatives, "ordinal_unlabeled": self.unlabeled,
-                "ordinal_rounds": self.rounds, "ordinal_fallback_reason": self.fallback_reason, "ordinal_model": self.model_meta}
+        return {
+            "ordinal_positives": self.positives,
+            "ordinal_negatives": self.negatives,
+            "ordinal_unlabeled": self.unlabeled,
+            "ordinal_rounds": self.rounds,
+            "ordinal_fallback_reason": self.fallback_reason,
+            "ordinal_model": self.model_meta,
+        }
+
+
+HARD_NEGATIVE_FEATURES = (
+    "email_exact",
+    "phone_exact",
+)  # strong identifiers: present on both sides and different
 
 
 def weak_labels(F: pd.DataFrame, cfg) -> np.ndarray:
-    """2 for deterministic / trivial-dupe pairs, 0 for hard conflicts, -1 (unlabeled) otherwise."""
+    """2 for deterministic / trivial-dupe pairs; 0 for hard conflicts and for *hard negatives* — candidate pairs
+    whose strong identifiers are present on both sides and disagree on at least
+    ``matcher.ordinal.hard_negative_min_disagreements`` of them (the label-free analogue of Amperity's
+    "different trusted keys ⇒ negative"; without them the only negatives are random pairs, which never share a
+    name, and the model learns that a shared name alone is a match); -1 (unlabeled) otherwise."""
+    ocfg = cfg.get("ordinal", {}) or {}
     rules = score_frame(F, cfg)
     y = np.full(len(F), -1, dtype=np.int64)
     y[(rules["match_type"].isin(["deterministic", "trivial_duplicate"])).to_numpy()] = 2
+    k = int(ocfg.get("hard_negative_min_disagreements", 2))
+    if k > 0:
+        disagree = np.zeros(len(F), dtype=np.int64)
+        for f in HARD_NEGATIVE_FEATURES:
+            disagree += (F[f].to_numpy(dtype=np.float64) == 0.0).astype(np.int64)
+        y[(disagree >= k) & (y != 2)] = 0
     y[(rules["match_category"] == "hard_conflict").to_numpy()] = 0
     return y
 
 
-def self_train(F_cand: pd.DataFrame, F_neg: pd.DataFrame, matcher_cfg, ocfg: dict) -> tuple[OrdinalModel | None, TrainingReport]:
+def self_train(
+    F_cand: pd.DataFrame, F_neg: pd.DataFrame, matcher_cfg, ocfg: dict
+) -> tuple[OrdinalModel | None, TrainingReport]:
     """Label-free training: rule positives + (random + conflict) negatives, then self-training rounds."""
     rep = TrainingReport()
     levels = int(ocfg.get("levels", 3))
     y_c = weak_labels(F_cand, matcher_cfg)
     F = pd.concat([F_cand, F_neg], ignore_index=True)
     y = np.concatenate([y_c, np.zeros(len(F_neg), dtype=np.int64)])
-    rep.positives, rep.negatives, rep.unlabeled = int((y == 2).sum()), int((y == 0).sum()), int((y == -1).sum())
+    rep.positives, rep.negatives, rep.unlabeled = (
+        int((y == 2).sum()),
+        int((y == 0).sum()),
+        int((y == -1).sum()),
+    )
     if rep.positives < int(ocfg.get("min_positive_pairs", 300)):
         rep.fallback_reason = f"insufficient positives ({rep.positives})"
         return None, rep
     if rep.negatives < int(ocfg.get("min_negative_pairs", 300)):
         rep.fallback_reason = f"insufficient negatives ({rep.negatives})"
         return None, rep
-    fit_kw = dict(levels=levels, l2=float(ocfg.get("l2", 1e-3)), lr=float(ocfg.get("lr", 0.05)), epochs=int(ocfg.get("epochs", 300)), seed=int(ocfg.get("sample_seed", 0)))
+    fit_kw = dict(
+        levels=levels,
+        l2=float(ocfg.get("l2", 1e-3)),
+        lr=float(ocfg.get("lr", 0.05)),
+        epochs=int(ocfg.get("epochs", 300)),
+        seed=int(ocfg.get("sample_seed", 0)),
+        monotone=bool(ocfg.get("monotone", False)),
+    )
     margin = float(ocfg.get("confidence_margin", 1.0))
     labelled = y >= 0
     model = None
     for r in range(int(ocfg.get("self_train_rounds", 3)) + 1):
         model = fit_ordinal(F[labelled], y[labelled], **fit_kw)
-        if not np.isfinite(model.meta["loss_last"]) or model.meta["loss_last"] > model.meta["loss_first"] * 1.5:
+        if (
+            not np.isfinite(model.meta["loss_last"])
+            or model.meta["loss_last"] > model.meta["loss_first"] * 1.5
+        ):
             rep.fallback_reason = "training diverged"
             return None, rep
         un = ~labelled
         if not un.any():
-            rep.rounds.append({"round": r, "train": int(labelled.sum()), "added_pos": 0, "added_neg": 0})
+            rep.rounds.append(
+                {"round": r, "train": int(labelled.sum()), "added_pos": 0, "added_neg": 0}
+            )
             break
         z = model.z(F[un])
         t1, t2 = model.thresholds[0], model.thresholds[-1]
@@ -328,8 +488,16 @@ def self_train(F_cand: pd.DataFrame, F_neg: pd.DataFrame, matcher_cfg, ocfg: dic
         y[idx[conf_pos]] = 2
         y[idx[conf_neg]] = 0
         labelled = y >= 0
-        rep.rounds.append({"round": r, "train": int(labelled.sum()), "added_pos": int(conf_pos.sum()), "added_neg": int(conf_neg.sum()),
-                           "loss": model.meta["loss_last"], "thresholds": [round(float(t), 3) for t in model.thresholds]})
+        rep.rounds.append(
+            {
+                "round": r,
+                "train": int(labelled.sum()),
+                "added_pos": int(conf_pos.sum()),
+                "added_neg": int(conf_neg.sum()),
+                "loss": model.meta["loss_last"],
+                "thresholds": [round(float(t), 3) for t in model.thresholds],
+            }
+        )
         if not conf_pos.any() and not conf_neg.any():
             break
     # final: remaining unlabeled candidates become the middle band (weak/moderate), then one more fit
@@ -340,7 +508,9 @@ def self_train(F_cand: pd.DataFrame, F_neg: pd.DataFrame, matcher_cfg, ocfg: dic
     return model, rep
 
 
-def sample_training_pairs(con, cfg, context: dict, rec_table: str = "_rec") -> tuple[pd.DataFrame, pd.DataFrame]:
+def sample_training_pairs(
+    con, cfg, context: dict, rec_table: str = "_rec"
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Candidate-pair sample (with features) and random non-candidate pairs (negatives) from the run's tables."""
     ocfg = cfg.matcher.get("ordinal", {}) or {}
     n_cand = int(ocfg.get("max_train_pairs", 40000))
@@ -353,15 +523,13 @@ def sample_training_pairs(con, cfg, context: dict, rec_table: str = "_rec") -> t
         f"JOIN {rec_table} a ON a.idx = p.l JOIN {rec_table} b ON b.idx = p.r"
     ).df()
     n_neg = int(max(1000, neg_ratio * len(cand) / 4))
-    neg = con.execute(
-        f"""
+    neg = con.execute(f"""
         WITH a AS (SELECT * FROM {rec_table} USING SAMPLE reservoir({n_neg} ROWS) REPEATABLE ({seed + 1})),
              b AS (SELECT * FROM {rec_table} USING SAMPLE reservoir({n_neg} ROWS) REPEATABLE ({seed + 2}))
         SELECT {lcols}, {rcols} FROM (SELECT a.*, ROW_NUMBER() OVER () AS rn FROM a) a
         JOIN (SELECT b.*, ROW_NUMBER() OVER () AS rn FROM b) b USING (rn)
         WHERE a.idx <> b.idx AND NOT EXISTS (SELECT 1 FROM _pairs p WHERE (p.l = LEAST(a.idx, b.idx) AND p.r = GREATEST(a.idx, b.idx)))
-        """
-    ).df()
+        """).df()
 
     def split(df):
         left = df[[f"l_{c}" for c in SIDE_COLUMNS]].rename(columns=lambda c: c[2:])
@@ -385,7 +553,9 @@ class RulesScorer:
     def __init__(self, matcher_cfg):
         self.cfg = matcher_cfg
 
-    def score_pairs(self, left: pd.DataFrame, right: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def score_pairs(
+        self, left: pd.DataFrame, right: pd.DataFrame
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         F = features_frame(left, right, self.cfg)
         return F, score_frame(F, self.cfg)
 
@@ -398,7 +568,9 @@ class OrdinalScorer:
         self.model = model
         self.context = context
 
-    def score_pairs(self, left: pd.DataFrame, right: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def score_pairs(
+        self, left: pd.DataFrame, right: pd.DataFrame
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         F = all_features(left, right, self.cfg, self.context)
         return F, score_frame_ordinal(F, self.model, self.cfg)
 
@@ -432,7 +604,9 @@ def prepare_scorer(con, cfg, run_id: str, workspace: Path | None = None) -> tupl
             return RulesScorer(mcfg), info
     if model is None:
         if retrain == "never":
-            info["scorer_fallback_reason"] = f"retrain=never and no usable model_file ({model_file!r})"
+            info["scorer_fallback_reason"] = (
+                f"retrain=never and no usable model_file ({model_file!r})"
+            )
             return RulesScorer(mcfg), info
         model, rep = train_from_candidates(con, cfg, context)
         info["ordinal_training"] = rep.as_metrics()
@@ -441,7 +615,11 @@ def prepare_scorer(con, cfg, run_id: str, workspace: Path | None = None) -> tupl
             return RulesScorer(mcfg), info
         info["ordinal_model_source"] = "trained"
         if bool(ocfg.get("save_model", True)):
-            target = Path(model_file) if model_file else Path(workspace or ".") / "models" / f"ordinal-{run_id}.json"
+            target = (
+                Path(model_file)
+                if model_file
+                else Path(workspace or ".") / "models" / f"ordinal-{run_id}.json"
+            )
             try:
                 model.save(target)
                 info["ordinal_model_file"] = str(target)

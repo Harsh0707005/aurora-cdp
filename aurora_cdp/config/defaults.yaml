@@ -118,6 +118,7 @@ matcher:
     self_train_rounds: 3
     confidence_margin: 1.0      # z beyond a threshold by this margin -> confident self-label
     negatives_per_positive: 2.0 # random non-candidate pairs sampled per rule positive
+    hard_negative_min_disagreements: 2   # candidate pairs whose e-mail AND phone are both present and different are negatives
     max_train_pairs: 40000      # candidate-pair sample used for training
     min_positive_pairs: 300     # fewer rule positives -> fall back to the rules scorer (counted in metrics)
     min_negative_pairs: 300
@@ -125,6 +126,8 @@ matcher:
     lr: 0.05
     epochs: 300
     sample_seed: 0              # sampling seed (documented; training is otherwise deterministic)
+    monotone: false             # constrain weights to each feature's orientation (stitch/ordinal.py FEATURE_ORIENTATION):
+                                # more agreement never lowers the score. Off = unconstrained fit (current behaviour)
   score_chunk_size: 250000      # candidate pairs scored per chunk (bounds memory; results are chunk-invariant)
   persist_features: false       # keep per-pair features_json in stitch_scores (QA; large: ~300 B per pair)
   export_expanded_dupe_pairs: true   # expand collapsed trivial-dupe groups back into every member pair in stitch_scores
