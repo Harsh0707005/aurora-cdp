@@ -84,3 +84,38 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
 - Email AmpID Assignment, households, richer Customer 360 attributes.
 - QA queries: weakest match, split clusters, many semantic values, FK validation.
 - Snowflake deployment of the DDL and a Postgres serving store (see `deploy/DEPLOY.md`).
+
+## Audit 2026-10-22 (parity layer, before the gap work)
+
+Scope: case-insensitive grep for `amperity` across code, tests, docs and `git log`; grep for
+TODO / FIXME / NotImplemented / skip / xfail across `aurora_cdp/`, `tests/` and `tools/`. "Amperity" in this repo
+is the *reference product* being reproduced, not a third-party integration: there is no Amperity API client,
+auth, pagination or export payload code anywhere, so the parity surface is the semantic-tagging → preprocessing →
+blocking → scoring → clustering → survivorship → activation chain documented in `architecture.md`.
+
+Found missing or incomplete (precise):
+
+- `stitch/matcher.py`: scoring is hand-set logistic weights + fixed-order deterministic rules; no learned
+  ordinal-regression classifier, no `score_mode` switch, no persisted learned parameters.
+  `stitch/ordinal.py` landed on this branch (all-threshold logistic loss, self-training) but is **not wired**
+  into `score_frame` / `run_stitch`, has no config keys in `defaults.yaml` and no tests.
+- `stitch/dnf.py` + `tools/learn_dnf.py`: learner, `dnf` strategy type and `strategy_source: fixed|learned|union`
+  exist; the CLI only reads parquet evaluation corpora (`profiles.parquet` + `truth.parquet` + `manifest.json`),
+  not a CSV / DuckDB table; `resolve_strategies` falls back silently (reason in metrics only, no logged warning);
+  the conjunction search is exhaustive (no beam bound) — fine for `max_terms: 2`, unbounded above that; no test
+  covers learned/union assembly through `run.py` or the missing/empty-file fallback.
+- `ingestion/normalize.py`: `canonical_address` has TODOs for unit/suite parsing, PO Box and directional
+  suffixes; the nickname table is a ~70-entry dict with a TODO to load from CSV (Amperity: thousands in
+  `stitch_nicknames`).
+- `audiences/destinations.py::send_webhook`: stub — single payload truncated to the first 1000 profiles, no
+  batching, no retries/backoff, no auth headers, no timeout configuration.
+- `stitch/run.py::apply_blocklist_sql`: automatic bad-value detection only; no manual blocklist (Amperity
+  `BlocklistValues`).
+- Stitch labels (forced merge / split) are absent; `cluster.py` has no pair-level veto, only the birthdate
+  attribute conflict.
+- `api/templates/cluster.html`: "approve / split actions TODO" placeholder (UI only).
+- Not started and out of scope for this pass: Email AmpID Assignment, households, dedicated one-to-one (ck)
+  Stitch mode, QA queries (weakest match / many semantic values / FK validation), HC_fusion clustering,
+  streaming layer, predictive models, Snowflake/Databricks connector.
+- No `pytest.mark.skip` / `xfail` / `NotImplementedError` anywhere in `aurora_cdp/` or `tests/`
+  (`tests/test_blocking.py` and `tests/test_scoring.py` import the optional Spark `aurora` package).
