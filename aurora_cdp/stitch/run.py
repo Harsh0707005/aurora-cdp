@@ -26,11 +26,12 @@ from datetime import datetime
 import duckdb
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 from aurora_cdp.config import Config
 from aurora_cdp.storage.duck import apply_settings, latest_run_id, read_df, write_df
 
-from .blocking import REC_COLUMNS, build_candidate_pairs
+from .blocking import REC_COLUMNS, add_derived_columns, build_candidate_pairs
 from .cluster import attach_rids, cluster_indices
 from .features import SIDE_COLUMNS, features_frame
 from .matcher import score_frame
@@ -85,6 +86,7 @@ def load_records_table(con: duckdb.DuckDBPyConnection) -> int:
         )
         """
     )
+    add_derived_columns(con, "_rec")
     return con.execute("SELECT COUNT(*) FROM _rec").fetchone()[0]
 
 
@@ -159,6 +161,35 @@ def _changed_rids(con: duckdb.DuckDBPyConnection, prev_run_id: str | None) -> se
         [started],
     ).fetchall()
     return {r[0] for r in rows}
+
+
+# ----------------------------------------------------------------------------------------- strategies
+def resolve_strategies(cfg: Config) -> tuple[dict, dict]:
+    """Blocking config with the strategy list chosen by ``blocking.strategy_source``:
+    ``fixed`` (defaults.yaml), ``learned`` (``blocking.learned_strategies_file``) or ``union``. Falls back to the
+    fixed list, with a reason, when the learned file is missing/empty."""
+    import yaml
+
+    bcfg = dict(cfg.blocking)
+    source = str(bcfg.get("strategy_source", "fixed"))
+    info = {"blocking_strategy_source": "fixed", "blocking_learned_fallback_reason": None, "blocking_learned_strategies": 0}
+    if source == "fixed":
+        return bcfg, info
+    path = bcfg.get("learned_strategies_file")
+    learned: list[dict] = []
+    if path and Path(path).exists():
+        doc = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+        learned = list(doc.get("strategies", doc if isinstance(doc, list) else []))
+    if not learned:
+        info["blocking_learned_fallback_reason"] = f"no learned strategies at {path!r}; using the fixed list"
+        return bcfg, info
+    info["blocking_learned_strategies"] = len(learned)
+    info["blocking_strategy_source"] = source
+    fixed = list(bcfg.get("strategies", []))
+    keep_types = set(bcfg.get("learned_keep_types", ["ck", "loy_id", "fk"]))  # key-only matches must stay blocked together
+    kept = [s for s in fixed if s["type"] in keep_types]
+    bcfg["strategies"] = (fixed + learned) if source == "union" else (kept + learned)
+    return bcfg, info
 
 
 # ----------------------------------------------------------------------------------------- scoring
@@ -284,7 +315,8 @@ def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", 
     timings["load"] = round(time.perf_counter() - t, 3)
 
     t = time.perf_counter()
-    bstats = build_candidate_pairs(con, cfg.blocking)
+    bcfg, strategy_source = resolve_strategies(cfg)
+    bstats = build_candidate_pairs(con, bcfg)
     previous = {
         f"{r[0]}|{r[1]}": r[2]
         for r in con.execute("SELECT datasource, pk, aurora_id FROM id_ledger WHERE is_current").fetchall()
@@ -347,6 +379,7 @@ def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", 
         "mode": mode,
         "prev_run_id": prev_run_id,
         **bstats.as_metrics(),
+        **strategy_source,
         "blocklisted_values": len(flagged),
         "pairs_scored": expansion["pairs_scored"],
         "pairs_scored_representative": scoring["pairs_scored_representative"],

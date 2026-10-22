@@ -38,6 +38,13 @@ REC_COLUMNS = [
     "idx", "rid", "datasource", "pk", "ck", "given_name_norm", "given_name_canon", "surname_norm", "email_norm",
     "phone_match", "address_norm", "postal_norm", "birthdate_norm", "loy_id_norm", "fk_json", "update_dt",
 ]
+# columns derived from REC_COLUMNS when the record table is built (used by learned DNF predicates)
+DERIVED_COLUMNS_SQL = {
+    "email_local": "NULLIF(split_part(email_norm, '@', 1), '')",
+    "house_no": "NULLIF(regexp_extract(address_norm, '^([0-9]+) ', 1), '')",
+    "given_sdx": "aurora_soundex(given_name_canon)",
+    "surname_sdx": "aurora_soundex(surname_norm)",
+}
 # attributes that make two records "the same record" (trivial dupes); any difference here is a real difference
 DUPE_KEY_FIELDS = [
     "given_name_norm", "surname_norm", "email_norm", "phone_match", "address_norm", "postal_norm", "birthdate_norm",
@@ -86,7 +93,25 @@ def strategy_key_sql(strategy: dict) -> tuple[str, str | None]:
         return name, "CAST(ck AS VARCHAR)"
     if kind == "fk":
         return name, None
+    if kind == "dnf":
+        from .dnf import conjunction_sql
+
+        return name, conjunction_sql(strategy["terms"])
     raise ValueError(f"unknown blocking strategy type: {kind}")
+
+
+def add_derived_columns(con: duckdb.DuckDBPyConnection, rec_table: str = "_rec") -> None:
+    """Append DERIVED_COLUMNS_SQL to ``rec_table`` (idempotent)."""
+    from .dnf import register_udfs
+
+    register_udfs(con)
+    have = {r[1] for r in con.execute(f"PRAGMA table_info('{rec_table}')").fetchall()}
+    exprs = [f"{expr} AS {col}" for col, expr in DERIVED_COLUMNS_SQL.items() if col not in have]
+    if exprs:
+        con.execute(f"CREATE OR REPLACE TEMP TABLE _rec_tmp AS SELECT *, {', '.join(exprs)} FROM {rec_table}")
+        con.execute(f"DROP TABLE {rec_table}")
+        con.execute(f"CREATE TEMP TABLE {rec_table} AS SELECT * FROM _rec_tmp")
+        con.execute("DROP TABLE _rec_tmp")
 
 
 def blocking_keys_for(record: dict, strategy: dict) -> list[tuple[str, str]]:
@@ -116,6 +141,15 @@ def blocking_keys_for(record: dict, strategy: dict) -> list[tuple[str, str]]:
     if kind == "ck":
         v = record.get("ck")
         return [(name, str(v))] if v else []
+    if kind == "dnf":
+        from .dnf import conjunction_key, derive_columns
+
+        rec = record
+        if any(t["attr"] in ("email_local", "house_no", "given_sdx", "surname_sdx") and t["attr"] not in record for t in strategy["terms"]):
+            rec = derive_columns(pd.DataFrame([record])).iloc[0].to_dict()
+            rec = {k: (None if (isinstance(v, float) and v != v) else v) for k, v in rec.items()}
+        key = conjunction_key(rec, strategy["terms"])
+        return [(name, key)] if key else []
     if kind == "fk":
         raw = record.get("fk_json")
         if not raw:
@@ -426,10 +460,11 @@ def load_records_table(con: duckdb.DuckDBPyConnection, records: dict[str, dict] 
     con.register("_rec_src", df)
     cols = ", ".join(c for c in REC_COLUMNS if c != "idx")
     con.execute(
-        f"CREATE OR REPLACE TABLE {rec_table} AS SELECT (ROW_NUMBER() OVER (ORDER BY rid) - 1)::INTEGER AS idx, {cols} "
+        f"CREATE OR REPLACE TEMP TABLE {rec_table} AS SELECT (ROW_NUMBER() OVER (ORDER BY rid) - 1)::INTEGER AS idx, {cols} "
         f"FROM (SELECT * FROM _rec_src)"
     )
     con.unregister("_rec_src")
+    add_derived_columns(con, rec_table)
 
 
 def build_blocks(records: dict[str, dict], cfg) -> BlockingResult:

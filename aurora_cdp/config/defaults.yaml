@@ -60,6 +60,20 @@ blocking:
   sn_window: 25                 # sorted-neighbourhood window swept over every refined oversized block (cross-sub-block recall)
   collapse_trivial_dupes: true  # [AMP] trivial dupe groups: identical records are blocked/scored once via a representative
   persist_blocking_keys: true   # write stitch_blocking_keys (QA); costs ~1 row per record per strategy
+  strategy_source: fixed        # fixed | learned | union  (learned = DNF strategies from learned_strategies_file)
+  learned_strategies_file: null # YAML written by `tools/learn_dnf.py` ({strategies: [...]})
+  learned_keep_types: [ck, loy_id, fk]   # fixed key strategies kept even in `learned` mode
+  dnf:                          # learned DNF blocking (Bilenko et al. 2006); see stitch/dnf.py
+    max_terms: 2                # conjunction length
+    min_positive_pairs: 200     # fewer labelled/self-labelled positives -> fall back to the fixed strategies
+    min_predicate_pc: 0.01      # unary predicates covering fewer positives are pruned
+    target_pc: 0.95             # stop when this share of positives is covered
+    min_gain_pairs: 5           # a conjunction must cover at least this many new positives to be added
+    pairs_per_record_budget: 20 # candidate-pair budget on the sample = this x sample size
+    sample_records: 20000       # record sample used to measure cost / completeness
+    sample_positive_pairs: 5000
+    sample_seed: 0              # sampling seed (documented; learning is otherwise deterministic)
+    labels: self                # self (deterministic rules) | truth (evaluation corpora with an entity label)
   refine_keys:                  # secondary keys tried, in order, when a block of this strategy type is oversized
     email:          [name3, postal, birthdate, update_month, given3]
     phone:          [name3, postal, birthdate, update_month, given3]
@@ -69,6 +83,7 @@ blocking:
     loy_id:         [name3, postal, birthdate, update_month]
     ck:             [name3, postal, birthdate, update_month]
     fk:             [name3, postal, birthdate, update_month]
+    dnf:            [postal, birthdate, email, phone, name3, update_month]
   strategies:                   # each strategy maps a record to zero or more blocking keys
     - name: email_exact
       type: email
