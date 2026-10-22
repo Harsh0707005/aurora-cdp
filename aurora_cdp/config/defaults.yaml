@@ -116,6 +116,8 @@ matcher:
     birthdate_exact: 1.5
     fk_shared: 1.0
     name_mismatch_penalty: -1.5
+    name_mismatch_floor: 0.6    # [ASSUMPTION] given/surname similarity below this triggers the penalty
+    address_house_number_mismatch_cap: 0.3   # [ASSUMPTION] address similarity cap when house numbers differ
     birthdate_conflict: -3.0
   hard_conflicts:
     birthdate: true             # [AMP] birthdate is the canonical hard conflict

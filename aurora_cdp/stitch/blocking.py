@@ -59,6 +59,8 @@ REFINE_SQL: dict[str, str] = {
     "update_month": "strftime(update_dt, '%Y-%m')",
 }
 SN_SORT_COLUMNS = ["surname_norm", "given_name_canon", "postal_norm", "email_norm", "update_dt", "idx"]
+# used only when a strategy has no `refine_keys` entry in the config (defaults.yaml lists every built-in type)
+DEFAULT_REFINE_KEYS = ["name3", "postal", "birthdate", "update_month"]
 
 
 def strategy_key_sql(strategy: dict) -> tuple[str, str | None]:
@@ -344,7 +346,7 @@ def build_candidate_pairs(con: duckdb.DuckDBPyConnection, cfg, rec_table: str = 
     ).fetchall()
     for strategy, bk, n, size_limit, blk_budget in big:
         kind = "fk" if strategy.startswith("fk-") else kinds.get(strategy, strategy)
-        keys = list(refine_keys.get(strategy) or refine_keys.get(kind) or ["name3", "postal", "birthdate", "update_month"])
+        keys = list(refine_keys.get(strategy) or refine_keys.get(kind) or DEFAULT_REFINE_KEYS)
         pairs, sub_blocks = refine_oversized_block(con, strategy, bk, keys, target, int(blk_budget), window, rec_table)
         con.register("_refined_pairs", pairs)
         con.execute("INSERT INTO _pairs SELECT l, r FROM _refined_pairs")

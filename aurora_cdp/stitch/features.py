@@ -80,9 +80,14 @@ def _exact(a, b) -> float | None:
     return 1.0 if a == b else 0.0
 
 
+def _house_cap(cfg) -> float:
+    return float(cfg.get("weights", {}).get("address_house_number_mismatch_cap", 0.3))
+
+
 def compute_features(a: dict, b: dict, cfg) -> dict[str, float | None]:
     """None means 'not comparable' (one side missing); the scorer treats None as neutral."""
     tol = int(cfg.get("hard_conflicts", {}).get("birthdate_typo_tolerance", 2))
+    house_cap = _house_cap(cfg)
     a, b = sanitize(a), sanitize(b)
     given_a = a.get("given_name_canon") or a.get("given_name_norm")
     given_b = b.get("given_name_canon") or b.get("given_name_norm")
@@ -104,7 +109,7 @@ def compute_features(a: dict, b: dict, cfg) -> dict[str, float | None]:
         sim = float(fuzz.token_set_ratio(aa, ab)) / 100.0
         na, nb = _house_number(aa), _house_number(ab)
         if na and nb and na != nb:
-            sim = min(sim, 0.3)  # same street name but different house number is a different address
+            sim = min(sim, house_cap)  # same street name but different house number is a different address
         f["address_sim"] = sim
     else:
         f["address_sim"] = None
@@ -175,6 +180,7 @@ def _exact_vec(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 def features_frame(left: pd.DataFrame, right: pd.DataFrame, cfg) -> pd.DataFrame:
     """Feature frame (FEATURE_NAMES columns, NaN = not comparable) for aligned left/right record frames."""
     tol = int(cfg.get("hard_conflicts", {}).get("birthdate_typo_tolerance", 2))
+    house_cap = _house_cap(cfg)
     n = len(left)
     f: dict[str, np.ndarray] = {}
     ga = np.where(_present(_col(left, "given_name_canon")), _col(left, "given_name_canon"), _col(left, "given_name_norm"))
@@ -197,7 +203,7 @@ def features_frame(left: pd.DataFrame, right: pd.DataFrame, cfg) -> pd.DataFrame
         ha = np.array([_house_number(x) if x is not None else None for x in aa], dtype=object)
         hb = np.array([_house_number(x) if x is not None else None for x in ab], dtype=object)
         diff = both_a & _present(ha) & _present(hb) & np.array([x != y for x, y in zip(ha, hb, strict=True)])
-        sim[diff] = np.minimum(sim[diff], 0.3)
+        sim[diff] = np.minimum(sim[diff], house_cap)
     f["address_sim"] = sim
     f["postal_exact"] = _exact_vec(_col(left, "postal_norm"), _col(right, "postal_norm"))
     ba, bb = _col(left, "birthdate_norm"), _col(right, "birthdate_norm")

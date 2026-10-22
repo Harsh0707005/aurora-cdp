@@ -96,7 +96,8 @@ def score_features(f: dict[str, float | None], cfg) -> PairScore:
         typo_floor = float(w.get("email_sim_min", 0.92))
         if es >= typo_floor:
             z += float(w.get("email_sim", 0.0)) * (es - typo_floor) / max(1e-9, 1.0 - typo_floor)
-    if gs is not None and ss is not None and (gs < 0.6 or ss < 0.6):
+    name_floor = float(w.get("name_mismatch_floor", 0.6))
+    if gs is not None and ss is not None and (gs < name_floor or ss < name_floor):
         z += float(w.get("name_mismatch_penalty", -1.5))
     score = round(5.0 * _sigmoid(z), 3)
     return PairScore(score, category_for(score), "scored", False)
@@ -134,7 +135,8 @@ def score_frame(F: pd.DataFrame, cfg) -> pd.DataFrame:
     z += np.where(typo, float(w.get("email_sim", 0.0)) * (np.nan_to_num(es) - floor_) / max(1e-9, 1.0 - floor_), 0.0)
     gs, ss = g["given_sim"], g["surname_sim"]
     both_names = ~np.isnan(gs) & ~np.isnan(ss)
-    z += np.where(both_names & ((gs < 0.6) | (ss < 0.6)), float(w.get("name_mismatch_penalty", -1.5)), 0.0)
+    name_floor = float(w.get("name_mismatch_floor", 0.6))
+    z += np.where(both_names & ((gs < name_floor) | (ss < name_floor)), float(w.get("name_mismatch_penalty", -1.5)), 0.0)
     logistic = np.round(5.0 / (1.0 + np.exp(-z)), 3)
 
     name_min = float(det.get("name_agreement_min", 0.85))
