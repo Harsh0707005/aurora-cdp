@@ -18,8 +18,8 @@ def test_categories_follow_thresholds():
     cfg = load_config("configs/tenants/demo.yaml").scoring
     X = _X([
         {"given_jw": 0.3},                                        # ~0.4 -> non_match
-        {"surname_jw": 1.0, "given_jw": 0.5},                     # 1.6+0.65=2.25 -> moderate
-        {"surname_jw": 1.0, "given_jw": 1.0, "dob_eq": 1.0},      # 4.7 -> excellent
+        {"surname_jw": 1.0, "given_jw": 0.9},                     # 1.2+0.9=2.1 -> moderate (name-only never merges)
+        {"surname_jw": 1.0, "given_jw": 1.0, "dob_eq": 1.0},      # 1.2+1.0+1.8=4.0 -> excellent
         {"email_exact": 1.0, "email_sim": 1.0},                   # deterministic -> exact
     ])
     out = ConfigScorer(cfg).score(X)
