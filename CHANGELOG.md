@@ -4,6 +4,28 @@ All notable changes to the `aurora_cdp` platform. Local-only history; one entry 
 
 ## [Unreleased]
 
+### 2026-10-22 — Zero-discard blocking + memory-bounded stitch (model: Claude Fable 5.1 via Claude Code)
+
+- **Blocking never drops a block** (`stitch/blocking.py`, now DuckDB-backed). A block over
+  `blocking.block_size_limit` is *oversized*, not skipped: it is compared in full when its pair count fits
+  `max_pairs_per_block` (500k), otherwise refined on a cascade of composite secondary keys (`refine_keys`
+  per strategy type) down to `refine_target`, plus a sorted-neighbourhood sweep (`sn_window`) across the whole
+  block. Identical records collapse into trivial-dupe groups scored once via a representative and expanded
+  back at export. New metrics: `oversized_blocks`, `oversized_handling`, `records_without_any_blocking_key`,
+  `records_in_candidate_pairs`, `records_dropped_by_blocking` (asserted `== 0` every run); `skipped_blocks`
+  is kept in the contract and is always 0. New QA table `stitch_oversized_blocks` (migration V2).
+- **Vectorised scoring** (`features_frame` / `score_frame`, rapidfuzz `cpdist`): identical results to the
+  per-pair reference (`tests/test_scoring_vectorised.py`), ~5x faster; pairs are streamed from DuckDB in
+  `matcher.score_chunk_size` chunks; `features_json` persisted only with `matcher.persist_features`.
+- **Clustering on integer union-find** (no networkx graph of the whole corpus); BFS partitioning only
+  builds adjacency for supersized components.
+- **Memory-bounded storage**: `storage.duckdb.{memory_limit, threads, temp_directory,
+  preserve_insertion_order}` applied on every connection; assignment/score exports stream through
+  `COPY` instead of pandas; run metrics report `peak_rss_mb` and the effective DuckDB settings.
+- Tests: `tests/test_blocking_subblocks.py` (full comparison within budget, refinement keeps every record,
+  duplicate-flood collapse, keyless records reported), `tests/test_scoring_vectorised.py` (reference
+  equivalence, chunk invariance); the old "cap skips oversized blocks" test now asserts the opposite.
+
 ### 2026-10-22 — Step 1 scaffold (model: Claude Fable 5.1 via Claude Code)
 
 - Repo skeleton: `pyproject.toml` (DuckDB/FastAPI/Typer stack), `Makefile`, `.gitignore`, research docs under `docs/research/`.

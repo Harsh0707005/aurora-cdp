@@ -94,13 +94,17 @@ def test_normalisation_rules():
     assert canonical_email("j.o.h.n@gmail.com", ncfg) == "j.o.h.n@gmail.com"
 
 
-def test_blocking_cap_skips_oversized_blocks():
-    cfg = {"block_size_limit": 3, "fk_block_size_limit": 1000, "strategies": [{"name": "email_exact", "type": "email"}]}
-    records = {f"s|{i}": {"datasource": "s", "pk": str(i), "email_norm": "shared@example.org"} for i in range(5)}
+def test_oversized_blocks_are_never_skipped():
+    """A block over block_size_limit used to be dropped; it must now still produce candidate pairs."""
+    cfg = {"block_size_limit": 3, "fk_block_size_limit": 1000, "max_pairs_per_block": 500_000,
+           "strategies": [{"name": "email_exact", "type": "email"}]}
+    records = {f"s|{i}": {"datasource": "s", "pk": str(i), "email_norm": "shared@example.org", "surname_norm": f"n{i}"} for i in range(5)}
     res = build_blocks(records, cfg)
-    assert res.pair_count == 0
-    assert res.skipped == [("email_exact", "shared@example.org", 5, 3)]
+    assert res.pair_count == 10  # all C(5,2) pairs compared in full (fits the pair budget)
+    assert res.skipped == []
+    assert [(o.strategy, o.bk, o.size, o.limit, o.handling) for o in res.oversized] == [("email_exact", "shared@example.org", 5, 3, "full")]
     assert len(res.keys) == 5
+    assert res.stats.records_dropped_by_blocking == 0 and res.stats.records_in_candidate_pairs == 5
 
 
 def test_stable_ids_greedy_max_overlap_and_jitter():

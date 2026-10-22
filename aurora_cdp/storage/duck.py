@@ -16,10 +16,37 @@ MIGRATIONS_DIR = Path(__file__).with_name("migrations")
 _MIGRATION_RE = re.compile(r"^V(\d+)__.*\.sql$")
 
 
-def connect(db_path: str | Path, read_only: bool = False) -> duckdb.DuckDBPyConnection:
+def connect(db_path: str | Path, read_only: bool = False, settings: dict | None = None) -> duckdb.DuckDBPyConnection:
+    """Open the workspace database and apply the memory settings from ``storage.duckdb`` (see defaults.yaml)."""
     db_path = Path(db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    return duckdb.connect(str(db_path), read_only=read_only)
+    con = duckdb.connect(str(db_path), read_only=read_only)
+    apply_settings(con, settings, db_path.parent)
+    return con
+
+
+def apply_settings(con: duckdb.DuckDBPyConnection, settings: dict | None, workspace: Path | None = None) -> dict:
+    """``SET memory_limit / threads / temp_directory / preserve_insertion_order`` so joins and sorts spill to
+    disk instead of growing the process. Returns the effective settings."""
+    s = dict(settings or {})
+    effective: dict = {}
+    if s.get("memory_limit"):
+        con.execute(f"SET memory_limit = '{s['memory_limit']}'")
+        effective["memory_limit"] = s["memory_limit"]
+    if s.get("threads"):
+        con.execute(f"SET threads = {int(s['threads'])}")
+        effective["threads"] = int(s["threads"])
+    tmp = s.get("temp_directory")
+    if not tmp and workspace is not None:
+        tmp = str(Path(workspace) / "duckdb_tmp")
+    if tmp:
+        Path(tmp).mkdir(parents=True, exist_ok=True)
+        con.execute(f"SET temp_directory = '{tmp}'")
+        effective["temp_directory"] = tmp
+    if "preserve_insertion_order" in s:
+        con.execute(f"SET preserve_insertion_order = {'true' if s['preserve_insertion_order'] else 'false'}")
+        effective["preserve_insertion_order"] = bool(s["preserve_insertion_order"])
+    return effective
 
 
 @contextmanager

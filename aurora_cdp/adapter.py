@@ -55,7 +55,7 @@ def run_on_file(
     df = read_any(input_path)
     df.columns = [str(c) for c in df.columns]
     mapping = yaml.safe_load(Path(mapping_path).read_text(encoding="utf-8")) if mapping_path else default_mapping(list(df.columns))
-    con = connect(ws / "adapter.duckdb")
+    con = connect(ws / "adapter.duckdb", settings=(cfg.get("storage") or {}).get("duckdb"))
     try:
         init_schema(con)
         if previous_assignments:
@@ -68,31 +68,38 @@ def run_on_file(
             write_df(con, "silver_unified_raw", raw)
             write_df(con, "silver_unified_preprocessed", preprocess_records(raw, cfg))
         result = run_stitch(con, cfg, mode="full")
-        assign = read_df(
-            con,
-            "SELECT pk AS source_record_id, aurora_id AS unified_id, datasource, pk, cluster_id, run_id FROM stitch_clusters WHERE run_id = ? ORDER BY datasource, pk",
-            [result.run_id],
-        )
-        assign["run_date"] = datetime.utcnow().strftime("%Y-%m-%d")
-        assign = assign[ASSIGNMENT_COLUMNS]
+        run_date = datetime.utcnow().strftime("%Y-%m-%d")
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        _write(assign, out_path)
-        written = {"assignments": str(out_path), "rows": int(len(assign)), "run_id": result.run_id, "metrics": result.metrics}
+        rows = _copy_query(
+            con,
+            f"SELECT pk AS source_record_id, aurora_id AS unified_id, '{run_date}' AS run_date, datasource, pk, cluster_id, run_id "
+            "FROM stitch_clusters WHERE run_id = ? ORDER BY datasource, pk",
+            [result.run_id], out_path,
+        )
+        written = {"assignments": str(out_path), "rows": rows, "run_id": result.run_id, "metrics": result.metrics}
         if scores_out:
-            scores = read_df(
+            # streamed straight from DuckDB: the pair table never has to fit in pandas on this side
+            written["score_rows"] = _copy_query(
                 con,
-                "SELECT left_datasource, left_pk AS left_record_id, right_datasource, right_pk AS right_record_id, score, match_category, match_type, is_edge FROM stitch_scores WHERE run_id = ? ORDER BY score DESC",
-                [result.run_id],
+                "SELECT left_datasource, left_pk AS left_record_id, right_datasource, right_pk AS right_record_id, score, "
+                "match_category, match_type, is_edge FROM stitch_scores WHERE run_id = ? ORDER BY score DESC, left_pk, right_pk",
+                [result.run_id], Path(scores_out),
             )
-            _write(scores, Path(scores_out))
             written["scores"] = str(scores_out)
-            written["score_rows"] = int(len(scores))
     finally:
         con.close()
     if not keep_workspace and not workspace:
         shutil.rmtree(ws, ignore_errors=True)
     return written
+
+
+def _copy_query(con, sql: str, params: list, path: Path) -> int:
+    """COPY a query result to csv/parquet (by extension) without materialising it in Python; returns rows."""
+    fmt = "(FORMAT PARQUET)" if path.suffix.lower() in {".parquet", ".pq"} else "(FORMAT CSV, HEADER)"
+    n = con.execute(f"SELECT COUNT(*) FROM ({sql})", params).fetchone()[0]
+    con.execute(f"COPY ({sql}) TO '{path.as_posix()}' {fmt}", params)
+    return int(n)
 
 
 def _seed_ledger(con, path: Path) -> None:

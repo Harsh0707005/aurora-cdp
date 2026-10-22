@@ -51,8 +51,23 @@ blocklist:
   address_max_given_names: 40
 
 blocking:
-  block_size_limit: 100         # [AMP] blocking size limit 100; larger blocks are skipped and logged
-  fk_block_size_limit: 1000     # [AMP] foreign-key blocking limit 1000
+  # [AMP] documents a blocking size limit of 100 (1000 for foreign keys) above which a block is *skipped*.
+  # We never discard a block: a block over the limit is "oversized" and is still compared, see docs/tuning.md.
+  block_size_limit: 100         # blocks above this are oversized -> handled by the rules below, never dropped
+  fk_block_size_limit: 1000     # same for fk-* strategies
+  max_pairs_per_block: 500000   # [ASSUMPTION] an oversized block whose n*(n-1)/2 fits this budget is compared in full
+  refine_target: 100            # sub-blocks are refined until they are at most this big (or keys run out)
+  sn_window: 25                 # sorted-neighbourhood window swept over every refined oversized block (cross-sub-block recall)
+  collapse_trivial_dupes: true  # [AMP] trivial dupe groups: identical records are blocked/scored once via a representative
+  persist_blocking_keys: true   # write stitch_blocking_keys (QA); costs ~1 row per record per strategy
+  refine_keys:                  # secondary keys tried, in order, when a block of this strategy type is oversized
+    email:          [name3, postal, birthdate, update_month, given3]
+    phone:          [name3, postal, birthdate, update_month, given3]
+    name_postal:    [email, phone, birthdate, house_number, update_month]
+    name_birthdate: [email, phone, postal, house_number, update_month]
+    loy_id:         [name3, postal, birthdate, update_month]
+    ck:             [name3, postal, birthdate, update_month]
+    fk:             [name3, postal, birthdate, update_month]
   strategies:                   # each strategy maps a record to zero or more blocking keys
     - name: email_exact
       type: email
@@ -71,6 +86,10 @@ blocking:
 
 matcher:
   match_threshold: 3.0          # [AMP] default pairwise scoring threshold is 3.0 on a 0-5 scale
+  score_chunk_size: 250000      # candidate pairs scored per chunk (bounds memory; results are chunk-invariant)
+  persist_features: false       # keep per-pair features_json in stitch_scores (QA; large: ~300 B per pair)
+  export_expanded_dupe_pairs: true   # expand collapsed trivial-dupe groups back into every member pair in stitch_scores
+  max_expanded_pairs: 50000000  # safety cap on that expansion (exceeding it is reported in metrics, never silent)
   # Ordered deterministic rules (first match wins) applied before probabilistic scoring. [AMP: Rules Editor]
   deterministic:
     ck_exact_score: 5.0
@@ -101,6 +120,13 @@ matcher:
 cluster:
   supersized_min_size: 500      # [AMP] (docs inconsistent: 64 vs 500); BFS partition above this size
   conflict_attributes: [birthdate]
+
+storage:
+  duckdb:
+    memory_limit: 3GB           # DuckDB buffer-pool cap; joins/sorts spill to temp_directory beyond it
+    threads: 4
+    temp_directory: null        # null -> <workspace>/duckdb_tmp
+    preserve_insertion_order: false
 
 stable_id:
   enabled: true
