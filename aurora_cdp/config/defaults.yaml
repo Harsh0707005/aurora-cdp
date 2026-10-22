@@ -12,6 +12,9 @@ normalize:
   phone_use_last10_for_match: true   # [AMP] identity resolution uses only the last 10 digits
   email_strip_plus_tag: true         # [AMP] derek+1234@ -> derek@
   email_strip_gmail_dots: false      # [ASSUMPTION] optional gmail-style dot folding; default off
+  nickname_file: null                # CSV (nickname,canonical) merged over the built-in table [AMP: stitch_nicknames]
+  address_parsing: false             # [AMP] unit/suite + PO Box + compound directionals parsed into a canonical form;
+                                     # off by default because it changes address_norm (re-tune after enabling)
   email_junk_local_parts:            # [AMP] junk local-part patterns are NULLed for matching (quoted: YAML 1.1 reads no/none as booleans)
     - "test"
     - "no"
