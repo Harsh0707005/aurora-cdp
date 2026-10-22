@@ -110,7 +110,8 @@ blocking:
       type: fk                  # one strategy per fk-<namespace>; exact match on the key
 
 matcher:
-  match_threshold: 3.0          # [AMP] default pairwise scoring threshold is 3.0 on a 0-5 scale
+  match_threshold: 3.25         # [AMP] documents 3.0; 3.25 chosen by the held-out sweep (tune seeds 7/11, confirm medium seed 7;
+                                #       top configs within noise, see reports/<date>/tuning/sweep.md)
   scorer: rules                 # rules (hand-set logistic + deterministic rules) | ordinal (learned, label-free; see stitch/ordinal.py)
   ordinal:                      # learned ordinal-regression scorer (Amperity SIGMOD 2020 §2.5-2.6 analogue)
     model_file: null            # json written by tools/train_ordinal.py or by a run; null -> train on this run's candidates
