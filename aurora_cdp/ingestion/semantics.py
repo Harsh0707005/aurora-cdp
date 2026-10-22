@@ -75,6 +75,27 @@ def _parse_dt(value) -> datetime | None:
         return None
 
 
+def _parse_dt_series(s: pd.Series) -> pd.Series:
+    """Vectorised :func:`_parse_dt`: datetime columns and ISO-8601 strings take the pandas fast path; anything the
+    fast path cannot parse (or a column that mixes time zones) falls back to dateutil row by row."""
+    if pd.api.types.is_datetime64_any_dtype(s.dtype):
+        # already datetimes: str(ts) -> dateutil round-trips to the same datetime, NaT -> None
+        out = pd.Series(s.dt.to_pydatetime(), index=s.index, dtype=object) if len(s) else pd.Series(dtype=object)
+        out[s.isna()] = None
+        return out
+    cleaned = s.map(_clean)
+    try:
+        fast = pd.to_datetime(cleaned, errors="coerce", format="ISO8601")
+    except (ValueError, TypeError):
+        return cleaned.map(_parse_dt)
+    out = pd.Series(fast.dt.to_pydatetime(), index=s.index, dtype=object) if len(fast) else pd.Series(dtype=object)
+    missed = fast.isna() & cleaned.notna()
+    if missed.any():
+        out[missed] = cleaned[missed].map(_parse_dt)
+    out[fast.isna() & ~missed] = None
+    return out
+
+
 def apply_semantics(df: pd.DataFrame, source: str, mapping: dict) -> pd.DataFrame:
     """Return a DataFrame with RAW_COLUMNS for one source using its semantic mapping."""
     if df.empty:
@@ -96,17 +117,21 @@ def apply_semantics(df: pd.DataFrame, source: str, mapping: dict) -> pd.DataFram
     for sem in PROFILE_SEMANTICS:
         col = inverse.get(sem)
         out[sem] = df[col].map(_clean) if col and col in df.columns else None
-    fk_rows = []
-    for _, row in df.iterrows():
-        fks = {}
-        for col, ns in fk_map.items():
-            v = _clean(row.get(col))
-            if v:
-                fks[f"fk-{ns}"] = v
-        fk_rows.append(json.dumps(fks, sort_keys=True) if fks else None)
-    out["fk_json"] = fk_rows
+    fk_cols = {col: ns for col, ns in fk_map.items() if col in df.columns}
+    if fk_cols:
+        fk_rows = []
+        for _, row in df[list(fk_cols)].iterrows():
+            fks = {}
+            for col, ns in fk_cols.items():
+                v = _clean(row.get(col))
+                if v:
+                    fks[f"fk-{ns}"] = v
+            fk_rows.append(json.dumps(fks, sort_keys=True) if fks else None)
+        out["fk_json"] = fk_rows
+    else:
+        out["fk_json"] = None
     upd_col = inverse.get("update_dt")
-    out["update_dt"] = df[upd_col].map(_parse_dt) if upd_col and upd_col in df.columns else None
+    out["update_dt"] = _parse_dt_series(df[upd_col]) if upd_col and upd_col in df.columns else None
     out["row_hash"] = df["__row_hash"] if "__row_hash" in df.columns else None
     out["batch_id"] = df["__batch_id"] if "__batch_id" in df.columns else None
     out["tagged_at"] = datetime.utcnow()

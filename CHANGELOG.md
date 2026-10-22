@@ -4,6 +4,31 @@ All notable changes to the `aurora_cdp` platform. Local-only history; one entry 
 
 ## [Unreleased]
 
+### 2026-10-22 — Performance: quadratic blocking accounting removed, scoring/ingestion vectorised (model: Claude Fable 5.1 via Claude Code)
+
+Output is byte-identical (116 tests incl. the frozen score snapshot; small tier through the harness: `assignments.csv`
+and `pairs.csv` identical to `small-v5`, every non-timing metric unchanged). Measured on the 200k medium corpus,
+final window, laptop (`cProfile`, same 2,676,111 blocked / 6,737,512 scored pairs before and after):
+
+| stage | before | after |
+|---|---|---|
+| blocking | 156.6 s | 0.6 s |
+| scoring | 69.8 s | 21.3 s |
+| whole `resolve_records` | 280.8 s | 51.8 s |
+
+- **`blocking.coverage_stats`**: the zero-discard check used `NOT EXISTS (SELECT 1 FROM _pairs p WHERE p.l = idx OR p.r = idx)`;
+  the `OR` prevents a hash anti-join, so DuckDB scanned the whole pair table once per blocking-key row (quadratic;
+  156 of the 157 blocking seconds at 200k, and the reason the "blocking" stage looked O(N²) in every report). The set
+  of paired representatives is now materialised once (`_paired`) and anti-joined.
+- **`features.features_frame`**: column sanitisation (`_nn`) ran as a Python loop over every element of every column,
+  ~100 M calls per 200k run; now vectorised (`pd.isna` + `str.strip`), memoised per call (columns are reused by
+  several features), and the element-wise equality loops (`_exact_vec`, birthdate, house number, trivial dupe) use
+  array comparisons. The memo is keyed by `id(frame)` rather than stored in `DataFrame.attrs` (pandas deep-copies
+  `attrs` into every derived Series, which cost 200 s on its own).
+- **`ingestion.semantics`**: `update_dt` parsing takes the pandas fast path (datetime columns: `to_pydatetime`;
+  strings: `to_datetime(format="ISO8601")` with a dateutil fallback for anything it cannot parse); the per-row
+  `iterrows` for foreign keys runs only when the mapping declares fk columns.
+
 ### 2026-10-22 — Amperity parity gaps: labels, manual blocklist, address parsing, webhook; learned DNF and ordinal completion (model: Claude Fable 5.1 via Claude Code)
 
 Every new capability is opt-in; the default configuration produces byte-identical scores (frozen snapshot in

@@ -409,15 +409,18 @@ def coverage_stats(con: duckdb.DuckDBPyConnection, stats: BlockingStats, rec_tab
     stats.records_in_multi_record_blocks = con.execute(
         "SELECT COUNT(DISTINCT b.idx) FROM _bk b JOIN _blk k ON k.strategy = b.strategy AND k.bk = b.bk WHERE k.n >= 2"
     ).fetchone()[0]
-    stats.records_in_candidate_pairs = con.execute(
-        "SELECT COUNT(*) FROM (SELECT l AS idx FROM _pairs UNION SELECT r FROM _pairs)"
-    ).fetchone()[0]
+    # Materialise the set of paired representatives once: a correlated ``NOT EXISTS (... p.l = idx OR p.r = idx)``
+    # cannot use a hash anti-join and scanned the whole pair table per key row (quadratic; 156 s of a 157 s
+    # blocking stage at 200k records).
+    con.execute("CREATE OR REPLACE TEMP TABLE _paired AS SELECT l AS idx FROM _pairs UNION SELECT r FROM _pairs")
+    stats.records_in_candidate_pairs = con.execute("SELECT COUNT(*) FROM _paired").fetchone()[0]
     stats.records_dropped_by_blocking = con.execute(
         """
         SELECT COUNT(DISTINCT b.idx) FROM _bk b JOIN _blk k ON k.strategy = b.strategy AND k.bk = b.bk
-        WHERE k.n >= 2 AND NOT EXISTS (SELECT 1 FROM _pairs p WHERE p.l = b.idx OR p.r = b.idx)
+        WHERE k.n >= 2 AND NOT EXISTS (SELECT 1 FROM _paired p WHERE p.idx = b.idx)
         """
     ).fetchone()[0]
+    con.execute("DROP TABLE _paired")
     return stats
 
 

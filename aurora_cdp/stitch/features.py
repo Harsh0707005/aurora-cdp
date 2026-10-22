@@ -146,22 +146,42 @@ def compute_features(a: dict, b: dict, cfg) -> dict[str, float | None]:
 
 
 # ----------------------------------------------------------------------------------------- vectorised
+def _nn_array(v: np.ndarray) -> np.ndarray:
+    """Vectorised :func:`_nn` over an object array: None / NaN / blank strings -> None, everything else kept."""
+    out = v.copy()
+    out[pd.isna(out)] = None
+    try:
+        stripped = pd.Series(out, dtype=object).str.strip()  # non-strings -> NaN, so only strings can match ""
+    except AttributeError:  # no string values at all (e.g. an all-integer key column): nothing can be blank
+        return out
+    out[(stripped == "").to_numpy()] = None
+    return out
+
+
+# per-call memo of sanitised columns keyed by id(frame); set up / torn down by features_frame (kept out of
+# DataFrame.attrs on purpose: pandas deep-copies attrs on every derived Series, which cost 200 s per 200k run)
+_COL_CACHE: dict[int, dict[str, np.ndarray]] = {}
+
+
 def _col(df: pd.DataFrame, name: str) -> np.ndarray:
-    """Object array with None for missing/blank values."""
+    """Object array with None for missing/blank values (memoised per frame: columns are reused across features)."""
+    cache = _COL_CACHE.get(id(df))
+    if cache is not None and name in cache:
+        return cache[name]
     if name not in df.columns:
-        return np.full(len(df), None, dtype=object)
-    s = df[name]
-    if pd.api.types.is_datetime64_any_dtype(s.dtype):
-        s = s.astype(object)
-    v = s.to_numpy(dtype=object, copy=True)
-    out = np.empty(len(v), dtype=object)
-    for i, x in enumerate(v):
-        out[i] = _nn(x)
+        out = np.full(len(df), None, dtype=object)
+    else:
+        s = df[name]
+        if pd.api.types.is_datetime64_any_dtype(s.dtype):
+            s = s.astype(object)
+        out = _nn_array(s.to_numpy(dtype=object, copy=True))
+    if cache is not None:
+        cache[name] = out
     return out
 
 
 def _present(a: np.ndarray) -> np.ndarray:
-    return np.array([x is not None for x in a], dtype=bool)
+    return ~pd.isna(a)  # after _nn_array the only missing marker is None
 
 
 def _strs(a: np.ndarray) -> list[str]:
@@ -181,7 +201,7 @@ def _exact_vec(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     both = _present(a) & _present(b)
     out = np.full(len(a), np.nan, dtype=np.float64)
     if both.any():
-        out[both] = np.array([1.0 if x == y else 0.0 for x, y in zip(a[both], b[both], strict=True)])
+        out[both] = (a[both] == b[both]).astype(np.float64)
     return out
 
 
@@ -190,6 +210,15 @@ def features_frame(left: pd.DataFrame, right: pd.DataFrame, cfg) -> pd.DataFrame
     tol = int(cfg.get("hard_conflicts", {}).get("birthdate_typo_tolerance", 2))
     house_cap = _house_cap(cfg)
     n = len(left)
+    _COL_CACHE[id(left)], _COL_CACHE[id(right)] = {}, {}  # memo lives for this call only
+    try:
+        return _features_frame(left, right, cfg, tol, house_cap, n)
+    finally:
+        _COL_CACHE.pop(id(left), None)
+        _COL_CACHE.pop(id(right), None)
+
+
+def _features_frame(left: pd.DataFrame, right: pd.DataFrame, cfg, tol: int, house_cap: float, n: int) -> pd.DataFrame:
     f: dict[str, np.ndarray] = {}
     ga = np.where(_present(_col(left, "given_name_canon")), _col(left, "given_name_canon"), _col(left, "given_name_norm"))
     gb = np.where(_present(_col(right, "given_name_canon")), _col(right, "given_name_canon"), _col(right, "given_name_norm"))
@@ -210,7 +239,7 @@ def features_frame(left: pd.DataFrame, right: pd.DataFrame, cfg) -> pd.DataFrame
     if both_a.any():
         ha = np.array([_house_number(x) if x is not None else None for x in aa], dtype=object)
         hb = np.array([_house_number(x) if x is not None else None for x in ab], dtype=object)
-        diff = both_a & _present(ha) & _present(hb) & np.array([x != y for x, y in zip(ha, hb, strict=True)])
+        diff = both_a & _present(ha) & _present(hb) & (ha != hb)
         sim[diff] = np.minimum(sim[diff], house_cap)
     f["address_sim"] = sim
     f["postal_exact"] = _exact_vec(_col(left, "postal_norm"), _col(right, "postal_norm"))
@@ -220,7 +249,7 @@ def features_frame(left: pd.DataFrame, right: pd.DataFrame, cfg) -> pd.DataFrame
     bcf = np.zeros(n)
     if both_b.any():
         eq = np.zeros(n, dtype=bool)
-        eq[both_b] = np.array([x == y for x, y in zip(ba[both_b], bb[both_b], strict=True)])
+        eq[both_b] = ba[both_b] == bb[both_b]
         dist = np.full(n, np.inf)
         dist[both_b] = process.cpdist(_strs(ba[both_b]), _strs(bb[both_b]), scorer=Levenshtein.distance, dtype=np.int64, workers=1)
         bex[both_b & eq] = 1.0
@@ -244,7 +273,7 @@ def features_frame(left: pd.DataFrame, right: pd.DataFrame, cfg) -> pd.DataFrame
     anyv = np.zeros(n, dtype=bool)
     for k in fields:
         xa, xb = _col(left, k), _col(right, k)
-        allq &= np.array([x == y for x, y in zip(xa, xb, strict=True)])
+        allq &= xa == xb
         if k in (idents if need_ident else fields):
             anyv |= _present(xa)
     f["trivial_dupe"] = (allq & anyv).astype(np.float64)
