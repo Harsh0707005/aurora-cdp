@@ -42,7 +42,7 @@ from aurora_cdp.storage.duck import init_schema, write_df
 
 log = logging.getLogger(__name__)
 
-STEP_ORDER = ["databases", "feeds", "stitch", "profile", "segments", "destinations"]
+STEP_ORDER = ["databases", "feeds", "stitch", "profile", "households", "segments", "destinations"]
 
 
 @dataclass
@@ -163,6 +163,11 @@ def run_pipeline(con: duckdb.DuckDBPyConnection, cfg: Config, spec: dict) -> Pip
 
     if spec.get("profile"):
         step("profile", lambda: build_profiles(con, cfg).__dict__)
+
+    if spec.get("households", (cfg.get("household") or {}).get("build_with_profile", True) and bool(spec.get("profile"))):
+        from aurora_cdp.profile.households import build_households
+
+        step("households", lambda: build_households(con, cfg).metrics)
 
     for seg in spec.get("segments", []):
 

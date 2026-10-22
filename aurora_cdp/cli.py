@@ -294,10 +294,18 @@ def profile(config: str = _config_opt, workspace: str = _workspace_opt) -> None:
     cfg = _cfg(config, workspace)
     con = connect(cfg.db_path)
     try:
+        init_schema(con)
         r = build_profiles(con, cfg)
+        hh = None
+        if (cfg.get("household") or {}).get("build_with_profile", True):
+            from aurora_cdp.profile.households import build_households
+
+            hh = build_households(con, cfg, r.run_id)
     finally:
         con.close()
     console.print(f"{r.summary()} -> {cfg.db_path}")
+    if hh is not None:
+        console.print(f"households: {hh.metrics['households']} ({hh.metrics['multi_member_households']} multi-member), evidence active {hh.metrics['evidence_active']}")
 
 
 @app.command()
