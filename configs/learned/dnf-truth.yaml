@@ -1,0 +1,3 @@
+blocking:
+  strategy_source: learned
+  learned_strategies_file: configs/learned/dnf-truth.strategies.yaml

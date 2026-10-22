@@ -31,6 +31,15 @@ All notable changes to the `aurora_cdp` platform. Local-only history; one entry 
   into `defaults.yaml`; engine code carries no paths, seeds, tenant names or magic thresholds.
 - `tools/sweep_blocking.py`: held-out sweep (tune seeds 7/11, confirm medium seed 7) with search space, trial
   count, noise band and confirmation; reported tiers (seed 42) are evaluated afterwards without re-tuning.
+  (Sweep was started and stopped per the "no heavy local runs" instruction; 0 trials recorded.)
+- Learned DNF blocking scaffold (`stitch/dnf.py`, `tools/learn_dnf.py`, `dnf` strategy type, config
+  `blocking.strategy_source/learned_strategies_file/dnf.*`) and an ordinal-regression scorer module
+  (`stitch/ordinal.py`, `tools/train_ordinal.py`, tests) — **handed over**: a separate worker now owns the
+  Amperity-gap strand (DNF, ordinal, HC_fusion, labels, households). State at handover: DNF learner runs end to
+  end on held-out seed 7 but its learned disjunction reaches PC 0.68 (self-labels) / 0.79 (truth labels) vs 0.90
+  for the fixed strategies (`reports/2026-10-22/dnf-{self,truth}/`); `learn_dnf.py` writes a *relative*
+  `learned_strategies_file` path, so the harness smoke (`reports/2026-10-22/small-dnf`) fell back to the fixed
+  list (identical to small-v2). The ordinal module is unit-tested but not wired into `run_stitch`.
 
 ### 2026-10-22 — Step 1 scaffold (model: Claude Fable 5.1 via Claude Code)
 

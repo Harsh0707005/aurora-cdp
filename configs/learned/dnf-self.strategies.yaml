@@ -1,0 +1,59 @@
+generated_at: '2026-10-22T09:22:28.510847+00:00'
+engine_commit: 55157c39107d424fc9125b2932fdae00e71fcd34
+labels: self
+train_corpus:
+  name: small-s7
+  seed: 7
+  tier: small
+  fingerprint: 1683336564509031924
+strategies:
+- name: dnf_given_name_canon.exact_phone_match.exact
+  type: dnf
+  terms:
+  - attr: given_name_canon
+    transform: exact
+  - &id001
+    attr: phone_match
+    transform: exact
+  learned:
+    pc: 0.3108
+    cost_sample: 38726
+- name: dnf_surname_norm.suffix3_email_norm.exact
+  type: dnf
+  terms:
+  - attr: surname_norm
+    transform: suffix3
+  - &id002
+    attr: email_norm
+    transform: exact
+  learned:
+    pc: 0.785
+    cost_sample: 102749
+- name: dnf_phone_match.exact_house_no.exact
+  type: dnf
+  terms:
+  - *id001
+  - attr: house_no
+    transform: exact
+  learned:
+    pc: 0.0968
+    cost_sample: 14510
+- name: dnf_email_local.exact_birthdate_norm.exact
+  type: dnf
+  terms:
+  - attr: email_local
+    transform: exact
+  - attr: birthdate_norm
+    transform: exact
+  learned:
+    pc: 0.082
+    cost_sample: 11216
+- name: dnf_given_name_canon.prefix3_email_norm.exact
+  type: dnf
+  terms:
+  - attr: given_name_canon
+    transform: prefix3
+  - *id002
+  learned:
+    pc: 0.777
+    cost_sample: 110802

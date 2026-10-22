@@ -1,0 +1,67 @@
+generated_at: '2026-10-22T09:22:47.646675+00:00'
+engine_commit: 55157c39107d424fc9125b2932fdae00e71fcd34
+labels: truth
+train_corpus:
+  name: small-s7
+  seed: 7
+  tier: small
+  fingerprint: 1683336564509031924
+strategies:
+- name: dnf_email_norm.exact_house_no.exact
+  type: dnf
+  terms:
+  - &id001
+    attr: email_norm
+    transform: exact
+  - attr: house_no
+    transform: exact
+  learned:
+    pc: 0.1018
+    cost_sample: 22090
+- name: dnf_given_name_canon.exact_email_norm.exact
+  type: dnf
+  terms:
+  - &id002
+    attr: given_name_canon
+    transform: exact
+  - *id001
+  learned:
+    pc: 0.4542
+    cost_sample: 99814
+- name: dnf_surname_norm.exact_phone_match.suffix4
+  type: dnf
+  terms:
+  - &id003
+    attr: surname_norm
+    transform: exact
+  - attr: phone_match
+    transform: suffix4
+  learned:
+    pc: 0.182
+    cost_sample: 44549
+- name: dnf_birthdate_norm.exact
+  type: dnf
+  terms:
+  - attr: birthdate_norm
+    transform: exact
+  learned:
+    pc: 0.0724
+    cost_sample: 17071
+- name: dnf_given_name_canon.exact_postal_norm.exact
+  type: dnf
+  terms:
+  - *id002
+  - attr: postal_norm
+    transform: exact
+  learned:
+    pc: 0.1202
+    cost_sample: 27164
+- name: dnf_given_name_canon.soundex_surname_norm.exact
+  type: dnf
+  terms:
+  - attr: given_name_canon
+    transform: soundex
+  - *id003
+  learned:
+    pc: 0.6002
+    cost_sample: 181657

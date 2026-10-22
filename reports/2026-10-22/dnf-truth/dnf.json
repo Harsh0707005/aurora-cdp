@@ -1,0 +1,571 @@
+{
+  "generated_at": "2026-10-22T09:22:47.646675+00:00",
+  "engine_commit": "55157c39107d424fc9125b2932fdae00e71fcd34",
+  "labels": "truth",
+  "config": {
+    "max_terms": 2,
+    "min_positive_pairs": 200,
+    "min_predicate_pc": 0.01,
+    "target_pc": 0.95,
+    "min_gain_pairs": 5,
+    "pairs_per_record_budget": 20,
+    "sample_records": 20000,
+    "sample_positive_pairs": 5000,
+    "sample_seed": 0,
+    "labels": "self"
+  },
+  "train": {
+    "corpus": {
+      "name": "small-s7",
+      "seed": 7,
+      "tier": "small",
+      "fingerprint": 1683336564509031924
+    },
+    "records_sampled": 20000,
+    "positives": 5000,
+    "label_purity_vs_truth": 1.0
+  },
+  "result": {
+    "dnf_strategies": 6,
+    "dnf_pc_train": 0.7952,
+    "dnf_cost_train": 392345,
+    "dnf_budget": 400000,
+    "dnf_positives": 5000,
+    "dnf_records": 20000,
+    "dnf_fallback_reason": null
+  },
+  "chosen": [
+    {
+      "terms": [
+        {
+          "attr": "email_norm",
+          "transform": "exact"
+        },
+        {
+          "attr": "house_no",
+          "transform": "exact"
+        }
+      ],
+      "pc": 0.1018,
+      "cost": 22090,
+      "new_pairs": 509,
+      "cum_pc": 0.1018
+    },
+    {
+      "terms": [
+        {
+          "attr": "given_name_canon",
+          "transform": "exact"
+        },
+        {
+          "attr": "email_norm",
+          "transform": "exact"
+        }
+      ],
+      "pc": 0.4542,
+      "cost": 99814,
+      "new_pairs": 1909,
+      "cum_pc": 0.4836
+    },
+    {
+      "terms": [
+        {
+          "attr": "surname_norm",
+          "transform": "exact"
+        },
+        {
+          "attr": "phone_match",
+          "transform": "suffix4"
+        }
+      ],
+      "pc": 0.182,
+      "cost": 44549,
+      "new_pairs": 480,
+      "cum_pc": 0.5796
+    },
+    {
+      "terms": [
+        {
+          "attr": "birthdate_norm",
+          "transform": "exact"
+        }
+      ],
+      "pc": 0.0724,
+      "cost": 17071,
+      "new_pairs": 107,
+      "cum_pc": 0.601
+    },
+    {
+      "terms": [
+        {
+          "attr": "given_name_canon",
+          "transform": "exact"
+        },
+        {
+          "attr": "postal_norm",
+          "transform": "exact"
+        }
+      ],
+      "pc": 0.1202,
+      "cost": 27164,
+      "new_pairs": 143,
+      "cum_pc": 0.6296
+    },
+    {
+      "terms": [
+        {
+          "attr": "given_name_canon",
+          "transform": "soundex"
+        },
+        {
+          "attr": "surname_norm",
+          "transform": "exact"
+        }
+      ],
+      "pc": 0.6002,
+      "cost": 181657,
+      "new_pairs": 828,
+      "cum_pc": 0.7952
+    }
+  ],
+  "predicates": [
+    {
+      "attr": "given_name_canon",
+      "transform": "exact",
+      "cost": 3844871,
+      "pc": 0.7446,
+      "blocks": 1223,
+      "pruned": "cost"
+    },
+    {
+      "attr": "given_name_canon",
+      "transform": "prefix3",
+      "cost": 4619938,
+      "pc": 0.8302,
+      "blocks": 611,
+      "pruned": "cost"
+    },
+    {
+      "attr": "given_name_canon",
+      "transform": "soundex",
+      "cost": 4942132,
+      "pc": 0.8344,
+      "blocks": 417,
+      "pruned": "cost"
+    },
+    {
+      "attr": "surname_norm",
+      "transform": "exact",
+      "cost": 2583075,
+      "pc": 0.7196,
+      "blocks": 1300,
+      "pruned": "cost"
+    },
+    {
+      "attr": "surname_norm",
+      "transform": "prefix3",
+      "cost": 3258957,
+      "pc": 0.7788,
+      "blocks": 627,
+      "pruned": "cost"
+    },
+    {
+      "attr": "surname_norm",
+      "transform": "suffix3",
+      "cost": 5354619,
+      "pc": 0.782,
+      "blocks": 580,
+      "pruned": "cost"
+    },
+    {
+      "attr": "surname_norm",
+      "transform": "soundex",
+      "cost": 3218718,
+      "pc": 0.7918,
+      "blocks": 511,
+      "pruned": "cost"
+    },
+    {
+      "attr": "email_norm",
+      "transform": "exact",
+      "cost": 133915,
+      "pc": 0.61,
+      "blocks": 2819,
+      "pruned": null
+    },
+    {
+      "attr": "email_norm",
+      "transform": "prefix5",
+      "cost": 1618437,
+      "pc": 0.675,
+      "blocks": 832,
+      "pruned": "cost"
+    },
+    {
+      "attr": "email_local",
+      "transform": "exact",
+      "cost": 138970,
+      "pc": 0.6252,
+      "blocks": 2590,
+      "pruned": null
+    },
+    {
+      "attr": "email_local",
+      "transform": "prefix5",
+      "cost": 1618437,
+      "pc": 0.675,
+      "blocks": 832,
+      "pruned": "cost"
+    },
+    {
+      "attr": "phone_match",
+      "transform": "exact",
+      "cost": 55073,
+      "pc": 0.2204,
+      "blocks": 1945,
+      "pruned": null
+    },
+    {
+      "attr": "phone_match",
+      "transform": "suffix4",
+      "cost": 61369,
+      "pc": 0.2286,
+      "blocks": 1645,
+      "pruned": null
+    },
+    {
+      "attr": "postal_norm",
+      "transform": "exact",
+      "cost": 43114,
+      "pc": 0.164,
+      "blocks": 1619,
+      "pruned": null
+    },
+    {
+      "attr": "postal_norm",
+      "transform": "prefix3",
+      "cost": 170301,
+      "pc": 0.164,
+      "blocks": 345,
+      "pruned": null
+    },
+    {
+      "attr": "birthdate_norm",
+      "transform": "exact",
+      "cost": 17071,
+      "pc": 0.0724,
+      "blocks": 1630,
+      "pruned": null
+    },
+    {
+      "attr": "birthdate_norm",
+      "transform": "year",
+      "cost": 255252,
+      "pc": 0.0742,
+      "blocks": 71,
+      "pruned": null
+    },
+    {
+      "attr": "address_norm",
+      "transform": "exact",
+      "cost": 38222,
+      "pc": 0.1494,
+      "blocks": 2010,
+      "pruned": null
+    },
+    {
+      "attr": "address_norm",
+      "transform": "first_token",
+      "cost": 44516,
+      "pc": 0.1592,
+      "blocks": 1647,
+      "pruned": null
+    },
+    {
+      "attr": "house_no",
+      "transform": "exact",
+      "cost": 44513,
+      "pc": 0.1592,
+      "blocks": 1601,
+      "pruned": null
+    },
+    {
+      "attr": "loy_id_norm",
+      "transform": "exact",
+      "cost": 0,
+      "pc": 0.0,
+      "blocks": 0,
+      "pruned": "pc"
+    },
+    {
+      "attr": "ck",
+      "transform": "exact",
+      "cost": 0,
+      "pc": 0.0,
+      "blocks": 0,
+      "pruned": "pc"
+    }
+  ],
+  "comparison_train_truth_pairs": {
+    "fixed": {
+      "pc": 0.9014,
+      "cost": 432785,
+      "per_strategy": [
+        {
+          "name": "email_exact",
+          "pc": 0.6128,
+          "cost": 133915
+        },
+        {
+          "name": "phone_exact",
+          "pc": 0.2226,
+          "cost": 55073
+        },
+        {
+          "name": "name_postal",
+          "pc": 0.1068,
+          "cost": 23382
+        },
+        {
+          "name": "name_birthdate",
+          "pc": 0.053,
+          "cost": 12354
+        },
+        {
+          "name": "name",
+          "pc": 0.6602,
+          "cost": 208061
+        },
+        {
+          "name": "loy_id_exact",
+          "pc": 0.0,
+          "cost": 0
+        },
+        {
+          "name": "ck_exact",
+          "pc": 0.0,
+          "cost": 0
+        },
+        {
+          "name": "fk",
+          "pc": 0.0,
+          "cost": 0
+        }
+      ]
+    },
+    "learned": {
+      "pc": 0.7936,
+      "cost": 392345,
+      "per_strategy": [
+        {
+          "name": "dnf_email_norm.exact_house_no.exact",
+          "pc": 0.1002,
+          "cost": 22090
+        },
+        {
+          "name": "dnf_given_name_canon.exact_email_norm.exact",
+          "pc": 0.4578,
+          "cost": 99814
+        },
+        {
+          "name": "dnf_surname_norm.exact_phone_match.suffix4",
+          "pc": 0.174,
+          "cost": 44549
+        },
+        {
+          "name": "dnf_birthdate_norm.exact",
+          "pc": 0.0736,
+          "cost": 17071
+        },
+        {
+          "name": "dnf_given_name_canon.exact_postal_norm.exact",
+          "pc": 0.1224,
+          "cost": 27164
+        },
+        {
+          "name": "dnf_given_name_canon.soundex_surname_norm.exact",
+          "pc": 0.5972,
+          "cost": 181657
+        }
+      ]
+    }
+  },
+  "confirm": [
+    {
+      "corpus": "small-s11",
+      "seed": 11,
+      "tier": "small",
+      "fixed": {
+        "pc": 0.8954,
+        "cost": 524314,
+        "per_strategy": [
+          {
+            "name": "email_exact",
+            "pc": 0.6148,
+            "cost": 162988
+          },
+          {
+            "name": "phone_exact",
+            "pc": 0.2296,
+            "cost": 69885
+          },
+          {
+            "name": "name_postal",
+            "pc": 0.1158,
+            "cost": 31272
+          },
+          {
+            "name": "name_birthdate",
+            "pc": 0.0598,
+            "cost": 15146
+          },
+          {
+            "name": "name",
+            "pc": 0.6354,
+            "cost": 245023
+          },
+          {
+            "name": "loy_id_exact",
+            "pc": 0.0,
+            "cost": 0
+          },
+          {
+            "name": "ck_exact",
+            "pc": 0.0,
+            "cost": 0
+          },
+          {
+            "name": "fk",
+            "pc": 0.0,
+            "cost": 0
+          }
+        ]
+      },
+      "learned": {
+        "pc": 0.7902,
+        "cost": 475215,
+        "per_strategy": [
+          {
+            "name": "dnf_email_norm.exact_house_no.exact",
+            "pc": 0.1096,
+            "cost": 27851
+          },
+          {
+            "name": "dnf_given_name_canon.exact_email_norm.exact",
+            "pc": 0.4618,
+            "cost": 124679
+          },
+          {
+            "name": "dnf_surname_norm.exact_phone_match.suffix4",
+            "pc": 0.1792,
+            "cost": 56508
+          },
+          {
+            "name": "dnf_birthdate_norm.exact",
+            "pc": 0.0782,
+            "cost": 20895
+          },
+          {
+            "name": "dnf_given_name_canon.exact_postal_norm.exact",
+            "pc": 0.1372,
+            "cost": 36678
+          },
+          {
+            "name": "dnf_given_name_canon.soundex_surname_norm.exact",
+            "pc": 0.5848,
+            "cost": 208604
+          }
+        ]
+      }
+    },
+    {
+      "corpus": "medium-s7",
+      "seed": 7,
+      "tier": "medium",
+      "fixed": {
+        "pc": 0.8864,
+        "cost": 105340,
+        "per_strategy": [
+          {
+            "name": "email_exact",
+            "pc": 0.6008,
+            "cost": 14080
+          },
+          {
+            "name": "phone_exact",
+            "pc": 0.219,
+            "cost": 5697
+          },
+          {
+            "name": "name_postal",
+            "pc": 0.1174,
+            "cost": 2566
+          },
+          {
+            "name": "name_birthdate",
+            "pc": 0.0518,
+            "cost": 1247
+          },
+          {
+            "name": "name",
+            "pc": 0.6304,
+            "cost": 81750
+          },
+          {
+            "name": "loy_id_exact",
+            "pc": 0.0,
+            "cost": 0
+          },
+          {
+            "name": "ck_exact",
+            "pc": 0.0,
+            "cost": 0
+          },
+          {
+            "name": "fk",
+            "pc": 0.0,
+            "cost": 0
+          }
+        ]
+      },
+      "learned": {
+        "pc": 0.7758,
+        "cost": 92354,
+        "per_strategy": [
+          {
+            "name": "dnf_email_norm.exact_house_no.exact",
+            "pc": 0.0954,
+            "cost": 2224
+          },
+          {
+            "name": "dnf_given_name_canon.exact_email_norm.exact",
+            "pc": 0.4462,
+            "cost": 10358
+          },
+          {
+            "name": "dnf_surname_norm.exact_phone_match.suffix4",
+            "pc": 0.1756,
+            "cost": 4581
+          },
+          {
+            "name": "dnf_birthdate_norm.exact",
+            "pc": 0.0654,
+            "cost": 2323
+          },
+          {
+            "name": "dnf_given_name_canon.exact_postal_norm.exact",
+            "pc": 0.1338,
+            "cost": 2977
+          },
+          {
+            "name": "dnf_given_name_canon.soundex_surname_norm.exact",
+            "pc": 0.5772,
+            "cost": 69891
+          }
+        ]
+      }
+    }
+  ],
+  "wall_s": 18.2,
+  "overlay": "configs/learned/dnf-truth.yaml"
+}
