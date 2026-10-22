@@ -65,6 +65,14 @@ Every new capability is opt-in; the default configuration produces byte-identica
 - `tools/sweep_blocking.py`: held-out sweep (tune seeds 7/11, confirm medium seed 7) with search space, trial
   count, noise band and confirmation; reported tiers (seed 42) are evaluated afterwards without re-tuning.
   (Sweep was started and stopped per the "no heavy local runs" instruction; 0 trials recorded.)
+- Stitch labels persisted in the workspace (`stitch_labels`, `aurora labels add|import|list|remove`), applied
+  together with the CSV overlay; forced merges outrank inferred attribute conflicts, split labels still win.
+- Households as an owned entity (`profile/households.py`): persistent `household_id`, evidence edges with
+  first/last-seen and a TTL, explicit relationships, stable ids by max-overlap; built by `aurora profile` and the
+  pipeline (`household.build_with_profile`).
+- AmpID compatibility (`identity.*`): `amperity_id` export column / previous-assignment alias and the 1:1
+  e-mail → customer table `gold_email_ampid`.
+- Destinations: JSONL and Parquet file connectors next to CSV and the webhook.
 - **HC_fusion clustering** (`cluster.linkage: fusion`): edges are applied in score tiers (strong structure first);
   below `fusion.strong_edge_score` two formed clusters fuse only with corroborating cross edges
   (`min_cross_edges`, `min_cross_edge_ratio`); hard conflicts are checked at every union, including a set-valued

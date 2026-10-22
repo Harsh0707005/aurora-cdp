@@ -13,13 +13,13 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
 | Learned DNF blocking | ✅ (off by default) | Bilenko-style learner in `stitch/dnf.py` (unary predicates → conjunctions, exhaustive or `beam_width`-bounded → greedy red-blue cover under a pair budget), label-free positives from the deterministic rules; `tools/learn_dnf.py` (corpus / CSV / DuckDB input) writes the strategies YAML; `blocking.strategy_source: fixed \| learned \| union` with logged fallback to the fixed list. Default stays `fixed`: on held-out seed 7 the learned disjunction reached PC 0.68 (self labels) / 0.79 (truth) vs 0.90 for the fixed strategies (`reports/2026-10-22/dnf-*`) |
 | Pairwise scoring 0–5 with weak/moderate/high/excellent/exact bands, threshold 3.0 | ✅ | bands + threshold reproduced |
 | Ordinal-regression classifier trained without ground truth | ✅ (off by default) | `matcher.scorer: ordinal` (`stitch/ordinal.py`): all-threshold logistic ordinal regression on the base + extended feature families, positives/negatives self-labelled from the rules, hard conflicts and hard negatives, self-training rounds; model persisted to `matcher.ordinal.model_file` (`tools/train_ordinal.py` or in-run), reused with `retrain: never`; falls back to the rules scorer with a reason. `matcher.ordinal.monotone` (off) sign-constrains the fit so more agreement never lowers the score. Default `rules` is byte-identical to before (`tests/test_scoring_frozen.py`); held-out evaluation of the ordinal scorer is still in progress (`reports/2026-10-22/small-ordinal*`) |
-| Rules Editor (ordered deterministic rules, first match wins) | 🟡 | fixed rule order in `matcher.py`, scores configurable |
-| Hard conflicts (birthdate) with explicit refuse-to-merge | ✅ | pairwise label + cluster-time check |
+| Rules Editor (ordered deterministic rules, first match wins) | 🟡 | fixed rule order in `matcher.py`, scores/thresholds configurable; operator overrides via persisted Stitch labels |
+| Hard conflicts with explicit refuse-to-merge | ✅ | pairwise (birthdate) + cluster-time per-attribute tolerances checked at every union: birthdate (Levenshtein ≤ 2), given name (JW ≥ 0.6, swept on held-out seeds), optional set-valued contact (`any_overlap`); forced merge labels outrank inferred conflicts |
 | Connected components → conflict-aware hierarchical clustering | ✅ | `cluster.linkage: fusion`: tiered, evidence-gated fusion with per-attribute hard conflicts (birthdate, given name, set-valued contact) checked at every union; `single` = conflict-aware single link |
 | Supersized / blackhole components (BFS partition) | ✅ | BFS partition of oversized components before fusion + `cluster.carve` trimming weak tiers of oversized clusters after it (members surfaced as `carved_records`) |
 | Trivial duplicate groups | ✅ | identical records collapse to a representative for blocking/scoring and expand back in `stitch_scores`; `match_type = trivial_duplicate` |
 | Bad-value blocklist with automatic detection + manual blocklist | ✅ | thresholds from docs; `blocklist.manual {email, phone, address}` values (raw or normalised) are NULLed before blocking and listed in `stitch_blocklist_values` with reason `manual` (config, not a tenant table) |
-| Stitch labels (forced merge / split CSV) | ✅ | `labels.file` CSV of record pairs; merge → score-5 `label_merge` edge, split → scored edge dropped + pair-level veto in clustering (transitive); rows kept in `stitch_scores`; metrics `labels_*`, `edges_rejected_by_label`. Amperity's group-id label form is not reproduced (pairs only) |
+| Stitch labels (forced merge / split) | ✅ | CSV overlay (`labels.file`) **and** persisted `stitch_labels` table (`aurora labels add|import|list|remove`, survive runs); merge → score-5 `label_merge` edge that outranks attribute conflicts, split → scored edge dropped + transitive pair veto; group-id label form not reproduced (pairs only) |
 | One-to-one (ck) Stitch mode | 🟡 | `ck_exact` is a deterministic rule; dedicated mode ❌ |
 | Incremental clustering | 🟡 | changed-record pair filtering + carried edges; correctness equivalence not verified |
 | Stable ID assignment (greedy max-overlap, ties by ascending id) | ✅ | `stable_id.py` |
@@ -34,9 +34,9 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
 | Immutable, versioned substrate (prior generations kept) | 🟡 | bronze keeps every row (`is_current`); stitch results keyed by run_id; silver is rebuilt per source |
 | Unified Preprocessed Raw / Unified Coalesced / Identity Graph | ✅ | tables + views |
 | Merged Customers with Source/Field priority, 999 default, recency | ✅ | provenance per attribute |
-| Email AmpID Assignment (many-to-many narrowed to 1:1) | ❌ | |
+| Email AmpID Assignment (many-to-many narrowed to 1:1) | ✅ | `gold_email_ampid` (SCD2) written at profile build (`identity.email_ampid_assignment`); `identity.ampid_mode` adds `amperity_id` to exports and accepts it as a previous-assignment column |
 | Customer 360 with behavioural attributes | 🟡 | order_count / total_spend / last_order_ts only |
-| Households | ❌ | |
+| Households | ✅ | owned entity (`profile/households.py`): persistent `household_id`, evidence edges (shared address, surname+postal, phone, explicit relationships) with first/last-seen and a TTL so moves do not churn, hot values excluded, stable ids by max-overlap; built by `aurora profile` / the pipeline, `aurora household build|show|add-relationship` |
 | Table/database versioning & rollback | 🟡 | SCD2 on ledger and merged customers; `*_as_of` helpers |
 
 ## Activation & operations
@@ -44,7 +44,7 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
 | Amperity behaviour | Status | Notes |
 |---|---|---|
 | Segments over Customer 360 | ✅ | filter-list → parameterised SQL |
-| Destinations | ✅ / 🟡 | CSV ✅; JSON webhook with opt-in batching, retries with exponential backoff, auth/custom headers and timeout (`dry_run` default, failures logged in `destination_runs` and raised); no connector catalogue (SFTP/S3/ad platforms) ❌ |
+| Destinations | ✅ / 🟡 | CSV, JSONL and Parquet file connectors; JSON webhook with batching, retries/backoff, auth/custom headers (`dry_run` default, failures logged in `destination_runs`); no SFTP/S3/ad-platform catalogue ❌ |
 | Workflows / scheduling | 🟡 | YAML DAG + interval loop |
 | Profile API (read-only lookup) | ✅ | FastAPI |
 | Real-time streaming layer | ❌ | out of scope for now |
@@ -57,7 +57,7 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
    deterministic rules (ck / loyalty exact → 5.0, email+name → 4.5, phone+name → 4.2). Amperity uses a learned
    ordinal-regression model. Weights are tuned only via the threshold sweep (`aurora tune`).
 2. **Birthdate typo tolerance.** Birthdates within Levenshtein ≤ 2 count as a typo (0.5 agreement), not a conflict.
-3. **Conflict-aware clustering** is deterministic single-link with a hard-conflict veto, not Amperity's HC_fusion.
+3. **Conflict-aware clustering** is HC_fusion-style: edges applied in score tiers, formed entities fuse only with corroborating cross edges below `strong_edge_score`, hard conflicts checked at every union, oversized clusters carved by trimming weak tiers (`cluster.linkage: fusion`; `single` keeps the old behaviour).
 4. **Incremental mode** carries previous clusters as score-5 "carried" edges and scores only pairs touching
    changed records (changed = ingested after the last run, or not yet in the ledger).
 5. **Cluster ids** are sha1 prefixes of the smallest member record id; tie-breaks therefore follow that hash order.
@@ -88,6 +88,13 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
 12. **Jitter** is computed over records present in both runs (`records_changed / records_compared`), matching the
     docs' "percent of customer records assigned an updated ID".
 
+## Defaults in force (measured on the small tier, seed 42, `reports/2026-10-22/small-v5`)
+
+`matcher.scorer: rules`, `match_threshold: 3.25`, `blocking.strategy_source: fixed` + zero-discard sub-blocking,
+`cluster.linkage: fusion` with birthdate + given-name hard conflicts and carve, `matcher.trivial_dupe.requires_identifier: true`,
+labels, households and AmpID mode on. Result: P/R/F1 0.998/0.872/0.931, B³ F1 0.937, blocking recall 0.878,
+false-merge clusters 1.04 % (baseline engine `08be538`: 0.980/0.649/0.781, B³ 0.931, 0.537, 1.75 %).
+
 ## Gaps / TODO (next steps)
 
 Precise list of what is still partial or absent (everything above marked ✅ has tests in `tests/`):
@@ -96,11 +103,11 @@ Precise list of what is still partial or absent (everything above marked ✅ has
   strategies on held-out data (PC 0.68/0.79 vs 0.90). Likely causes to investigate: the predicate space lacks the
   composite keys the fixed list uses (`given₃+surname+postal`, `given₃+surname₁+birthdate`) and the pair budget
   (`pairs_per_record_budget`) is tighter than the fixed list's cost. `beam_width` is `null` (exhaustive) by default.
-- **Ordinal scorer evaluation** on the reported tiers is pending; the default scorer stays `rules`.
+- **Ordinal scorer** evaluated on seed-42 small (`reports/2026-10-22/small-ordinal*`): F1 0.955 but precision 0.952–0.957 and false merges 6.75–8.66 % — no operating point meets P ≥ 0.98, so `rules` stays the default.
   `tools/train_ordinal.py` reads evaluation corpora only (no CSV/DuckDB input yet).
 - **Rules Editor**: deterministic rule *order* is fixed in `matcher.py` (ck → loyalty → e-mail+name → phone+name);
   only the scores and the name-agreement floor are configurable.
-- **Clustering** is conflict-free single-link with attribute + label vetoes, not Amperity's HC_fusion.
+- **Clustering**: HC_fusion in place (`cluster.linkage: fusion`, default); the medium-tier false-merge ceiling (2.0 %) is the remaining open gate — see `docs/tuning.md`.
 - **Stitch labels** are pair-level (no group-id form); a split between two members of the same trivial-dupe
   group separates the member from its representative (unenforceable in the group-id sense).
 - **Manual blocklist** is config-only (no `BlocklistValues` table / UI).
@@ -110,7 +117,7 @@ Precise list of what is still partial or absent (everything above marked ✅ has
 - **Webhook**: no connector catalogue (SFTP/S3/ad platforms), no OAuth refresh, no idempotency keys.
 - `api/templates/cluster.html` still carries the "approve / split actions TODO" placeholder: the API has no
   write endpoints; labels are applied through `labels.file` instead.
-- Email AmpID Assignment, households, richer Customer 360 attributes, one-to-one (ck) Stitch mode.
+- Richer Customer 360 attributes, one-to-one (ck) Stitch mode; device graph and real-time streaming are deliberately out of scope.
 - QA queries: weakest match, split clusters, many semantic values, FK validation.
 - Snowflake deployment of the DDL and a Postgres serving store (see `deploy/DEPLOY.md`).
 
