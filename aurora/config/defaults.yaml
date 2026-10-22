@@ -38,12 +38,14 @@ scoring:
     dob_near: 0.6
     fk_match: 3.5
     name_conflict: -2.5
+    given_conflict: -1.5
     dob_conflict: -2.0
   thresholds: [1.0, 2.0, 3.0, 4.0, 5.0]
   edge_keep_threshold: 3.0
   deterministic_keys: [email_exact, phone_exact, fk_match]
   hard_conflicts:
     dob_conflict: true
+    given_conflict: true
 
 hygiene:
   supersized_threshold: 64

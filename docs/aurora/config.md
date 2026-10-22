@@ -27,7 +27,7 @@ scoring:
   thresholds: [1.0, 2.0, 3.0, 4.0, 5.0]   # five increasing cut points -> categories 0..5
   edge_keep_threshold: 3.0
   deterministic_keys: [email_exact, phone_exact, fk_match]   # -> category 5 "exact"
-  hard_conflicts: {dob_conflict: true}                       # -> capped at category 2, never an edge
+  hard_conflicts: {dob_conflict: true, given_conflict: true} # -> capped at category 2, never an edge
 
 hygiene:
   supersized_threshold: 64           # components above this get carved / flagged
@@ -51,5 +51,5 @@ Environment: `AURORA_CONFIG` (API config path), `AURORA_SPARK_MASTER`
 
 `email_exact, email_sim, phone_exact, phone_prefix, given_jw, surname_jw,
 name_exact, nickname_match, postal_eq, house_eq, street_sim, dob_eq, dob_near,
-fk_match, name_conflict, dob_conflict` — all in [0, 1]; computed in
+fk_match, name_conflict, given_conflict, dob_conflict` — all in [0, 1]; computed in
 `aurora/features/pairwise.py`.

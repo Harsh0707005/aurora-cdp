@@ -84,6 +84,7 @@ def preprocess(raw: DataFrame, cfg: TenantConfig) -> DataFrame:
         bl_names, bl_domains = set(bl["names"]), set(bl["email_domains"])
         for pdf in it:
             out = pdf.copy()
+            pdf = pdf.astype(object).where(pd.notna(pdf), None)  # Arrow nulls arrive as NaN floats
             rows = []
             for r in pdf.to_dict("records"):
                 given, surname = r.get("given_name"), r.get("surname")

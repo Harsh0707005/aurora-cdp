@@ -26,7 +26,7 @@ RAW_SCHEMA = T.StructType(
 PAIR_FEATURE_COLUMNS = [
     "email_exact", "email_sim", "phone_exact", "phone_prefix", "given_jw", "surname_jw",
     "name_exact", "nickname_match", "postal_eq", "house_eq", "street_sim", "dob_eq", "dob_near",
-    "fk_match", "name_conflict", "dob_conflict",
+    "fk_match", "name_conflict", "given_conflict", "dob_conflict",
 ]
 
 MATCH_CATEGORIES = {0: "non_match", 1: "weak", 2: "moderate", 3: "high", 4: "excellent", 5: "exact"}

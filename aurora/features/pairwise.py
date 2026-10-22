@@ -68,6 +68,9 @@ def pair_features(l: dict, r: dict) -> dict[str, float]:
     f["nickname_match"] = 1.0 if (ln and rn and ln == rn and lg != rg) else 0.0
     if ls and rs and f["surname_jw"] < 0.6 and lg and rg and f["given_jw"] < 0.6:
         f["name_conflict"] = 1.0
+    # clearly different first names (not nickname variants): spouses / household members
+    if lg and rg and f["given_jw"] < 0.75 and not f["nickname_match"]:
+        f["given_conflict"] = 1.0
     lpost, rpost = l.get("postal_std"), r.get("postal_std")
     f["postal_eq"] = 1.0 if (lpost and rpost and lpost == rpost) else 0.0
     lh, rh = l.get("house_no"), r.get("house_no")

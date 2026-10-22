@@ -26,9 +26,13 @@ def _strip_accents(s: str) -> str:
     return "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))
 
 
+def _is_null(value: object) -> bool:
+    return value is None or (isinstance(value, float) and value != value)
+
+
 def clean_text(value: str | None) -> str | None:
     """Lowercase, strip accents and punctuation, collapse whitespace."""
-    if value is None:
+    if _is_null(value):
         return None
     s = _strip_accents(str(value)).lower().strip()
     s = _NON_ALNUM.sub(" ", s)
@@ -38,7 +42,7 @@ def clean_text(value: str | None) -> str | None:
 
 def normalize_email(value: str | None) -> str | None:
     """Lowercase + trim. Returns None if not shaped like an email."""
-    if value is None:
+    if _is_null(value):
         return None
     s = str(value).strip().lower()
     if "@" not in s or s.startswith("@") or s.endswith("@"):
@@ -61,7 +65,7 @@ def canonical_email(value: str | None) -> str | None:
 
 def normalize_phone(value: str | None, default_country: str = "1") -> str | None:
     """Digits only, E.164-ish (no '+'). 10-digit NANP numbers get the country code."""
-    if value is None:
+    if _is_null(value):
         return None
     digits = _DIGITS.sub("", str(value))
     if not digits:
@@ -115,7 +119,7 @@ def house_number(street: str | None) -> str | None:
 
 
 def normalize_postal(value: str | None) -> str | None:
-    if value is None:
+    if _is_null(value):
         return None
     s = re.sub(r"[^a-z0-9]", "", str(value).lower())
     if not s:
@@ -125,7 +129,7 @@ def normalize_postal(value: str | None) -> str | None:
 
 def normalize_dob(value: str | None) -> str | None:
     """Accept ISO yyyy-mm-dd, yyyymmdd or mm/dd/yyyy; return ISO or None."""
-    if value is None:
+    if _is_null(value):
         return None
     s = str(value).strip()
     m = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})", s)
