@@ -27,13 +27,12 @@ from __future__ import annotations
 
 import json
 import math
-from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
-from rapidfuzz import fuzz
 from rapidfuzz.distance import Hamming, JaroWinkler
 
 from .features import FEATURE_NAMES, SIDE_COLUMNS, features_frame
@@ -280,7 +279,7 @@ def fit_ordinal(
     y = np.asarray(y, dtype=np.int64)
     K = levels - 1
     rng = np.random.default_rng(seed)
-    w = rng.normal(0, 0.01, d)
+    w: np.ndarray = np.asarray(rng.normal(0, 0.01, d), dtype=np.float64)
     t0 = 0.0
     gaps = np.zeros(K - 1)  # softplus(gaps) = θ_{k+1} - θ_k
     m = np.zeros(d + K)
@@ -323,7 +322,7 @@ def fit_ordinal(
     params = project(np.concatenate([w, [t0], gaps]))
     hist = []
     for it in range(1, epochs + 1):
-        w, t0, gaps = params[:d], params[d], params[d + 1 :]
+        w, t0, gaps = params[:d], float(params[d]), params[d + 1 :]
         L, gw, gt0, gg = loss_grad(w, t0, gaps)
         g = np.concatenate([gw, [gt0], gg])
         m = b1 * m + (1 - b1) * g
@@ -331,7 +330,7 @@ def fit_ordinal(
         mh, vh = m / (1 - b1**it), v / (1 - b2**it)
         params = project(params - lr * mh / (np.sqrt(vh) + eps))
         hist.append(L)
-    w, t0, gaps = params[:d], params[d], params[d + 1 :]
+    w, t0, gaps = params[:d], float(params[d]), params[d + 1 :]
     th = thresholds(t0, gaps)
     model = OrdinalModel(
         list(names),
@@ -455,7 +454,7 @@ def self_train(
     if rep.negatives < int(ocfg.get("min_negative_pairs", 300)):
         rep.fallback_reason = f"insufficient negatives ({rep.negatives})"
         return None, rep
-    fit_kw = dict(
+    fit_kw: dict[str, Any] = dict(
         levels=levels,
         l2=float(ocfg.get("l2", 1e-3)),
         lr=float(ocfg.get("lr", 0.05)),
@@ -504,6 +503,7 @@ def self_train(
     if levels >= 3 and (~labelled).any():
         y[~labelled] = 1
         model = fit_ordinal(F, y, **fit_kw)
+    assert model is not None
     rep.model_meta = model.meta
     return model, rep
 
@@ -583,7 +583,11 @@ def prepare_scorer(con, cfg, run_id: str, workspace: Path | None = None) -> tupl
     ``_pairs`` to exist (called after blocking)."""
     mcfg = cfg.matcher
     requested = str(mcfg.get("scorer", "rules"))
-    info = {"scorer_requested": requested, "scorer_used": "rules", "scorer_fallback_reason": None}
+    info: dict[str, Any] = {
+        "scorer_requested": requested,
+        "scorer_used": "rules",
+        "scorer_fallback_reason": None,
+    }
     if requested == "rules":
         return RulesScorer(mcfg), info
     if requested != "ordinal":
