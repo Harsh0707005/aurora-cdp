@@ -114,14 +114,17 @@ Precise list of what is still partial or absent (everything above marked ✅ has
 - **Nickname table** ships ~70 built-in entries; a full table must be supplied via `normalize.nickname_file`.
 - **Address parsing**: no libpostal-style tokenisation, no secondary-unit ranges, no non-US formats beyond
   uppercasing; hyphens inside PO Box numbers become spaces.
-- **Webhook**: no connector catalogue (SFTP/S3/ad platforms), no OAuth refresh, no idempotency keys.
+- **Connectors**: CSV/JSONL/Parquet files and the webhook exist; no SFTP/S3/ad-platform catalogue, no OAuth refresh, no idempotency keys.
 - `api/templates/cluster.html` still carries the "approve / split actions TODO" placeholder: the API has no
-  write endpoints; labels are applied through `labels.file` instead.
+  write endpoints; labels are applied through `aurora labels …` / `labels.file` instead.
 - Richer Customer 360 attributes, one-to-one (ck) Stitch mode; device graph and real-time streaming are deliberately out of scope.
 - QA queries: weakest match, split clusters, many semantic values, FK validation.
 - Snowflake deployment of the DDL and a Postgres serving store (see `deploy/DEPLOY.md`).
 
-## Audit 2026-10-22 (parity layer, before the gap work)
+## Audit 2026-10-22 (historical snapshot, taken before the gap work — superseded by the tables above)
+
+> This section is kept as history. Everything it lists as missing was re-assessed the same day; the
+> "Resolution" table below is the authoritative outcome and matches the status tables at the top of this file.
 
 Scope: case-insensitive grep for `amperity` across code, tests, docs and `git log`; grep for
 TODO / FIXME / NotImplemented / skip / xfail across `aurora_cdp/`, `tests/` and `tools/`. "Amperity" in this repo
@@ -129,42 +132,33 @@ is the *reference product* being reproduced, not a third-party integration: ther
 auth, pagination or export payload code anywhere, so the parity surface is the semantic-tagging → preprocessing →
 blocking → scoring → clustering → survivorship → activation chain documented in `architecture.md`.
 
-Found missing or incomplete (precise):
+Found missing or incomplete at the time of the audit (precise):
 
-- `stitch/matcher.py`: scoring is hand-set logistic weights + fixed-order deterministic rules; no learned
-  ordinal-regression classifier, no `score_mode` switch, no persisted learned parameters.
-  `stitch/ordinal.py` landed on this branch (all-threshold logistic loss, self-training) but is **not wired**
-  into `score_frame` / `run_stitch`, has no config keys in `defaults.yaml` and no tests.
-- `stitch/dnf.py` + `tools/learn_dnf.py`: learner, `dnf` strategy type and `strategy_source: fixed|learned|union`
-  exist; the CLI only reads parquet evaluation corpora (`profiles.parquet` + `truth.parquet` + `manifest.json`),
-  not a CSV / DuckDB table; `resolve_strategies` falls back silently (reason in metrics only, no logged warning);
-  the conjunction search is exhaustive (no beam bound) — fine for `max_terms: 2`, unbounded above that; no test
-  covers learned/union assembly through `run.py` or the missing/empty-file fallback.
-- `ingestion/normalize.py`: `canonical_address` has TODOs for unit/suite parsing, PO Box and directional
-  suffixes; the nickname table is a ~70-entry dict with a TODO to load from CSV (Amperity: thousands in
-  `stitch_nicknames`).
-- `audiences/destinations.py::send_webhook`: stub — single payload truncated to the first 1000 profiles, no
-  batching, no retries/backoff, no auth headers, no timeout configuration.
-- `stitch/run.py::apply_blocklist_sql`: automatic bad-value detection only; no manual blocklist (Amperity
-  `BlocklistValues`).
-- Stitch labels (forced merge / split) are absent; `cluster.py` has no pair-level veto, only the birthdate
-  attribute conflict.
+- `stitch/matcher.py`: hand-set logistic weights + fixed-order deterministic rules; `stitch/ordinal.py` existed
+  but was not wired, had no config keys and no tests.
+- `stitch/dnf.py` + `tools/learn_dnf.py`: learner existed; CLI parquet-only, relative strategies path, silent
+  fallback, exhaustive conjunction search, no wiring tests.
+- `ingestion/normalize.py`: TODOs for unit/suite parsing, PO Box and directional suffixes; ~70-entry nickname dict.
+- `audiences/destinations.py::send_webhook`: stub (single payload truncated to 1000 profiles, no retries/auth).
+- `stitch/run.py::apply_blocklist_sql`: automatic detection only, no manual blocklist.
+- Stitch labels absent; `cluster.py` had no pair-level veto, only the birthdate conflict.
 - `api/templates/cluster.html`: "approve / split actions TODO" placeholder (UI only).
-- Not started and out of scope for this pass: Email AmpID Assignment, households, dedicated one-to-one (ck)
-  Stitch mode, QA queries (weakest match / many semantic values / FK validation), HC_fusion clustering,
-  streaming layer, predictive models, Snowflake/Databricks connector.
-- No `pytest.mark.skip` / `xfail` / `NotImplementedError` anywhere in `aurora_cdp/` or `tests/`
-  (`tests/test_blocking.py` and `tests/test_scoring.py` import the optional Spark `aurora` package).
+- Not started at audit time: Email AmpID Assignment, households, one-to-one (ck) Stitch mode, QA queries,
+  HC_fusion clustering, streaming layer, predictive models, Snowflake/Databricks connector.
+- No `pytest.mark.skip` / `xfail` / `NotImplementedError` anywhere in `aurora_cdp/` or `tests/`.
 
-### Resolution of the audit items (same day)
+### Resolution of the audit items (final state at HEAD)
 
 | Audit item | Outcome |
 |---|---|
-| Ordinal scorer not wired / no config / no tests | wired as `matcher.scorer: rules \| ordinal` + `matcher.ordinal.*` (default `rules`); frozen hand-set snapshot test; monotone, band and round-trip tests |
-| DNF CLI parquet-only, relative path, silent fallback, exhaustive search, no wiring tests | `--csv` / `--duckdb --table`, absolute strategies path, validated loader with logged warning, `beam_width`, learned/union/fallback + CLI→run tests |
+| Ordinal scorer not wired / no config / no tests | **wired** as `matcher.scorer: rules \| ordinal` + `matcher.ordinal.*` (label-free self-training, hard negatives, rules fallback); tests in `tests/test_ordinal.py`, `tests/test_scoring_frozen.py`. **Not default**: no operating point reaches P ≥ 0.98 on seed-42 small (`reports/2026-10-22/small-ordinal*`) |
+| DNF CLI parquet-only, relative path, silent fallback, exhaustive search, no wiring tests | `--csv` / `--duckdb --table`, absolute strategies path, validated loader with logged warning, `beam_width`, learned/union/fallback + CLI→run tests. **Not default**: held-out PC 0.68/0.79 vs 0.90 for the fixed list |
 | Address parsing TODOs, nickname dict TODO | `normalize.address_parsing` (opt-in) + `normalize.nickname_file` |
-| Webhook stub | batching / retries / auth / timeout, opt-in; defaults unchanged |
+| Webhook stub | batching / retries / auth / timeout (opt-in; dry-run default); JSONL and Parquet file connectors added |
 | No manual blocklist | `blocklist.manual` |
-| No Stitch labels / pair veto | `labels.file` + `cluster_indices(forbidden=...)` |
+| No Stitch labels / pair veto | **done**: `labels.file` overlay + persisted `stitch_labels` table (`aurora labels …`), forced merges outrank attribute conflicts, splits are transitive vetoes |
+| HC_fusion clustering not started | **done and default**: `cluster.linkage: fusion` (tiered evidence-gated fusion, per-attribute hard conflicts incl. given name and optional contact sets, supersized carve) |
+| Households not started | **done and default**: owned entity with persistent ids, evidence edges + TTL, relationships; built with `aurora profile` / pipeline |
+| Email AmpID Assignment not started | **done and default**: `gold_email_ampid` (1:1, SCD2) + `identity.ampid_mode` (`amperity_id` export / previous-assignment alias) |
 | `cluster.html` placeholder | left (UI only; see gaps) |
-| Not started items (AmpID, households, ck mode, QA queries, HC_fusion, streaming, predictive, connectors) | unchanged, listed in gaps |
+| Still deliberately unbuilt | one-to-one (ck) Stitch mode; QA query catalogue (weakest match / many semantic values / FK validation); SFTP/S3/ad-platform connectors; device graph; real-time streaming; predictive models; Snowflake/Databricks connector |
