@@ -36,6 +36,7 @@ class ClusterResult:
     cluster_idx: np.ndarray | None = None  # position -> cluster root index
     component_idx: np.ndarray | None = None
     supersized_idx: np.ndarray | None = None  # -1 when not supersized
+    carved_idx: np.ndarray | None = None  # original cluster root when a record was separated by the carve
 
 
 def _short_id(seed: str) -> str:
@@ -86,6 +87,13 @@ def tolerances_from_cfg(cfg) -> dict[str, dict]:
     return tol
 
 
+def _sets_compatible(vals_a: set, vals_b: set, spec: dict | None) -> bool:
+    """Set-level measure ``any_overlap`` (identifier sets): compatible unless both sides are non-empty and disjoint."""
+    if not vals_a or not vals_b:
+        return True
+    return bool(vals_a & vals_b)
+
+
 def _pair_ok(x: str, y: str, spec: dict | None) -> bool:
     if x == y:
         return True
@@ -106,6 +114,8 @@ def _values_compatible(attr: str, vals_a: set[str], vals_b: set[str], tol) -> bo
     if not vals_a or not vals_b:
         return True
     spec = tol.get(attr) if isinstance(tol, dict) else ({"measure": "levenshtein_max", "value": tol} if attr == "birthdate" else None)
+    if spec and spec.get("measure") == "any_overlap":
+        return _sets_compatible(vals_a, vals_b, spec)
     for x in vals_a:
         for y in vals_b:
             if not _pair_ok(x, y, spec):
@@ -184,11 +194,16 @@ def cluster_indices(
         del adj
         log.info("partitioned %d supersized components (> %d records)", len(big_set), max_size)
 
-    # 3. conflict-aware single link, strongest edges first (ties: ascending ids)
-    order = np.lexsort((right, left, -score))
+    # 3. conflict-aware fusion, strongest edges first (ties: ascending ids)
+    linkage = str(cfg.get("linkage", "fusion"))
+    fcfg = dict(cfg.get("fusion") or {})
+    tiers = sorted((float(t) for t in (fcfg.get("tiers") or [])), reverse=True)
+    strong = float(fcfg.get("strong_edge_score", 4.0))
+    min_cross = int(fcfg.get("min_cross_edges", 2))
+    min_ratio = float(fcfg.get("min_cross_edge_ratio", 0.1))
     uf2 = UnionFind(n)
-    values: dict[str, list] = {attr: list(conflict_values[attr]) for attr in conflict_attrs}
-    # per-root value sets, created lazily on first merge; singletons use their own scalar value
+    values: dict[str, list] = {attr: conflict_values[attr] for attr in conflict_attrs}
+    # per-root value sets, created lazily on first merge; singletons use their own value (scalar or set)
     root_vals: dict[int, dict[str, set[str]]] = {}
 
     def vals_of(root: int, attr: str) -> set[str]:
@@ -196,6 +211,8 @@ def cluster_indices(
         if rv is not None and attr in rv:
             return rv[attr]
         v = values[attr][root]
+        if isinstance(v, (set, frozenset)):
+            return set(v)
         return {v} if v else set()
 
     # pair-level vetoes (split labels): per root, the record indices its members must not be clustered with
@@ -211,28 +228,25 @@ def cluster_indices(
             return True
         return fb is not None and any(uf2.find(x) == ra for x in fb)
 
-    rejected = 0
-    rejected_label = 0
-    for e in order.tolist():
-        a, b = int(left[e]), int(right[e])
-        if group[a] != group[b]:
-            continue
+    size = np.ones(n, dtype=np.int64)  # live cluster sizes by root
+    counters = {"rejected": 0, "rejected_label": 0, "deferred_fusion": 0, "fused_multi": 0}
+
+    def try_union(a: int, b: int) -> bool:
+        """Union a and b unless a hard conflict / split label forbids it. Returns True when merged."""
         ra, rb = uf2.find(a), uf2.find(b)
         if ra == rb:
-            continue
+            return True
         if forbid and label_blocks(ra, rb):
-            rejected_label += 1
-            continue
-        ok = True
+            counters["rejected_label"] += 1
+            return False
         for attr in conflict_attrs:
             if not _values_compatible(attr, vals_of(ra, attr), vals_of(rb, attr), tol):
-                ok = False
-                break
-        if not ok:
-            rejected += 1
-            continue
+                counters["rejected"] += 1
+                return False
         merged = {attr: vals_of(ra, attr) | vals_of(rb, attr) for attr in conflict_attrs}
         root = uf2.union(a, b)
+        other = rb if root == ra else ra
+        size[root] += size[other]
         root_vals.pop(ra, None)
         root_vals.pop(rb, None)
         root_vals[root] = merged
@@ -240,7 +254,77 @@ def cluster_indices(
             fa, fb = forbid.pop(ra, set()), forbid.pop(rb, set())
             if fa or fb:
                 forbid[root] = fa | fb
+        return True
+
+    same_group = group[left] == group[right]
+    if linkage == "single" or m == 0:
+        order = np.lexsort((right, left, -score))
+        for e in order.tolist():
+            if same_group[e]:
+                try_union(int(left[e]), int(right[e]))
+    elif linkage == "fusion":
+        floors = tiers + [float("-inf")]
+        upper = float("inf")
+        for floor in floors:
+            tier = np.flatnonzero(same_group & (score >= floor) & (score < upper))
+            upper = floor
+            if len(tier) == 0:
+                continue
+            # cross-cluster evidence at tier start: edges per (rootA, rootB) pair, as sorted numpy keys
+            ra = np.array([uf2.find(int(x)) for x in left[tier]], dtype=np.int64)
+            rb = np.array([uf2.find(int(x)) for x in right[tier]], dtype=np.int64)
+            keys = np.minimum(ra, rb) * n + np.maximum(ra, rb)
+            ukeys, counts = np.unique(keys, return_counts=True)
+            order = tier[np.lexsort((right[tier], left[tier], -score[tier]))]
+            for e in order.tolist():
+                a, b = int(left[e]), int(right[e])
+                ra_, rb_ = uf2.find(a), uf2.find(b)
+                if ra_ == rb_:
+                    continue
+                sa, sb = int(size[ra_]), int(size[rb_])
+                if score[e] < strong and sa > 1 and sb > 1:
+                    # fusing two formed entities on a non-strong edge needs corroborating cross edges in this tier
+                    k = min(ra_, rb_) * n + max(ra_, rb_)
+                    pos = np.searchsorted(ukeys, k)
+                    cnt = int(counts[pos]) if pos < len(ukeys) and ukeys[pos] == k else 0
+                    if cnt < max(min_cross, int(np.ceil(min_ratio * min(sa, sb)))):
+                        counters["deferred_fusion"] += 1
+                        continue
+                    counters["fused_multi"] += int(try_union(a, b))
+                else:
+                    try_union(a, b)
+    else:
+        raise ValueError(f"cluster.linkage must be single | fusion, got {linkage!r}")
     cluster = uf2.roots().copy()
+    rejected, rejected_label = counters["rejected"], counters["rejected_label"]
+
+    # 4. carve: clusters above the ceiling get their weakest tiers trimmed back (leaked-common-value signature)
+    ccfg = dict(cfg.get("carve") or {})
+    carved = np.full(n, -1, dtype=np.int64)
+    carved_clusters = 0
+    if bool(ccfg.get("enabled", True)) and m:
+        ceiling = int(ccfg.get("max_cluster_size", max_size))
+        csizes = np.bincount(cluster, minlength=n)
+        for root in np.flatnonzero(csizes > ceiling).tolist():
+            members = np.flatnonzero(cluster == root)
+            emask = (cluster[left] == root) & (cluster[right] == root)
+            el, er, es = left[emask], right[emask], score[emask]
+            pieces = None
+            for floor in tiers:  # drop everything below the next stronger tier until the pieces fit
+                keep = es >= floor
+                uf3 = UnionFind(n)
+                for a, b in zip(el[keep].tolist(), er[keep].tolist(), strict=True):
+                    uf3.union(a, b)
+                part = uf3.roots()[members]
+                if np.bincount(part).max() <= ceiling:
+                    pieces = part
+                    break
+            if pieces is None:  # even the strongest tier alone is too big: keep the cluster, surface it
+                pieces = np.full(len(members), root, dtype=np.int64)
+            cluster[members] = pieces
+            carved_clusters += 1
+            carved[members[pieces != pieces[np.argmin(members)]]] = root
+            supersized[members] = np.where(supersized[members] >= 0, supersized[members], root)
 
     sizes = np.bincount(cluster, minlength=n)
     cluster_sizes = sizes[sizes > 0]
@@ -262,6 +346,7 @@ def cluster_indices(
         )
         hist[bucket] += 1
     res = ClusterResult(cluster_idx=cluster, component_idx=comp, supersized_idx=supersized)
+    res.carved_idx = carved
     res.qa = {
         "components": comp_count,
         "clusters": int(len(cluster_sizes)),
@@ -271,6 +356,11 @@ def cluster_indices(
         "split_components": split_components,  # components split by hard conflicts (over-merge guard)
         "edges_rejected_by_conflict": rejected,
         "edges_rejected_by_label": rejected_label,
+        "fusion_deferred_edges": counters["deferred_fusion"],  # weak edges that would have fused two formed entities
+        "fusion_multi_merges": counters["fused_multi"],
+        "carved_clusters": carved_clusters,
+        "carved_records": int(np.sum(carved >= 0)),
+        "linkage": linkage,
         "edges": int(m),
         "cluster_size_distribution": dict(hist),
         "singleton_pct": round(

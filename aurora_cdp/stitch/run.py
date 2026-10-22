@@ -598,10 +598,14 @@ def run_stitch(
     ccfg = dict(cfg.cluster)
     ccfg["birthdate_typo_tolerance"] = cfg.matcher.get("hard_conflicts", {}).get("birthdate_typo_tolerance", 2)
     columns = {"birthdate": "birthdate_norm", "given_name": "given_name_canon", **(ccfg.get("conflict_columns") or {})}
-    conflict_values = {
-        attr: [r[0] for r in con.execute(f"SELECT {columns[attr]} FROM _rec ORDER BY idx").fetchall()]
-        for attr in ccfg.get("conflict_attributes", ["birthdate"])
-    }
+    conflict_values = {}
+    for attr in ccfg.get("conflict_attributes", ["birthdate"]):
+        col = columns[attr]
+        if isinstance(col, (list, tuple)):  # set-valued attribute (e.g. contact = e-mail ∪ phone)
+            rows = con.execute(f"SELECT {', '.join(col)} FROM _rec ORDER BY idx").fetchall()
+            conflict_values[attr] = [frozenset(v for v in r if v) for r in rows]
+        else:
+            conflict_values[attr] = [r[0] for r in con.execute(f"SELECT {col} FROM _rec ORDER BY idx").fetchall()]
     clusters = cluster_indices(
         n, left, right, score, conflict_values, ccfg,
         forbidden=resolved.forbidden if resolved is not None else None,

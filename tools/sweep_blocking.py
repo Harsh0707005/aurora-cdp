@@ -120,15 +120,31 @@ def overlay(trial: dict) -> dict:
     ov = {"blocking": {"max_pairs_per_block": int(trial["blocking.max_pairs_per_block"]), "sn_window": int(trial["blocking.sn_window"]),
                        "strategies": strategies},
           "matcher": {"match_threshold": float(trial["matcher.match_threshold"]), "scorer": str(trial.get("matcher.scorer", "rules"))}}
-    if "cluster.given_name_conflict_min" in trial:  # None -> birthdate-only conflicts; number -> JW tolerance for given names
+    base = load_config(use_last_best=False)["cluster"]
+    cl: dict = {}
+    attrs = list(base.get("conflict_attributes") or ["birthdate"])
+    tol = dict(base.get("conflict_tolerances") or {})
+    if "cluster.given_name_conflict_min" in trial:  # None -> no given-name conflict; number -> JW tolerance for given names
         gn = trial["cluster.given_name_conflict_min"]
-        base = load_config(use_last_best=False)["cluster"]
-        tol = dict(base.get("conflict_tolerances") or {})
-        if gn is None:
-            ov["cluster"] = {"conflict_attributes": ["birthdate"], "conflict_tolerances": {k: v for k, v in tol.items() if k != "given_name"}}
-        else:
+        attrs = [a for a in attrs if a != "given_name"]
+        if gn is not None:
+            attrs.append("given_name")
             tol["given_name"] = {"measure": "jaro_winkler_min", "value": float(gn)}
-            ov["cluster"] = {"conflict_attributes": ["birthdate", "given_name"], "conflict_tolerances": tol}
+    if "cluster.contact_conflict" in trial:  # True -> formed clusters with disjoint e-mail+phone sets never fuse
+        attrs = [a for a in attrs if a != "contact"] + (["contact"] if trial["cluster.contact_conflict"] else [])
+    cl["conflict_attributes"] = attrs
+    cl["conflict_tolerances"] = tol
+    if "cluster.linkage" in trial:
+        cl["linkage"] = str(trial["cluster.linkage"])
+    fusion = dict(base.get("fusion") or {})
+    for k in ("min_cross_edges", "min_cross_edge_ratio", "strong_edge_score"):
+        if f"cluster.fusion.{k}" in trial:
+            fusion[k] = trial[f"cluster.fusion.{k}"]
+    cl["fusion"] = fusion
+    ov["cluster"] = cl
+    if "matcher.trivial_dupe.requires_identifier" in trial:
+        ov["matcher"]["trivial_dupe"] = {**(load_config(use_last_best=False)["matcher"].get("trivial_dupe") or {}),
+                                         "requires_identifier": bool(trial["matcher.trivial_dupe.requires_identifier"])}
     return ov
 
 
@@ -233,7 +249,7 @@ def markdown(r: dict) -> str:
           "| # | scorer | threshold | name budget | max_pairs_per_block | sn_window | P | R | F1 | B³ F1 | blocking R | false-merge | pairs | wall s | gates (all tune corpora) |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for t in r["ranked"]:
         tr, g = t["trial"], t["mean"]
-        extra = f" gn-conflict={tr['cluster.given_name_conflict_min']}" if "cluster.given_name_conflict_min" in tr else ""
+        extra = "".join(f" {k.split('.', 1)[1]}={v}" for k, v in tr.items() if k.startswith(("cluster.", "matcher.trivial")))
         L.append(f"| {t['i']} | {tr.get('matcher.scorer', 'rules')}{extra} | {tr['matcher.match_threshold']} | {tr['blocking.name_budget']:,} | {tr['blocking.max_pairs_per_block']:,} | {tr['blocking.sn_window']} | {g['precision']} | {g['recall']} | {g['f1']} | {g['bcubed_f1']} | {g['blocking_recall']} | {g['false_merge_clusters']} | {int(g['pairs_scored']):,} | {g['wall_s']} | {'✅' if t['gates_pass'] else '❌'} |")
     n = r["noise"]
     L += ["", f"**Noise band:** top-{len(n['top_f1'])} F1 = {n['top_f1']}, spread {n['spread_top']} → " + ("the top configs are within noise of each other; the chosen one is the cheapest of them, not a clear winner." if n["within_noise"] else "the top config is separated from the runners-up by more than the noise band."), "",

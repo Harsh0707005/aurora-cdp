@@ -171,16 +171,27 @@ matcher:
 
 cluster:
   supersized_min_size: 500      # [AMP] (docs inconsistent: 64 vs 500); BFS partition above this size
+  linkage: fusion               # single (conflict-aware single link) | fusion (HC_fusion: tiered, evidence-gated merges)
+  fusion:                       # internals §2.7-2.8: strong structure first, weak edges only if they do not fuse formed entities
+    tiers: [4.75, 4.0]          # score floors of the strong tiers; the final tier is everything down to match_threshold
+    strong_edge_score: 4.0      # a single edge at/above this may fuse two formed clusters on its own
+    min_cross_edges: 2          # below it, two multi-record clusters need this many corroborating edges in the tier ...
+    min_cross_edge_ratio: 0.1   # ... and at least this fraction of the smaller cluster's size (swept, see docs/tuning.md)
+  carve:                        # internals §2.9: supersized / blackhole clusters get their weak tiers trimmed back
+    enabled: true
+    max_cluster_size: 500       # clusters above this lose their weakest tier(s) until the pieces fit; carved members are surfaced
   conflict_attributes: [birthdate, given_name]   # [AMP] hard conflicts refuse a merge however strong the score
   conflict_tolerances:          # per-attribute tolerance t_j (internals §2.8): values closer than this are not a conflict
     birthdate:  {measure: levenshtein_max, value: 2}      # typo / transposition tolerance
     given_name: {measure: jaro_winkler_min, value: 0.6}   # swept on held-out seeds 7/11 (reports/<date>/tuning); nicknames are canonicalised first
+    contact:    {measure: any_overlap}                    # set-valued: two formed clusters with disjoint e-mail+phone sets (add 'contact' to conflict_attributes to enable)
   conflict_columns:             # attribute -> standardised column used for the conflict check
     birthdate: birthdate_norm
     given_name: given_name_canon
     surname: surname_norm
     ck: ck
     loy_id: loy_id_norm
+    contact: [email_norm, phone_match]   # list -> set-valued attribute
 
 labels:                         # [AMP: Stitch labels] operator-forced merges / splits, see stitch/labels.py
   file: null                    # CSV: left_datasource,left_pk,right_datasource,right_pk,label (merge|split);
