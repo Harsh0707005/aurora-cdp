@@ -344,7 +344,8 @@ def evaluate_strategies(df: pd.DataFrame, positives: np.ndarray, strategies: lis
 
     covered = np.zeros(len(positives), dtype=bool)
     cost = 0
-    recs = df.to_dict("records")
+    recs = [{k: _str(v) if not isinstance(v, (int, float)) or isinstance(v, bool) else (None if v != v else v) for k, v in r.items()}
+            for r in df.to_dict("records")]
     per: list[dict] = []
     for s in strategies:
         keys = np.array([(blocking_keys_for(r, s) or [(None, None)])[0][1] for r in recs], dtype=object)
