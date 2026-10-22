@@ -25,3 +25,6 @@ metastore_db/
 *.joblib
 .tmp/
 deploy/aws/.env
+
+# evaluation artefacts written by aurora-eval-harness (keep JSON/MD/PNG, drop bulky tables)
+reports/**/*.parquet
