@@ -1,0 +1,5 @@
+{"t": 1.008, "stage": "ramp:20000", "cpu_pct": 7.7, "rss_mb": 638.8, "procs": 3, "sys_mem_used_pct": 74.6}
+{"t": 2.016, "stage": "ramp:20000", "cpu_pct": 0.3, "rss_mb": 767.9, "procs": 3, "sys_mem_used_pct": 76.0}
+{"t": 3.023, "stage": "ramp:20000", "cpu_pct": 0.4, "rss_mb": 852.2, "procs": 3, "sys_mem_used_pct": 76.5}
+{"t": 4.032, "stage": "ramp:20000", "cpu_pct": 0.4, "rss_mb": 722.3, "procs": 3, "sys_mem_used_pct": 77.4}
+{"t": 4.768, "stage": "ramp:20000", "cpu_pct": 60.9, "rss_mb": 335.8, "procs": 2, "sys_mem_used_pct": 73.5}

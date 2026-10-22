@@ -1,0 +1,5 @@
+{"t": 0.51, "stage": "flood:supersized_cluster", "cpu_pct": 4.8, "rss_mb": 314.8, "procs": 3, "sys_mem_used_pct": 73.8}
+{"t": 1.018, "stage": "flood:supersized_cluster", "cpu_pct": 0.6, "rss_mb": 369.9, "procs": 3, "sys_mem_used_pct": 74.2}
+{"t": 1.525, "stage": "flood:supersized_cluster", "cpu_pct": 0.6, "rss_mb": 443.8, "procs": 3, "sys_mem_used_pct": 74.9}
+{"t": 2.033, "stage": "flood:supersized_cluster", "cpu_pct": 0.6, "rss_mb": 490.7, "procs": 3, "sys_mem_used_pct": 76.0}
+{"t": 2.171, "stage": "flood:supersized_cluster", "cpu_pct": 52.3, "rss_mb": 179.4, "procs": 2, "sys_mem_used_pct": 74.8}

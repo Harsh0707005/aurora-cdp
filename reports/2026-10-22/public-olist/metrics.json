@@ -1,0 +1,2378 @@
+{
+  "provenance": {
+    "adapter": "aurora_cdp",
+    "aurora_cdp_commit": "08be538f5996b0a909a71b047d33d5b696b470b3",
+    "aurora_cdp_commit_source": "git",
+    "aurora_cdp_dirty_worktree": true,
+    "aurora_cdp_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp",
+    "aurora_cdp_version": "0.1.0",
+    "aurora_cdp_config": {
+      "workspace": ".aurora",
+      "outputs_dir": "outputs",
+      "db_file": "aurora.duckdb",
+      "normalize": {
+        "default_region": "US",
+        "phone_use_last10_for_match": true,
+        "email_strip_plus_tag": true,
+        "email_strip_gmail_dots": false,
+        "email_junk_local_parts": [
+          "test",
+          "no",
+          "none",
+          "reservation",
+          "admin",
+          "contact",
+          "guest",
+          "info",
+          "noreply",
+          "no-reply",
+          "donotreply",
+          "unknown"
+        ],
+        "address_abbreviations": {
+          "ST": "STREET",
+          "AVE": "AVENUE",
+          "RD": "ROAD",
+          "BLVD": "BOULEVARD",
+          "DR": "DRIVE",
+          "LN": "LANE",
+          "CT": "COURT",
+          "STE": "SUITE",
+          "APT": "APARTMENT",
+          "N": "NORTH",
+          "S": "SOUTH",
+          "E": "EAST",
+          "W": "WEST",
+          "1ST": "FIRST",
+          "2ND": "SECOND",
+          "3RD": "THIRD"
+        }
+      },
+      "blocklist": {
+        "email_max_given_names": 20,
+        "email_max_surnames": 20,
+        "phone_max_given_names": 20,
+        "address_max_given_names": 40
+      },
+      "blocking": {
+        "block_size_limit": 100,
+        "fk_block_size_limit": 1000,
+        "strategies": [
+          {
+            "name": "email_exact",
+            "type": "email"
+          },
+          {
+            "name": "phone_exact",
+            "type": "phone"
+          },
+          {
+            "name": "name_postal",
+            "type": "name_postal"
+          },
+          {
+            "name": "name_birthdate",
+            "type": "name_birthdate"
+          },
+          {
+            "name": "loy_id_exact",
+            "type": "loy_id"
+          },
+          {
+            "name": "ck_exact",
+            "type": "ck"
+          },
+          {
+            "name": "fk",
+            "type": "fk"
+          }
+        ]
+      },
+      "matcher": {
+        "match_threshold": 3.0,
+        "deterministic": {
+          "ck_exact_score": 5.0,
+          "loy_exact_score": 5.0,
+          "email_exact_with_name_score": 4.5,
+          "phone_exact_with_name_score": 4.2,
+          "name_agreement_min": 0.85
+        },
+        "weights": {
+          "bias": -2.5,
+          "given_sim": 1.0,
+          "surname_sim": 1.2,
+          "email_exact": 3.0,
+          "email_sim": 0.5,
+          "email_sim_min": 0.92,
+          "phone_exact": 2.5,
+          "address_sim": 1.2,
+          "postal_exact": 0.6,
+          "birthdate_exact": 1.5,
+          "fk_shared": 1.0,
+          "name_mismatch_penalty": -1.5,
+          "birthdate_conflict": -3.0
+        },
+        "hard_conflicts": {
+          "birthdate": true,
+          "birthdate_typo_tolerance": 2
+        }
+      },
+      "cluster": {
+        "supersized_min_size": 500,
+        "conflict_attributes": [
+          "birthdate"
+        ]
+      },
+      "stable_id": {
+        "enabled": true,
+        "jitter_alert_pct": 2.0
+      },
+      "survivorship": {
+        "source_priority": {
+          "loyalty": 1,
+          "crm": 2,
+          "ecommerce": 3,
+          "pos": 4
+        },
+        "field_priority": {},
+        "recency_field": "update_dt",
+        "attributes": [
+          "given_name",
+          "surname",
+          "email",
+          "phone",
+          "address",
+          "address2",
+          "city",
+          "state",
+          "postal",
+          "country",
+          "birthdate"
+        ]
+      },
+      "sources": {},
+      "tuning": {
+        "thresholds": [
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0
+        ],
+        "min_precision": 0.98
+      }
+    },
+    "harness_commit": "01795d854517e2c3a1540f4f0290be9ec53bf450",
+    "harness_version": "0.1.0",
+    "seed": 20261022,
+    "dataset": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/olist/sample-50000",
+    "run_at": "2026-10-22T05:39:07+00:00",
+    "host": {
+      "platform": "macOS",
+      "platform_release": "25.5.0",
+      "machine": "arm64",
+      "python": "3.11.11",
+      "cpu_count": 8,
+      "mem_total_gb": 8.59,
+      "hostname": "Harshs-Macbook-Air"
+    },
+    "run_name": "public-olist",
+    "input_hash": "87ce1685a11eb001d904",
+    "adapter_config": {
+      "cdp_path": null,
+      "config": null,
+      "threshold": 0.6,
+      "datasource_column": "source",
+      "datasource": "input",
+      "windows": 4,
+      "deterministic_ids": true,
+      "seed": 20261022,
+      "isolate_windows": false,
+      "max_stored_pairs": 20000000,
+      "epoch": "2026-01-01",
+      "window_days": 30,
+      "retries": 1,
+      "timeout_s": null,
+      "threshold_raw": 3.0,
+      "score_scale": 5.0,
+      "engine_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp"
+    },
+    "dataset_manifest_fingerprint": 17468295455860884585,
+    "dataset_seed": null,
+    "sample": null,
+    "argv": [
+      "--adapter",
+      "aurora_cdp",
+      "--windows",
+      "4",
+      "--seed",
+      "20261022",
+      "--date",
+      "2026-10-22",
+      "--force",
+      "--dataset",
+      "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/olist/sample-50000",
+      "--run-name",
+      "public-olist",
+      "--limitation",
+      "Public-corpus sanity check on a 50,000-profile sample (whole customers sampled, seed 20261022); the full corpus was not evaluated locally. See aurora-eval-harness/datasets/public/olist/README.md for the mapping and the pseudonymous loy_id assumption (recall ceiling ~0.64)."
+    ]
+  },
+  "run": {
+    "run_id": "public-olist",
+    "dataset": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/olist/sample-50000",
+    "dataset_name": "sample-50000",
+    "dataset_fingerprint": 17468295455860884585,
+    "elapsed_s": 16.42,
+    "argv": [
+      "--adapter",
+      "aurora_cdp",
+      "--windows",
+      "4",
+      "--seed",
+      "20261022",
+      "--date",
+      "2026-10-22",
+      "--force",
+      "--dataset",
+      "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/olist/sample-50000",
+      "--run-name",
+      "public-olist",
+      "--limitation",
+      "Public-corpus sanity check on a 50,000-profile sample (whole customers sampled, seed 20261022); the full corpus was not evaluated locally. See aurora-eval-harness/datasets/public/olist/README.md for the mapping and the pseudonymous loy_id assumption (recall ceiling ~0.64)."
+    ],
+    "contract_files": {
+      "assignments": "/Users/harshmaster/Desktop/Projects/aurora-eval-harness/runs/public-olist/assignments.csv",
+      "pairs": "/Users/harshmaster/Desktop/Projects/aurora-eval-harness/runs/public-olist/pairs.csv"
+    },
+    "provenance": {
+      "adapter": "aurora_cdp",
+      "aurora_cdp_commit": "08be538f5996b0a909a71b047d33d5b696b470b3",
+      "aurora_cdp_commit_source": "git",
+      "aurora_cdp_dirty_worktree": true,
+      "aurora_cdp_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp",
+      "aurora_cdp_version": "0.1.0",
+      "aurora_cdp_config": {
+        "workspace": ".aurora",
+        "outputs_dir": "outputs",
+        "db_file": "aurora.duckdb",
+        "normalize": {
+          "default_region": "US",
+          "phone_use_last10_for_match": true,
+          "email_strip_plus_tag": true,
+          "email_strip_gmail_dots": false,
+          "email_junk_local_parts": [
+            "test",
+            "no",
+            "none",
+            "reservation",
+            "admin",
+            "contact",
+            "guest",
+            "info",
+            "noreply",
+            "no-reply",
+            "donotreply",
+            "unknown"
+          ],
+          "address_abbreviations": {
+            "ST": "STREET",
+            "AVE": "AVENUE",
+            "RD": "ROAD",
+            "BLVD": "BOULEVARD",
+            "DR": "DRIVE",
+            "LN": "LANE",
+            "CT": "COURT",
+            "STE": "SUITE",
+            "APT": "APARTMENT",
+            "N": "NORTH",
+            "S": "SOUTH",
+            "E": "EAST",
+            "W": "WEST",
+            "1ST": "FIRST",
+            "2ND": "SECOND",
+            "3RD": "THIRD"
+          }
+        },
+        "blocklist": {
+          "email_max_given_names": 20,
+          "email_max_surnames": 20,
+          "phone_max_given_names": 20,
+          "address_max_given_names": 40
+        },
+        "blocking": {
+          "block_size_limit": 100,
+          "fk_block_size_limit": 1000,
+          "strategies": [
+            {
+              "name": "email_exact",
+              "type": "email"
+            },
+            {
+              "name": "phone_exact",
+              "type": "phone"
+            },
+            {
+              "name": "name_postal",
+              "type": "name_postal"
+            },
+            {
+              "name": "name_birthdate",
+              "type": "name_birthdate"
+            },
+            {
+              "name": "loy_id_exact",
+              "type": "loy_id"
+            },
+            {
+              "name": "ck_exact",
+              "type": "ck"
+            },
+            {
+              "name": "fk",
+              "type": "fk"
+            }
+          ]
+        },
+        "matcher": {
+          "match_threshold": 3.0,
+          "deterministic": {
+            "ck_exact_score": 5.0,
+            "loy_exact_score": 5.0,
+            "email_exact_with_name_score": 4.5,
+            "phone_exact_with_name_score": 4.2,
+            "name_agreement_min": 0.85
+          },
+          "weights": {
+            "bias": -2.5,
+            "given_sim": 1.0,
+            "surname_sim": 1.2,
+            "email_exact": 3.0,
+            "email_sim": 0.5,
+            "email_sim_min": 0.92,
+            "phone_exact": 2.5,
+            "address_sim": 1.2,
+            "postal_exact": 0.6,
+            "birthdate_exact": 1.5,
+            "fk_shared": 1.0,
+            "name_mismatch_penalty": -1.5,
+            "birthdate_conflict": -3.0
+          },
+          "hard_conflicts": {
+            "birthdate": true,
+            "birthdate_typo_tolerance": 2
+          }
+        },
+        "cluster": {
+          "supersized_min_size": 500,
+          "conflict_attributes": [
+            "birthdate"
+          ]
+        },
+        "stable_id": {
+          "enabled": true,
+          "jitter_alert_pct": 2.0
+        },
+        "survivorship": {
+          "source_priority": {
+            "loyalty": 1,
+            "crm": 2,
+            "ecommerce": 3,
+            "pos": 4
+          },
+          "field_priority": {},
+          "recency_field": "update_dt",
+          "attributes": [
+            "given_name",
+            "surname",
+            "email",
+            "phone",
+            "address",
+            "address2",
+            "city",
+            "state",
+            "postal",
+            "country",
+            "birthdate"
+          ]
+        },
+        "sources": {},
+        "tuning": {
+          "thresholds": [
+            2.0,
+            2.5,
+            3.0,
+            3.5,
+            4.0
+          ],
+          "min_precision": 0.98
+        }
+      },
+      "harness_commit": "01795d854517e2c3a1540f4f0290be9ec53bf450",
+      "harness_version": "0.1.0",
+      "seed": 20261022,
+      "dataset": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/olist/sample-50000",
+      "run_at": "2026-10-22T05:39:07+00:00",
+      "host": {
+        "platform": "macOS",
+        "platform_release": "25.5.0",
+        "machine": "arm64",
+        "python": "3.11.11",
+        "cpu_count": 8,
+        "mem_total_gb": 8.59,
+        "hostname": "Harshs-Macbook-Air"
+      },
+      "run_name": "public-olist",
+      "input_hash": "87ce1685a11eb001d904",
+      "adapter_config": {
+        "cdp_path": null,
+        "config": null,
+        "threshold": 0.6,
+        "datasource_column": "source",
+        "datasource": "input",
+        "windows": 4,
+        "deterministic_ids": true,
+        "seed": 20261022,
+        "isolate_windows": false,
+        "max_stored_pairs": 20000000,
+        "epoch": "2026-01-01",
+        "window_days": 30,
+        "retries": 1,
+        "timeout_s": null,
+        "threshold_raw": 3.0,
+        "score_scale": 5.0,
+        "engine_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp"
+      },
+      "dataset_manifest_fingerprint": 17468295455860884585,
+      "dataset_seed": null,
+      "sample": null,
+      "argv": [
+        "--adapter",
+        "aurora_cdp",
+        "--windows",
+        "4",
+        "--seed",
+        "20261022",
+        "--date",
+        "2026-10-22",
+        "--force",
+        "--dataset",
+        "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/olist/sample-50000",
+        "--run-name",
+        "public-olist",
+        "--limitation",
+        "Public-corpus sanity check on a 50,000-profile sample (whole customers sampled, seed 20261022); the full corpus was not evaluated locally. See aurora-eval-harness/datasets/public/olist/README.md for the mapping and the pseudonymous loy_id assumption (recall ceiling ~0.64)."
+      ]
+    },
+    "resolver": "aurora_cdp",
+    "adapter": "aurora_cdp",
+    "config": {
+      "threshold": 0.6,
+      "threshold_raw": 3.0,
+      "score_scale": 5.0,
+      "seed": 20261022,
+      "windows": 4,
+      "deterministic_ids": true,
+      "datasource_column": "source",
+      "isolate_windows": false,
+      "block_cap": 100,
+      "engine_overlay": null
+    },
+    "engine_config": {
+      "workspace": ".aurora",
+      "outputs_dir": "outputs",
+      "db_file": "aurora.duckdb",
+      "normalize": {
+        "default_region": "US",
+        "phone_use_last10_for_match": true,
+        "email_strip_plus_tag": true,
+        "email_strip_gmail_dots": false,
+        "email_junk_local_parts": [
+          "test",
+          "no",
+          "none",
+          "reservation",
+          "admin",
+          "contact",
+          "guest",
+          "info",
+          "noreply",
+          "no-reply",
+          "donotreply",
+          "unknown"
+        ],
+        "address_abbreviations": {
+          "ST": "STREET",
+          "AVE": "AVENUE",
+          "RD": "ROAD",
+          "BLVD": "BOULEVARD",
+          "DR": "DRIVE",
+          "LN": "LANE",
+          "CT": "COURT",
+          "STE": "SUITE",
+          "APT": "APARTMENT",
+          "N": "NORTH",
+          "S": "SOUTH",
+          "E": "EAST",
+          "W": "WEST",
+          "1ST": "FIRST",
+          "2ND": "SECOND",
+          "3RD": "THIRD"
+        }
+      },
+      "blocklist": {
+        "email_max_given_names": 20,
+        "email_max_surnames": 20,
+        "phone_max_given_names": 20,
+        "address_max_given_names": 40
+      },
+      "blocking": {
+        "block_size_limit": 100,
+        "fk_block_size_limit": 1000,
+        "strategies": [
+          {
+            "name": "email_exact",
+            "type": "email"
+          },
+          {
+            "name": "phone_exact",
+            "type": "phone"
+          },
+          {
+            "name": "name_postal",
+            "type": "name_postal"
+          },
+          {
+            "name": "name_birthdate",
+            "type": "name_birthdate"
+          },
+          {
+            "name": "loy_id_exact",
+            "type": "loy_id"
+          },
+          {
+            "name": "ck_exact",
+            "type": "ck"
+          },
+          {
+            "name": "fk",
+            "type": "fk"
+          }
+        ]
+      },
+      "matcher": {
+        "match_threshold": 3.0,
+        "deterministic": {
+          "ck_exact_score": 5.0,
+          "loy_exact_score": 5.0,
+          "email_exact_with_name_score": 4.5,
+          "phone_exact_with_name_score": 4.2,
+          "name_agreement_min": 0.85
+        },
+        "weights": {
+          "bias": -2.5,
+          "given_sim": 1.0,
+          "surname_sim": 1.2,
+          "email_exact": 3.0,
+          "email_sim": 0.5,
+          "email_sim_min": 0.92,
+          "phone_exact": 2.5,
+          "address_sim": 1.2,
+          "postal_exact": 0.6,
+          "birthdate_exact": 1.5,
+          "fk_shared": 1.0,
+          "name_mismatch_penalty": -1.5,
+          "birthdate_conflict": -3.0
+        },
+        "hard_conflicts": {
+          "birthdate": true,
+          "birthdate_typo_tolerance": 2
+        }
+      },
+      "cluster": {
+        "supersized_min_size": 500,
+        "conflict_attributes": [
+          "birthdate"
+        ]
+      },
+      "stable_id": {
+        "enabled": true,
+        "jitter_alert_pct": 2.0
+      },
+      "survivorship": {
+        "source_priority": {
+          "loyalty": 1,
+          "crm": 2,
+          "ecommerce": 3,
+          "pos": 4
+        },
+        "field_priority": {},
+        "recency_field": "update_dt",
+        "attributes": [
+          "given_name",
+          "surname",
+          "email",
+          "phone",
+          "address",
+          "address2",
+          "city",
+          "state",
+          "postal",
+          "country",
+          "birthdate"
+        ]
+      },
+      "sources": {},
+      "tuning": {
+        "thresholds": [
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0
+        ],
+        "min_precision": 0.98
+      }
+    },
+    "windows_plan": [
+      {
+        "window": 0,
+        "run_date": "2016-10-04"
+      },
+      {
+        "window": 8,
+        "run_date": "2017-06-01"
+      },
+      {
+        "window": 17,
+        "run_date": "2018-02-26"
+      },
+      {
+        "window": 25,
+        "run_date": "2018-10-24"
+      }
+    ],
+    "per_window": [
+      {
+        "window": 0,
+        "run_date": "2016-10-04",
+        "records": 9,
+        "elapsed_s": 0.33,
+        "engine_run_id": "run-20261022053908-ec537b",
+        "engine": {
+          "records": 9,
+          "mode": "full",
+          "prev_run_id": null,
+          "blocks": 0,
+          "skipped_blocks": 0,
+          "blocklisted_values": 0,
+          "pairs_blocked": 0,
+          "pairs_scored": 0,
+          "edges": 0,
+          "carried_edges": 0,
+          "match_rate": 0.0,
+          "clusters": 9,
+          "multi_record_clusters": 0,
+          "records_in_multi_record_clusters_pct": 0.0,
+          "components": 9,
+          "max_component_size": 1,
+          "max_cluster_size": 1,
+          "supersized_components": 0,
+          "split_components": 0,
+          "edges_rejected_by_conflict": 0,
+          "cluster_size_distribution": {
+            "1": 9
+          },
+          "singleton_pct": 100.0,
+          "jitter": {
+            "records_total": 9,
+            "records_compared": 0,
+            "records_changed": 0,
+            "jitter_pct": 0.0,
+            "ids_minted": 9,
+            "ids_retired": 0,
+            "alert": false
+          },
+          "timings_sec": {
+            "load": 0.007,
+            "blocking": 0.0,
+            "scoring": 0.001,
+            "clustering": 0.0,
+            "stable_id": 0.0,
+            "persist": 0.022
+          },
+          "threshold": 3.0
+        },
+        "match_category_counts": {},
+        "resumed": false
+      },
+      {
+        "window": 8,
+        "run_date": "2017-06-01",
+        "records": 5924,
+        "elapsed_s": 0.97,
+        "engine_run_id": "run-20261022053908-cddcfb",
+        "engine": {
+          "records": 5924,
+          "mode": "full",
+          "prev_run_id": "seed",
+          "blocks": 77,
+          "skipped_blocks": 0,
+          "blocklisted_values": 0,
+          "pairs_blocked": 85,
+          "pairs_scored": 85,
+          "edges": 85,
+          "carried_edges": 0,
+          "match_rate": 1.0,
+          "clusters": 5843,
+          "multi_record_clusters": 77,
+          "records_in_multi_record_clusters_pct": 2.67,
+          "components": 5843,
+          "max_component_size": 3,
+          "max_cluster_size": 3,
+          "supersized_components": 0,
+          "split_components": 0,
+          "edges_rejected_by_conflict": 0,
+          "cluster_size_distribution": {
+            "3-5": 4,
+            "2": 73,
+            "1": 5766
+          },
+          "singleton_pct": 98.68,
+          "jitter": {
+            "records_total": 5924,
+            "records_compared": 9,
+            "records_changed": 0,
+            "jitter_pct": 0.0,
+            "ids_minted": 5834,
+            "ids_retired": 0,
+            "alert": false
+          },
+          "timings_sec": {
+            "load": 0.063,
+            "blocking": 0.066,
+            "scoring": 0.003,
+            "clustering": 0.027,
+            "stable_id": 0.028,
+            "persist": 0.074
+          },
+          "threshold": 3.0
+        },
+        "match_category_counts": {
+          "exact": 85
+        },
+        "resumed": false
+      },
+      {
+        "window": 17,
+        "run_date": "2018-02-26",
+        "records": 29522,
+        "elapsed_s": 4.63,
+        "engine_run_id": "run-20261022053912-2d4487",
+        "engine": {
+          "records": 29522,
+          "mode": "full",
+          "prev_run_id": "seed",
+          "blocks": 565,
+          "skipped_blocks": 0,
+          "blocklisted_values": 0,
+          "pairs_blocked": 675,
+          "pairs_scored": 675,
+          "edges": 675,
+          "carried_edges": 0,
+          "match_rate": 1.0,
+          "clusters": 28910,
+          "multi_record_clusters": 565,
+          "records_in_multi_record_clusters_pct": 3.99,
+          "components": 28910,
+          "max_component_size": 6,
+          "max_cluster_size": 6,
+          "supersized_components": 0,
+          "split_components": 0,
+          "edges_rejected_by_conflict": 0,
+          "cluster_size_distribution": {
+            "6-10": 1,
+            "3-5": 35,
+            "2": 529,
+            "1": 28345
+          },
+          "singleton_pct": 98.05,
+          "jitter": {
+            "records_total": 29522,
+            "records_compared": 5924,
+            "records_changed": 0,
+            "jitter_pct": 0.0,
+            "ids_minted": 23067,
+            "ids_retired": 0,
+            "alert": false
+          },
+          "timings_sec": {
+            "load": 0.391,
+            "blocking": 0.231,
+            "scoring": 0.021,
+            "clustering": 0.33,
+            "stable_id": 0.187,
+            "persist": 0.496
+          },
+          "threshold": 3.0
+        },
+        "match_category_counts": {
+          "exact": 675
+        },
+        "resumed": false
+      },
+      {
+        "window": 25,
+        "run_date": "2018-10-24",
+        "records": 50001,
+        "elapsed_s": 6.66,
+        "engine_run_id": "run-20261022053919-ce87d8",
+        "engine": {
+          "records": 50001,
+          "mode": "full",
+          "prev_run_id": "seed",
+          "blocks": 1015,
+          "skipped_blocks": 0,
+          "blocklisted_values": 0,
+          "pairs_blocked": 1258,
+          "pairs_scored": 1258,
+          "edges": 1258,
+          "carried_edges": 0,
+          "match_rate": 1.0,
+          "clusters": 48888,
+          "multi_record_clusters": 1015,
+          "records_in_multi_record_clusters_pct": 4.26,
+          "components": 48888,
+          "max_component_size": 9,
+          "max_cluster_size": 9,
+          "supersized_components": 0,
+          "split_components": 0,
+          "edges_rejected_by_conflict": 0,
+          "cluster_size_distribution": {
+            "6-10": 2,
+            "3-5": 70,
+            "2": 943,
+            "1": 47873
+          },
+          "singleton_pct": 97.92,
+          "jitter": {
+            "records_total": 50001,
+            "records_compared": 29522,
+            "records_changed": 0,
+            "jitter_pct": 0.0,
+            "ids_minted": 19978,
+            "ids_retired": 0,
+            "alert": false
+          },
+          "timings_sec": {
+            "load": 0.572,
+            "blocking": 0.278,
+            "scoring": 0.027,
+            "clustering": 0.356,
+            "stable_id": 0.284,
+            "persist": 0.392
+          },
+          "threshold": 3.0
+        },
+        "match_category_counts": {
+          "exact": 1258
+        },
+        "resumed": false
+      }
+    ],
+    "candidate_pairs": 1258,
+    "blocking": {
+      "engine (final snapshot)": {
+        "pairs": 1258,
+        "groups": 1015,
+        "skipped_over_cap": 0,
+        "rows_in_skipped": -1
+      }
+    },
+    "timing_s": {
+      "engine_load": 1.03,
+      "engine_blocking": 0.58,
+      "engine_scoring": 0.05,
+      "engine_clustering": 0.72,
+      "engine_stable_id": 0.5,
+      "engine_persist": 0.98,
+      "resolve_windows": 12.59,
+      "wall_total": 16.07
+    },
+    "windows": {
+      "windows": 4,
+      "edges_total": 1258,
+      "per_window": [
+        {
+          "window": 0,
+          "profiles": 9,
+          "edges": 0,
+          "clusters": 9
+        },
+        {
+          "window": 8,
+          "profiles": 5924,
+          "edges": 85,
+          "clusters": 5843
+        },
+        {
+          "window": 17,
+          "profiles": 29522,
+          "edges": 675,
+          "clusters": 28910
+        },
+        {
+          "window": 25,
+          "profiles": 50001,
+          "edges": 1258,
+          "clusters": 48888
+        }
+      ]
+    },
+    "jitter_per_window": [
+      {
+        "window": 0,
+        "run_date": "2016-10-04",
+        "records_total": 9,
+        "records_compared": 0,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 9,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 8,
+        "run_date": "2017-06-01",
+        "records_total": 5924,
+        "records_compared": 9,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 5834,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 17,
+        "run_date": "2018-02-26",
+        "records_total": 29522,
+        "records_compared": 5924,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 23067,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 25,
+        "run_date": "2018-10-24",
+        "records_total": 50001,
+        "records_compared": 29522,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 19978,
+        "ids_retired": 0,
+        "alert": false
+      }
+    ],
+    "engine_metrics_final": {
+      "records": 50001,
+      "mode": "full",
+      "prev_run_id": "seed",
+      "blocks": 1015,
+      "skipped_blocks": 0,
+      "blocklisted_values": 0,
+      "pairs_blocked": 1258,
+      "pairs_scored": 1258,
+      "edges": 1258,
+      "carried_edges": 0,
+      "match_rate": 1.0,
+      "clusters": 48888,
+      "multi_record_clusters": 1015,
+      "records_in_multi_record_clusters_pct": 4.26,
+      "components": 48888,
+      "max_component_size": 9,
+      "max_cluster_size": 9,
+      "supersized_components": 0,
+      "split_components": 0,
+      "edges_rejected_by_conflict": 0,
+      "cluster_size_distribution": {
+        "6-10": 2,
+        "3-5": 70,
+        "2": 943,
+        "1": 47873
+      },
+      "singleton_pct": 97.92,
+      "jitter": {
+        "records_total": 50001,
+        "records_compared": 29522,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 19978,
+        "ids_retired": 0,
+        "alert": false
+      },
+      "timings_sec": {
+        "load": 0.572,
+        "blocking": 0.278,
+        "scoring": 0.027,
+        "clustering": 0.356,
+        "stable_id": 0.284,
+        "persist": 0.392
+      },
+      "threshold": 3.0
+    },
+    "scores_store_fraction": 1.0
+  },
+  "dataset": {
+    "name": "sample-50000",
+    "manifest": {
+      "schema_version": "1",
+      "public_dataset": "olist",
+      "generated_at": "2026-10-22T05:21:02+00:00",
+      "epoch": "2016-09-04",
+      "window_days": 30,
+      "timeline_days": 773,
+      "n_windows_at_30d": 26,
+      "counts": {
+        "profiles": 50001,
+        "persons": 48306,
+        "true_pairs": 2039,
+        "profiles_per_person_max": 17,
+        "singleton_persons": 46786,
+        "raw_customer_rows": 99441
+      },
+      "source_url": "https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce",
+      "license": "CC BY-NC-SA 4.0",
+      "raw_files": [
+        "olist_customers_dataset.csv",
+        "olist_orders_dataset.csv"
+      ],
+      "loy_capture": 0.8,
+      "sample": 50000,
+      "seed": 20261022,
+      "mapping": {
+        "profile_id": "customer_id",
+        "person_id": "customer_unique_id",
+        "created_at": "orders.order_purchase_timestamp",
+        "postal_code": "customer_zip_code_prefix",
+        "city": "customer_city",
+        "state": "customer_state",
+        "loy_id": "sha1('olist:' + customer_unique_id)[:16] on loy_capture share",
+        "fk_order": "order_id"
+      },
+      "assumptions": [
+        "customer_unique_id is ground truth and is never exposed to the resolver",
+        "loy_id is a pseudonymous stand-in for a partially captured account key (recall ceiling ~ capture^2)",
+        "names/emails/phones/dob/street are empty: the corpus is PII-free"
+      ],
+      "out": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/olist/sample-50000",
+      "fingerprint": 17468295455860884585
+    }
+  },
+  "metrics": {
+    "n_profiles_scored": 50001,
+    "n_profiles_labelled": 50001,
+    "n_windows": 4,
+    "pairwise": {
+      "precision": 1.0,
+      "recall": 0.616969102501226,
+      "f1": 0.7631179860479224,
+      "tp_pairs": 1258,
+      "fp_pairs": 0,
+      "fn_pairs": 781,
+      "predicted_pairs": 1258,
+      "true_pairs": 2039
+    },
+    "cluster": {
+      "n_profiles": 50001,
+      "n_pred_clusters": 48888,
+      "n_truth_persons": 48306,
+      "cluster_count_ratio": 1.0120481927710843,
+      "bcubed_precision": 1.0,
+      "bcubed_recall": 0.9878340920576546,
+      "bcubed_f1": 0.9938798172387957,
+      "exact_match_clusters": 47748,
+      "exact_match_rate": 0.9884486399205068,
+      "false_merge": {
+        "clusters": 0,
+        "cluster_rate": 0.0,
+        "profiles": 0,
+        "profile_rate": 0.0,
+        "persons_affected": 0,
+        "max_persons_in_cluster": 1
+      },
+      "split": {
+        "persons": 558,
+        "person_rate": 0.01155136007949323,
+        "profiles": 1221,
+        "profile_rate": 0.024419511609767804
+      },
+      "pred_size_dist": {
+        "mean": 1.022766323024055,
+        "p50": 1.0,
+        "p90": 1.0,
+        "p99": 2.0,
+        "max": 9,
+        "singletons": 47873
+      },
+      "truth_size_dist": {
+        "mean": 1.0350888088436219,
+        "p50": 1.0,
+        "p90": 1.0,
+        "p99": 2.0,
+        "max": 17,
+        "singletons": 46786
+      },
+      "size_hist": {
+        "labels": [
+          "1",
+          "2",
+          "3",
+          "4-5",
+          "6-10",
+          "11-20",
+          "21-50",
+          "51-100",
+          ">100"
+        ],
+        "pred": [
+          47873,
+          943,
+          56,
+          14,
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "truth": [
+          46786,
+          1402,
+          89,
+          24,
+          4,
+          1,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "churn": {
+      "windows": [
+        {
+          "window": 0,
+          "profiles": 9,
+          "clusters": 9
+        },
+        {
+          "window": 8,
+          "profiles": 5924,
+          "clusters": 5843,
+          "new_profiles": 5915,
+          "carried": 9,
+          "churned": 0,
+          "churn_rate": 0.0,
+          "churn_merge_profiles": 0,
+          "churn_split_profiles": 0,
+          "clusters_changed": 0
+        },
+        {
+          "window": 17,
+          "profiles": 29522,
+          "clusters": 28910,
+          "new_profiles": 23598,
+          "carried": 5924,
+          "churned": 0,
+          "churn_rate": 0.0,
+          "churn_merge_profiles": 0,
+          "churn_split_profiles": 0,
+          "clusters_changed": 0
+        },
+        {
+          "window": 25,
+          "profiles": 50001,
+          "clusters": 48888,
+          "new_profiles": 20479,
+          "carried": 29522,
+          "churned": 0,
+          "churn_rate": 0.0,
+          "churn_merge_profiles": 0,
+          "churn_split_profiles": 0,
+          "clusters_changed": 0
+        }
+      ],
+      "n_windows": 4,
+      "mean_churn_rate": 0.0,
+      "max_churn_rate": 0.0,
+      "total_churned": 0,
+      "total_carried": 35455,
+      "harmful_churn_share": 0.0
+    },
+    "per_window": [
+      {
+        "window": 0,
+        "profiles": 9,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "false_merge_cluster_rate": 0.0,
+        "bcubed_f1": 1.0
+      },
+      {
+        "window": 8,
+        "profiles": 5924,
+        "precision": 1.0,
+        "recall": 0.5821917808219178,
+        "f1": 0.735930735930736,
+        "false_merge_cluster_rate": 0.0,
+        "bcubed_f1": 0.9954355966932804
+      },
+      {
+        "window": 17,
+        "profiles": 29522,
+        "precision": 1.0,
+        "recall": 0.6226937269372693,
+        "f1": 0.7674815235929504,
+        "false_merge_cluster_rate": 0.0,
+        "bcubed_f1": 0.9942230797446664
+      },
+      {
+        "window": 25,
+        "profiles": 50001,
+        "precision": 1.0,
+        "recall": 0.616969102501226,
+        "f1": 0.7631179860479224,
+        "false_merge_cluster_rate": 0.0,
+        "bcubed_f1": 0.9938798172387957
+      }
+    ],
+    "curves": {
+      "n_scored_pairs": 1258,
+      "positives_in_candidates": 1258,
+      "negatives_in_candidates": 0,
+      "scores_store_fraction": 1.0,
+      "blocking_recall": 0.616969102501226,
+      "auc_roc": null,
+      "average_precision": null,
+      "roc": null,
+      "pr": null
+    },
+    "summary": "pairwise P=1.000 R=0.617 F1=0.763 | B3 F1=0.994 | false-merge clusters=0.00% (profiles 0.00%) | split persons=1.16% | ID churn/30d mean=0.00% max=0.00%",
+    "engine_jitter": [
+      {
+        "window": 0,
+        "run_date": "2016-10-04",
+        "records_total": 9,
+        "records_compared": 0,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 9,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 8,
+        "run_date": "2017-06-01",
+        "records_total": 5924,
+        "records_compared": 9,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 5834,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 17,
+        "run_date": "2018-02-26",
+        "records_total": 29522,
+        "records_compared": 5924,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 23067,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 25,
+        "run_date": "2018-10-24",
+        "records_total": 50001,
+        "records_compared": 29522,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 19978,
+        "ids_retired": 0,
+        "alert": false
+      }
+    ],
+    "validation": {
+      "ok": true,
+      "failed": [],
+      "n_cases": 17,
+      "n_checks": 91,
+      "metrics": {
+        "pairwise.precision/recall/f1": {
+          "status": "validated",
+          "case": "A: pairwise",
+          "failed_checks": []
+        },
+        "pairwise.tp/fp/fn pairs": {
+          "status": "validated",
+          "case": "A: pairwise",
+          "failed_checks": []
+        },
+        "cluster.bcubed_precision/recall/f1": {
+          "status": "validated",
+          "case": "A: B-cubed",
+          "failed_checks": []
+        },
+        "cluster.false_merge (cluster/profile/pair)": {
+          "status": "validated",
+          "case": "A: false-merge",
+          "failed_checks": []
+        },
+        "cluster.split (persons/profiles)": {
+          "status": "validated",
+          "case": "A: split",
+          "failed_checks": []
+        },
+        "cluster.exact_match_rate / cluster_count_ratio": {
+          "status": "validated",
+          "case": "A: exact / ratio",
+          "failed_checks": []
+        },
+        "cluster.pred_size_dist / truth_size_dist": {
+          "status": "validated",
+          "case": "A: size distributions",
+          "failed_checks": []
+        },
+        "churn.rate / merge vs split": {
+          "status": "validated",
+          "case": "C: churn rate, merge vs split",
+          "failed_checks": []
+        },
+        "churn.harmful vs justified": {
+          "status": "validated",
+          "case": "C: harmful vs justified",
+          "failed_checks": []
+        },
+        "curves.blocking_recall": {
+          "status": "validated",
+          "case": "A: blocking recall",
+          "failed_checks": []
+        },
+        "curves.auc_roc / average_precision": {
+          "status": "validated",
+          "case": "A: ROC / PR",
+          "failed_checks": []
+        },
+        "curves.operating_point": {
+          "status": "validated",
+          "case": "A: operating point @0.75",
+          "failed_checks": []
+        },
+        "per_window quality": {
+          "status": "validated",
+          "case": "C: per-window quality",
+          "failed_checks": []
+        },
+        "sanity: perfect input": {
+          "status": "validated",
+          "case": "perfect prediction",
+          "failed_checks": []
+        },
+        "sanity: all-singleton input": {
+          "status": "validated",
+          "case": "all singletons",
+          "failed_checks": []
+        },
+        "sanity: all-merged input": {
+          "status": "validated",
+          "case": "everything merged",
+          "failed_checks": []
+        },
+        "sanity: disjoint prediction": {
+          "status": "validated",
+          "case": "disjoint prediction",
+          "failed_checks": []
+        },
+        "sanity: disjoint pairs file": {
+          "status": "validated",
+          "case": "pairs file with no true pair",
+          "failed_checks": []
+        },
+        "threshold_sweep": {
+          "status": "approximation",
+          "note": "approximation \u2014 harness connected components over engine pair scores; not the engine's conflict-aware clustering"
+        },
+        "overmerge.dominant_feature": {
+          "status": "untrusted",
+          "note": "untrusted \u2014 attribution by engine match_type only (engine pair features are not exported)"
+        },
+        "curves.score_hist": {
+          "status": "untrusted",
+          "note": "untrusted \u2014 diagnostic histogram, no golden case"
+        },
+        "engine.metrics (pairs_blocked, skipped_blocks, cluster_size_distribution, timings)": {
+          "status": "untrusted",
+          "note": "untrusted \u2014 reported verbatim from the engine, not independently recomputed"
+        },
+        "engine.jitter_pct per snapshot": {
+          "status": "cross-checked",
+          "note": "engine jitter == harness churn rate per window",
+          "windows": [
+            {
+              "window": 8,
+              "engine_jitter": 0.0,
+              "harness_churn": 0.0,
+              "engine_compared": 9,
+              "harness_carried": 9,
+              "ok": true
+            },
+            {
+              "window": 17,
+              "engine_jitter": 0.0,
+              "harness_churn": 0.0,
+              "engine_compared": 5924,
+              "harness_carried": 5924,
+              "ok": true
+            },
+            {
+              "window": 25,
+              "engine_jitter": 0.0,
+              "harness_churn": 0.0,
+              "engine_compared": 29522,
+              "harness_carried": 29522,
+              "ok": true
+            }
+          ]
+        }
+      },
+      "cases": {
+        "pairwise": {
+          "case": "A: pairwise",
+          "ok": true,
+          "checks": [
+            {
+              "check": "precision",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "recall",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "f1",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "tp_pairs",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            },
+            {
+              "check": "fp_pairs",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            },
+            {
+              "check": "fn_pairs",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            },
+            {
+              "check": "predicted_pairs",
+              "expected": 4,
+              "got": 4,
+              "ok": true
+            },
+            {
+              "check": "true_pairs",
+              "expected": 4,
+              "got": 4,
+              "ok": true
+            }
+          ]
+        },
+        "bcubed": {
+          "case": "A: B-cubed",
+          "ok": true,
+          "checks": [
+            {
+              "check": "bcubed_precision",
+              "expected": 0.7777777777777778,
+              "got": 0.7777777777777778,
+              "ok": true
+            },
+            {
+              "check": "bcubed_recall",
+              "expected": 0.7777777777777778,
+              "got": 0.7777777777777777,
+              "ok": true
+            },
+            {
+              "check": "bcubed_f1",
+              "expected": 0.7777777777777778,
+              "got": 0.7777777777777778,
+              "ok": true
+            }
+          ]
+        },
+        "false_merge": {
+          "case": "A: false-merge",
+          "ok": true,
+          "checks": [
+            {
+              "check": "clusters",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "cluster_rate",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            },
+            {
+              "check": "profiles",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "profile_rate",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "pair_rate = 1-precision",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "persons_affected",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            },
+            {
+              "check": "max_persons_in_cluster",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            }
+          ]
+        },
+        "split": {
+          "case": "A: split",
+          "ok": true,
+          "checks": [
+            {
+              "check": "persons",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "person_rate",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            },
+            {
+              "check": "profiles",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "profile_rate",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            }
+          ]
+        },
+        "exact": {
+          "case": "A: exact / ratio",
+          "ok": true,
+          "checks": [
+            {
+              "check": "exact_match_clusters",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "exact_match_rate",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            },
+            {
+              "check": "cluster_count_ratio",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "n_pred_clusters",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "n_truth_persons",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            }
+          ]
+        },
+        "sizes": {
+          "case": "A: size distributions",
+          "ok": true,
+          "checks": [
+            {
+              "check": "pred.mean",
+              "expected": 2.0,
+              "got": 2.0,
+              "ok": true
+            },
+            {
+              "check": "pred.max",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "pred.singletons",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "truth.mean",
+              "expected": 2.0,
+              "got": 2.0,
+              "ok": true
+            },
+            {
+              "check": "truth.max",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "truth.singletons",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            }
+          ]
+        },
+        "blocking": {
+          "case": "A: blocking recall",
+          "ok": true,
+          "checks": [
+            {
+              "check": "blocking_recall",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "positives_in_candidates",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            },
+            {
+              "check": "n_scored_pairs",
+              "expected": 4,
+              "got": 4,
+              "ok": true
+            }
+          ]
+        },
+        "curves": {
+          "case": "A: ROC / PR",
+          "ok": true,
+          "checks": [
+            {
+              "check": "auc_roc",
+              "expected": 0.75,
+              "got": 0.75,
+              "ok": true
+            },
+            {
+              "check": "average_precision",
+              "expected": 0.8333333333333334,
+              "got": 0.8333333333333333,
+              "ok": true
+            }
+          ]
+        },
+        "operating": {
+          "case": "A: operating point @0.75",
+          "ok": true,
+          "checks": [
+            {
+              "check": "precision",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "recall_in_candidates",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "effective_recall",
+              "expected": 0.25,
+              "got": 0.25,
+              "ok": true
+            },
+            {
+              "check": "tp",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "fp",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "fn",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            }
+          ]
+        },
+        "churn": {
+          "case": "C: churn rate, merge vs split",
+          "ok": true,
+          "checks": [
+            {
+              "check": "w1.carried",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "w1.churned",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "w1.churn_rate",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            },
+            {
+              "check": "w1.merge",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "w1.split",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            },
+            {
+              "check": "w1.new",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "w2.carried",
+              "expected": 4,
+              "got": 4,
+              "ok": true
+            },
+            {
+              "check": "w2.churned",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "w2.churn_rate",
+              "expected": 0.25,
+              "got": 0.25,
+              "ok": true
+            },
+            {
+              "check": "w2.merge",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            },
+            {
+              "check": "w2.split",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "mean_churn_rate",
+              "expected": 0.29166666666666663,
+              "got": 0.29166666666666663,
+              "ok": true
+            },
+            {
+              "check": "max_churn_rate",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            }
+          ]
+        },
+        "churn_harm": {
+          "case": "C: harmful vs justified",
+          "ok": true,
+          "checks": [
+            {
+              "check": "w1.justified",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "w1.harmful",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            },
+            {
+              "check": "w2.harmful",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            },
+            {
+              "check": "harmful_share",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            }
+          ]
+        },
+        "per_window": {
+          "case": "C: per-window quality",
+          "ok": true,
+          "checks": [
+            {
+              "check": "w0.precision",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "w0.recall",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            },
+            {
+              "check": "w1.recall",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "w2.false_merge_cluster_rate",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            }
+          ]
+        },
+        "perfect": {
+          "case": "perfect prediction",
+          "ok": true,
+          "checks": [
+            {
+              "check": "f1",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "bcubed_f1",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "false_merge.cluster_rate",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "split.person_rate",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "exact_match_rate",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            }
+          ]
+        },
+        "singletons": {
+          "case": "all singletons",
+          "ok": true,
+          "checks": [
+            {
+              "check": "recall",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "precision (no predicted pairs -> 1 by convention)",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "f1",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "bcubed_precision",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "bcubed_recall",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "false_merge.clusters",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            },
+            {
+              "check": "split.persons",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            }
+          ]
+        },
+        "merged": {
+          "case": "everything merged",
+          "ok": true,
+          "checks": [
+            {
+              "check": "recall",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "precision",
+              "expected": 0.26666666666666666,
+              "got": 0.26666666666666666,
+              "ok": true
+            },
+            {
+              "check": "false_merge.cluster_rate",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "false_merge.profile_rate",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "bcubed_recall",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "bcubed_precision",
+              "expected": 0.38888888888888884,
+              "got": 0.38888888888888884,
+              "ok": true
+            }
+          ]
+        },
+        "disjoint": {
+          "case": "disjoint prediction",
+          "ok": true,
+          "checks": [
+            {
+              "check": "recall",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "precision",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "f1",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "false_merge.cluster_rate",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "split.person_rate",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            }
+          ]
+        },
+        "disjoint_pairs": {
+          "case": "pairs file with no true pair",
+          "ok": true,
+          "checks": [
+            {
+              "check": "blocking_recall",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "auc_roc (undefined -> None)",
+              "expected": null,
+              "got": null,
+              "ok": true
+            },
+            {
+              "check": "positives_in_candidates",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            }
+          ]
+        }
+      }
+    }
+  },
+  "threshold_sweep": [
+    {
+      "threshold": 0.3,
+      "precision": 1.0,
+      "recall": 0.616969102501226,
+      "f1": 0.7631179860479224,
+      "bcubed_f1": 0.9938798172387957,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.01155136007949323,
+      "n_clusters": 48888
+    },
+    {
+      "threshold": 0.35,
+      "precision": 1.0,
+      "recall": 0.616969102501226,
+      "f1": 0.7631179860479224,
+      "bcubed_f1": 0.9938798172387957,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.01155136007949323,
+      "n_clusters": 48888
+    },
+    {
+      "threshold": 0.4,
+      "precision": 1.0,
+      "recall": 0.616969102501226,
+      "f1": 0.7631179860479224,
+      "bcubed_f1": 0.9938798172387957,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.01155136007949323,
+      "n_clusters": 48888
+    },
+    {
+      "threshold": 0.45,
+      "precision": 1.0,
+      "recall": 0.616969102501226,
+      "f1": 0.7631179860479224,
+      "bcubed_f1": 0.9938798172387957,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.01155136007949323,
+      "n_clusters": 48888
+    },
+    {
+      "threshold": 0.5,
+      "precision": 1.0,
+      "recall": 0.616969102501226,
+      "f1": 0.7631179860479224,
+      "bcubed_f1": 0.9938798172387957,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.01155136007949323,
+      "n_clusters": 48888
+    },
+    {
+      "threshold": 0.55,
+      "precision": 1.0,
+      "recall": 0.616969102501226,
+      "f1": 0.7631179860479224,
+      "bcubed_f1": 0.9938798172387957,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.01155136007949323,
+      "n_clusters": 48888
+    },
+    {
+      "threshold": 0.6,
+      "precision": 1.0,
+      "recall": 0.616969102501226,
+      "f1": 0.7631179860479224,
+      "bcubed_f1": 0.9938798172387957,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.01155136007949323,
+      "n_clusters": 48888
+    },
+    {
+      "threshold": 0.65,
+      "precision": 1.0,
+      "recall": 0.616969102501226,
+      "f1": 0.7631179860479224,
+      "bcubed_f1": 0.9938798172387957,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.01155136007949323,
+      "n_clusters": 48888
+    },
+    {
+      "threshold": 0.7,
+      "precision": 1.0,
+      "recall": 0.616969102501226,
+      "f1": 0.7631179860479224,
+      "bcubed_f1": 0.9938798172387957,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.01155136007949323,
+      "n_clusters": 48888
+    },
+    {
+      "threshold": 0.75,
+      "precision": 1.0,
+      "recall": 0.616969102501226,
+      "f1": 0.7631179860479224,
+      "bcubed_f1": 0.9938798172387957,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.01155136007949323,
+      "n_clusters": 48888
+    },
+    {
+      "threshold": 0.8,
+      "precision": 1.0,
+      "recall": 0.616969102501226,
+      "f1": 0.7631179860479224,
+      "bcubed_f1": 0.9938798172387957,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.01155136007949323,
+      "n_clusters": 48888
+    },
+    {
+      "threshold": 0.85,
+      "precision": 1.0,
+      "recall": 0.616969102501226,
+      "f1": 0.7631179860479224,
+      "bcubed_f1": 0.9938798172387957,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.01155136007949323,
+      "n_clusters": 48888
+    },
+    {
+      "threshold": 0.9,
+      "precision": 1.0,
+      "recall": 0.616969102501226,
+      "f1": 0.7631179860479224,
+      "bcubed_f1": 0.9938798172387957,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.01155136007949323,
+      "n_clusters": 48888
+    },
+    {
+      "threshold": 0.95,
+      "precision": 1.0,
+      "recall": 0.616969102501226,
+      "f1": 0.7631179860479224,
+      "bcubed_f1": 0.9938798172387957,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.01155136007949323,
+      "n_clusters": 48888
+    }
+  ],
+  "overmerge_summary": {
+    "overmerged_clusters": 0,
+    "profiles_in_overmerged": 0,
+    "persons_in_overmerged": 0,
+    "cross_person_edges": 0,
+    "edge_feature_tally": {
+      "email": 0,
+      "phone": 0,
+      "dob": 0,
+      "postal": 0,
+      "name": 0,
+      "addr": 0,
+      "engine_deterministic": 0,
+      "engine_scored": 0,
+      "engine_trivial_duplicate": 0
+    },
+    "edge_feature_only_tally": {
+      "email": 0,
+      "phone": 0,
+      "dob": 0,
+      "postal": 0,
+      "name": 0,
+      "addr": 0,
+      "engine_deterministic": 0,
+      "engine_scored": 0,
+      "engine_trivial_duplicate": 0
+    }
+  },
+  "resources": {
+    "wall_s": 18.3,
+    "samples": 18,
+    "interval_s": 1.0,
+    "peak_rss_mb": 761.6,
+    "mean_rss_mb": 601.8,
+    "mean_cpu_pct": 98.0,
+    "peak_cpu_pct": 102.0,
+    "cpu_count": 8,
+    "stage_wall_s": {
+      "init": 0.0,
+      "load": 0.14,
+      "resolve": 0.04,
+      "resolve:w0": 0.36,
+      "resolve:w8": 1.23,
+      "resolve:w17": 5.73,
+      "resolve:w25": 8.64,
+      "assemble": 0.11,
+      "persist": 0.3,
+      "metrics": 1.73,
+      "report": 0.0
+    },
+    "per_stage": {
+      "resolve:w8": {
+        "samples": 1,
+        "peak_rss_mb": 332.6,
+        "mean_cpu_pct": 93.2,
+        "wall_s": 1.23
+      },
+      "resolve:w17": {
+        "samples": 6,
+        "peak_rss_mb": 608.6,
+        "mean_cpu_pct": 98.0,
+        "wall_s": 5.73
+      },
+      "resolve:w25": {
+        "samples": 8,
+        "peak_rss_mb": 761.6,
+        "mean_cpu_pct": 99.3,
+        "wall_s": 8.64
+      },
+      "persist": {
+        "samples": 1,
+        "peak_rss_mb": 629.1,
+        "mean_cpu_pct": 98.6,
+        "wall_s": 0.3
+      },
+      "metrics": {
+        "samples": 1,
+        "peak_rss_mb": 632.9,
+        "mean_cpu_pct": 91.3,
+        "wall_s": 1.73
+      },
+      "report": {
+        "samples": 1,
+        "peak_rss_mb": 633.0,
+        "mean_cpu_pct": 98.4,
+        "wall_s": 0.0
+      }
+    }
+  },
+  "events": {
+    "stages": [
+      "load",
+      "metrics",
+      "report",
+      "resolve:w0",
+      "resolve:w17",
+      "resolve:w25",
+      "resolve:w8"
+    ],
+    "failures": 0,
+    "retries": 0,
+    "resumed": false,
+    "failure_details": []
+  },
+  "limitations": [
+    "Public-corpus sanity check on a 50,000-profile sample (whole customers sampled, seed 20261022); the full corpus was not evaluated locally. See aurora-eval-harness/datasets/public/olist/README.md for the mapping and the pseudonymous loy_id assumption (recall ceiling ~0.64)."
+  ],
+  "notes": [
+    "Engine scores are normalised from the 0\u20135 band scale to [0, 1] (score/5); the operating threshold 0.60 is the engine's 3.0 on its own scale.",
+    "The threshold sweep re-clusters engine pair scores with plain connected components, so it approximates (does not reproduce) the engine's conflict-aware clustering at other thresholds."
+  ],
+  "plots": {
+    "cluster_sizes": "cluster_sizes.png",
+    "churn": "churn.png",
+    "sweep": "sweep.png",
+    "resources": "resources.png"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "summary": {
+    "overmerged_clusters": 0,
+    "profiles_in_overmerged": 0,
+    "persons_in_overmerged": 0,
+    "cross_person_edges": 0,
+    "edge_feature_tally": {
+      "email": 0,
+      "phone": 0,
+      "dob": 0,
+      "postal": 0,
+      "name": 0,
+      "addr": 0,
+      "engine_deterministic": 0,
+      "engine_scored": 0,
+      "engine_trivial_duplicate": 0
+    },
+    "edge_feature_only_tally": {
+      "email": 0,
+      "phone": 0,
+      "dob": 0,
+      "postal": 0,
+      "name": 0,
+      "addr": 0,
+      "engine_deterministic": 0,
+      "engine_scored": 0,
+      "engine_trivial_duplicate": 0
+    }
+  },
+  "clusters": []
+}

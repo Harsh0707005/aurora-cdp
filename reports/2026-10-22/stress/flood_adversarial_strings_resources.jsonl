@@ -1,0 +1,6 @@
+{"t": 0.511, "stage": "flood:adversarial_strings", "cpu_pct": 7.1, "rss_mb": 392.6, "procs": 3, "sys_mem_used_pct": 75.4}
+{"t": 1.015, "stage": "flood:adversarial_strings", "cpu_pct": 0.6, "rss_mb": 438.8, "procs": 3, "sys_mem_used_pct": 75.4}
+{"t": 1.523, "stage": "flood:adversarial_strings", "cpu_pct": 0.6, "rss_mb": 533.8, "procs": 3, "sys_mem_used_pct": 76.3}
+{"t": 2.03, "stage": "flood:adversarial_strings", "cpu_pct": 0.6, "rss_mb": 568.8, "procs": 3, "sys_mem_used_pct": 76.3}
+{"t": 2.544, "stage": "flood:adversarial_strings", "cpu_pct": 5.8, "rss_mb": 242.8, "procs": 2, "sys_mem_used_pct": 74.7}
+{"t": 2.582, "stage": "flood:adversarial_strings", "cpu_pct": 100.3, "rss_mb": 243.2, "procs": 2, "sys_mem_used_pct": 74.6}

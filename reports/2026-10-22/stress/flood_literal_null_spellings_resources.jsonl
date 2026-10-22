@@ -1,0 +1,7 @@
+{"t": 0.513, "stage": "flood:literal_null_spellings", "cpu_pct": 9.3, "rss_mb": 639.8, "procs": 3, "sys_mem_used_pct": 74.4}
+{"t": 1.022, "stage": "flood:literal_null_spellings", "cpu_pct": 0.8, "rss_mb": 675.6, "procs": 3, "sys_mem_used_pct": 73.7}
+{"t": 1.53, "stage": "flood:literal_null_spellings", "cpu_pct": 0.6, "rss_mb": 601.5, "procs": 3, "sys_mem_used_pct": 74.0}
+{"t": 2.038, "stage": "flood:literal_null_spellings", "cpu_pct": 0.6, "rss_mb": 488.1, "procs": 3, "sys_mem_used_pct": 75.0}
+{"t": 2.544, "stage": "flood:literal_null_spellings", "cpu_pct": 0.5, "rss_mb": 467.5, "procs": 3, "sys_mem_used_pct": 75.0}
+{"t": 3.058, "stage": "flood:literal_null_spellings", "cpu_pct": 14.5, "rss_mb": 161.3, "procs": 2, "sys_mem_used_pct": 73.4}
+{"t": 3.179, "stage": "flood:literal_null_spellings", "cpu_pct": 99.7, "rss_mb": 161.7, "procs": 2, "sys_mem_used_pct": 73.4}

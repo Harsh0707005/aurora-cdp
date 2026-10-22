@@ -1,0 +1,2395 @@
+{
+  "provenance": {
+    "adapter": "aurora_cdp",
+    "aurora_cdp_commit": "08be538f5996b0a909a71b047d33d5b696b470b3",
+    "aurora_cdp_commit_source": "git",
+    "aurora_cdp_dirty_worktree": true,
+    "aurora_cdp_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp",
+    "aurora_cdp_version": "0.1.0",
+    "aurora_cdp_config": {
+      "workspace": ".aurora",
+      "outputs_dir": "outputs",
+      "db_file": "aurora.duckdb",
+      "normalize": {
+        "default_region": "US",
+        "phone_use_last10_for_match": true,
+        "email_strip_plus_tag": true,
+        "email_strip_gmail_dots": false,
+        "email_junk_local_parts": [
+          "test",
+          "no",
+          "none",
+          "reservation",
+          "admin",
+          "contact",
+          "guest",
+          "info",
+          "noreply",
+          "no-reply",
+          "donotreply",
+          "unknown"
+        ],
+        "address_abbreviations": {
+          "ST": "STREET",
+          "AVE": "AVENUE",
+          "RD": "ROAD",
+          "BLVD": "BOULEVARD",
+          "DR": "DRIVE",
+          "LN": "LANE",
+          "CT": "COURT",
+          "STE": "SUITE",
+          "APT": "APARTMENT",
+          "N": "NORTH",
+          "S": "SOUTH",
+          "E": "EAST",
+          "W": "WEST",
+          "1ST": "FIRST",
+          "2ND": "SECOND",
+          "3RD": "THIRD"
+        }
+      },
+      "blocklist": {
+        "email_max_given_names": 20,
+        "email_max_surnames": 20,
+        "phone_max_given_names": 20,
+        "address_max_given_names": 40
+      },
+      "blocking": {
+        "block_size_limit": 100,
+        "fk_block_size_limit": 1000,
+        "strategies": [
+          {
+            "name": "email_exact",
+            "type": "email"
+          },
+          {
+            "name": "phone_exact",
+            "type": "phone"
+          },
+          {
+            "name": "name_postal",
+            "type": "name_postal"
+          },
+          {
+            "name": "name_birthdate",
+            "type": "name_birthdate"
+          },
+          {
+            "name": "loy_id_exact",
+            "type": "loy_id"
+          },
+          {
+            "name": "ck_exact",
+            "type": "ck"
+          },
+          {
+            "name": "fk",
+            "type": "fk"
+          }
+        ]
+      },
+      "matcher": {
+        "match_threshold": 3.0,
+        "deterministic": {
+          "ck_exact_score": 5.0,
+          "loy_exact_score": 5.0,
+          "email_exact_with_name_score": 4.5,
+          "phone_exact_with_name_score": 4.2,
+          "name_agreement_min": 0.85
+        },
+        "weights": {
+          "bias": -2.5,
+          "given_sim": 1.0,
+          "surname_sim": 1.2,
+          "email_exact": 3.0,
+          "email_sim": 0.5,
+          "email_sim_min": 0.92,
+          "phone_exact": 2.5,
+          "address_sim": 1.2,
+          "postal_exact": 0.6,
+          "birthdate_exact": 1.5,
+          "fk_shared": 1.0,
+          "name_mismatch_penalty": -1.5,
+          "birthdate_conflict": -3.0
+        },
+        "hard_conflicts": {
+          "birthdate": true,
+          "birthdate_typo_tolerance": 2
+        }
+      },
+      "cluster": {
+        "supersized_min_size": 500,
+        "conflict_attributes": [
+          "birthdate"
+        ]
+      },
+      "stable_id": {
+        "enabled": true,
+        "jitter_alert_pct": 2.0
+      },
+      "survivorship": {
+        "source_priority": {
+          "loyalty": 1,
+          "crm": 2,
+          "ecommerce": 3,
+          "pos": 4
+        },
+        "field_priority": {},
+        "recency_field": "update_dt",
+        "attributes": [
+          "given_name",
+          "surname",
+          "email",
+          "phone",
+          "address",
+          "address2",
+          "city",
+          "state",
+          "postal",
+          "country",
+          "birthdate"
+        ]
+      },
+      "sources": {},
+      "tuning": {
+        "thresholds": [
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0
+        ],
+        "min_precision": 0.98
+      }
+    },
+    "harness_commit": "01795d854517e2c3a1540f4f0290be9ec53bf450",
+    "harness_version": "0.1.0",
+    "seed": 20261022,
+    "dataset": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/instacart2017/sample-50000",
+    "run_at": "2026-10-22T05:39:28+00:00",
+    "host": {
+      "platform": "macOS",
+      "platform_release": "25.5.0",
+      "machine": "arm64",
+      "python": "3.11.11",
+      "cpu_count": 8,
+      "mem_total_gb": 8.59,
+      "hostname": "Harshs-Macbook-Air"
+    },
+    "run_name": "public-instacart2017",
+    "input_hash": "f1b484a7e469e95895ae",
+    "adapter_config": {
+      "cdp_path": null,
+      "config": null,
+      "threshold": 0.6,
+      "datasource_column": "source",
+      "datasource": "input",
+      "windows": 4,
+      "deterministic_ids": true,
+      "seed": 20261022,
+      "isolate_windows": false,
+      "max_stored_pairs": 20000000,
+      "epoch": "2026-01-01",
+      "window_days": 30,
+      "retries": 1,
+      "timeout_s": null,
+      "threshold_raw": 3.0,
+      "score_scale": 5.0,
+      "engine_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp"
+    },
+    "dataset_manifest_fingerprint": 10527857023365178332,
+    "dataset_seed": null,
+    "sample": null,
+    "argv": [
+      "--adapter",
+      "aurora_cdp",
+      "--windows",
+      "4",
+      "--seed",
+      "20261022",
+      "--date",
+      "2026-10-22",
+      "--force",
+      "--dataset",
+      "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/instacart2017/sample-50000",
+      "--run-name",
+      "public-instacart2017",
+      "--limitation",
+      "Public-corpus sanity check on a 50,000-profile sample (whole customers sampled, seed 20261022); the full corpus was not evaluated locally. See aurora-eval-harness/datasets/public/instacart2017/README.md for the mapping and the pseudonymous loy_id assumption (recall ceiling ~0.64)."
+    ]
+  },
+  "run": {
+    "run_id": "public-instacart2017",
+    "dataset": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/instacart2017/sample-50000",
+    "dataset_name": "sample-50000",
+    "dataset_fingerprint": 10527857023365178332,
+    "elapsed_s": 43.22,
+    "argv": [
+      "--adapter",
+      "aurora_cdp",
+      "--windows",
+      "4",
+      "--seed",
+      "20261022",
+      "--date",
+      "2026-10-22",
+      "--force",
+      "--dataset",
+      "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/instacart2017/sample-50000",
+      "--run-name",
+      "public-instacart2017",
+      "--limitation",
+      "Public-corpus sanity check on a 50,000-profile sample (whole customers sampled, seed 20261022); the full corpus was not evaluated locally. See aurora-eval-harness/datasets/public/instacart2017/README.md for the mapping and the pseudonymous loy_id assumption (recall ceiling ~0.64)."
+    ],
+    "contract_files": {
+      "assignments": "/Users/harshmaster/Desktop/Projects/aurora-eval-harness/runs/public-instacart2017/assignments.csv",
+      "pairs": "/Users/harshmaster/Desktop/Projects/aurora-eval-harness/runs/public-instacart2017/pairs.csv"
+    },
+    "provenance": {
+      "adapter": "aurora_cdp",
+      "aurora_cdp_commit": "08be538f5996b0a909a71b047d33d5b696b470b3",
+      "aurora_cdp_commit_source": "git",
+      "aurora_cdp_dirty_worktree": true,
+      "aurora_cdp_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp",
+      "aurora_cdp_version": "0.1.0",
+      "aurora_cdp_config": {
+        "workspace": ".aurora",
+        "outputs_dir": "outputs",
+        "db_file": "aurora.duckdb",
+        "normalize": {
+          "default_region": "US",
+          "phone_use_last10_for_match": true,
+          "email_strip_plus_tag": true,
+          "email_strip_gmail_dots": false,
+          "email_junk_local_parts": [
+            "test",
+            "no",
+            "none",
+            "reservation",
+            "admin",
+            "contact",
+            "guest",
+            "info",
+            "noreply",
+            "no-reply",
+            "donotreply",
+            "unknown"
+          ],
+          "address_abbreviations": {
+            "ST": "STREET",
+            "AVE": "AVENUE",
+            "RD": "ROAD",
+            "BLVD": "BOULEVARD",
+            "DR": "DRIVE",
+            "LN": "LANE",
+            "CT": "COURT",
+            "STE": "SUITE",
+            "APT": "APARTMENT",
+            "N": "NORTH",
+            "S": "SOUTH",
+            "E": "EAST",
+            "W": "WEST",
+            "1ST": "FIRST",
+            "2ND": "SECOND",
+            "3RD": "THIRD"
+          }
+        },
+        "blocklist": {
+          "email_max_given_names": 20,
+          "email_max_surnames": 20,
+          "phone_max_given_names": 20,
+          "address_max_given_names": 40
+        },
+        "blocking": {
+          "block_size_limit": 100,
+          "fk_block_size_limit": 1000,
+          "strategies": [
+            {
+              "name": "email_exact",
+              "type": "email"
+            },
+            {
+              "name": "phone_exact",
+              "type": "phone"
+            },
+            {
+              "name": "name_postal",
+              "type": "name_postal"
+            },
+            {
+              "name": "name_birthdate",
+              "type": "name_birthdate"
+            },
+            {
+              "name": "loy_id_exact",
+              "type": "loy_id"
+            },
+            {
+              "name": "ck_exact",
+              "type": "ck"
+            },
+            {
+              "name": "fk",
+              "type": "fk"
+            }
+          ]
+        },
+        "matcher": {
+          "match_threshold": 3.0,
+          "deterministic": {
+            "ck_exact_score": 5.0,
+            "loy_exact_score": 5.0,
+            "email_exact_with_name_score": 4.5,
+            "phone_exact_with_name_score": 4.2,
+            "name_agreement_min": 0.85
+          },
+          "weights": {
+            "bias": -2.5,
+            "given_sim": 1.0,
+            "surname_sim": 1.2,
+            "email_exact": 3.0,
+            "email_sim": 0.5,
+            "email_sim_min": 0.92,
+            "phone_exact": 2.5,
+            "address_sim": 1.2,
+            "postal_exact": 0.6,
+            "birthdate_exact": 1.5,
+            "fk_shared": 1.0,
+            "name_mismatch_penalty": -1.5,
+            "birthdate_conflict": -3.0
+          },
+          "hard_conflicts": {
+            "birthdate": true,
+            "birthdate_typo_tolerance": 2
+          }
+        },
+        "cluster": {
+          "supersized_min_size": 500,
+          "conflict_attributes": [
+            "birthdate"
+          ]
+        },
+        "stable_id": {
+          "enabled": true,
+          "jitter_alert_pct": 2.0
+        },
+        "survivorship": {
+          "source_priority": {
+            "loyalty": 1,
+            "crm": 2,
+            "ecommerce": 3,
+            "pos": 4
+          },
+          "field_priority": {},
+          "recency_field": "update_dt",
+          "attributes": [
+            "given_name",
+            "surname",
+            "email",
+            "phone",
+            "address",
+            "address2",
+            "city",
+            "state",
+            "postal",
+            "country",
+            "birthdate"
+          ]
+        },
+        "sources": {},
+        "tuning": {
+          "thresholds": [
+            2.0,
+            2.5,
+            3.0,
+            3.5,
+            4.0
+          ],
+          "min_precision": 0.98
+        }
+      },
+      "harness_commit": "01795d854517e2c3a1540f4f0290be9ec53bf450",
+      "harness_version": "0.1.0",
+      "seed": 20261022,
+      "dataset": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/instacart2017/sample-50000",
+      "run_at": "2026-10-22T05:39:28+00:00",
+      "host": {
+        "platform": "macOS",
+        "platform_release": "25.5.0",
+        "machine": "arm64",
+        "python": "3.11.11",
+        "cpu_count": 8,
+        "mem_total_gb": 8.59,
+        "hostname": "Harshs-Macbook-Air"
+      },
+      "run_name": "public-instacart2017",
+      "input_hash": "f1b484a7e469e95895ae",
+      "adapter_config": {
+        "cdp_path": null,
+        "config": null,
+        "threshold": 0.6,
+        "datasource_column": "source",
+        "datasource": "input",
+        "windows": 4,
+        "deterministic_ids": true,
+        "seed": 20261022,
+        "isolate_windows": false,
+        "max_stored_pairs": 20000000,
+        "epoch": "2026-01-01",
+        "window_days": 30,
+        "retries": 1,
+        "timeout_s": null,
+        "threshold_raw": 3.0,
+        "score_scale": 5.0,
+        "engine_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp"
+      },
+      "dataset_manifest_fingerprint": 10527857023365178332,
+      "dataset_seed": null,
+      "sample": null,
+      "argv": [
+        "--adapter",
+        "aurora_cdp",
+        "--windows",
+        "4",
+        "--seed",
+        "20261022",
+        "--date",
+        "2026-10-22",
+        "--force",
+        "--dataset",
+        "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/instacart2017/sample-50000",
+        "--run-name",
+        "public-instacart2017",
+        "--limitation",
+        "Public-corpus sanity check on a 50,000-profile sample (whole customers sampled, seed 20261022); the full corpus was not evaluated locally. See aurora-eval-harness/datasets/public/instacart2017/README.md for the mapping and the pseudonymous loy_id assumption (recall ceiling ~0.64)."
+      ]
+    },
+    "resolver": "aurora_cdp",
+    "adapter": "aurora_cdp",
+    "config": {
+      "threshold": 0.6,
+      "threshold_raw": 3.0,
+      "score_scale": 5.0,
+      "seed": 20261022,
+      "windows": 4,
+      "deterministic_ids": true,
+      "datasource_column": "source",
+      "isolate_windows": false,
+      "block_cap": 100,
+      "engine_overlay": null
+    },
+    "engine_config": {
+      "workspace": ".aurora",
+      "outputs_dir": "outputs",
+      "db_file": "aurora.duckdb",
+      "normalize": {
+        "default_region": "US",
+        "phone_use_last10_for_match": true,
+        "email_strip_plus_tag": true,
+        "email_strip_gmail_dots": false,
+        "email_junk_local_parts": [
+          "test",
+          "no",
+          "none",
+          "reservation",
+          "admin",
+          "contact",
+          "guest",
+          "info",
+          "noreply",
+          "no-reply",
+          "donotreply",
+          "unknown"
+        ],
+        "address_abbreviations": {
+          "ST": "STREET",
+          "AVE": "AVENUE",
+          "RD": "ROAD",
+          "BLVD": "BOULEVARD",
+          "DR": "DRIVE",
+          "LN": "LANE",
+          "CT": "COURT",
+          "STE": "SUITE",
+          "APT": "APARTMENT",
+          "N": "NORTH",
+          "S": "SOUTH",
+          "E": "EAST",
+          "W": "WEST",
+          "1ST": "FIRST",
+          "2ND": "SECOND",
+          "3RD": "THIRD"
+        }
+      },
+      "blocklist": {
+        "email_max_given_names": 20,
+        "email_max_surnames": 20,
+        "phone_max_given_names": 20,
+        "address_max_given_names": 40
+      },
+      "blocking": {
+        "block_size_limit": 100,
+        "fk_block_size_limit": 1000,
+        "strategies": [
+          {
+            "name": "email_exact",
+            "type": "email"
+          },
+          {
+            "name": "phone_exact",
+            "type": "phone"
+          },
+          {
+            "name": "name_postal",
+            "type": "name_postal"
+          },
+          {
+            "name": "name_birthdate",
+            "type": "name_birthdate"
+          },
+          {
+            "name": "loy_id_exact",
+            "type": "loy_id"
+          },
+          {
+            "name": "ck_exact",
+            "type": "ck"
+          },
+          {
+            "name": "fk",
+            "type": "fk"
+          }
+        ]
+      },
+      "matcher": {
+        "match_threshold": 3.0,
+        "deterministic": {
+          "ck_exact_score": 5.0,
+          "loy_exact_score": 5.0,
+          "email_exact_with_name_score": 4.5,
+          "phone_exact_with_name_score": 4.2,
+          "name_agreement_min": 0.85
+        },
+        "weights": {
+          "bias": -2.5,
+          "given_sim": 1.0,
+          "surname_sim": 1.2,
+          "email_exact": 3.0,
+          "email_sim": 0.5,
+          "email_sim_min": 0.92,
+          "phone_exact": 2.5,
+          "address_sim": 1.2,
+          "postal_exact": 0.6,
+          "birthdate_exact": 1.5,
+          "fk_shared": 1.0,
+          "name_mismatch_penalty": -1.5,
+          "birthdate_conflict": -3.0
+        },
+        "hard_conflicts": {
+          "birthdate": true,
+          "birthdate_typo_tolerance": 2
+        }
+      },
+      "cluster": {
+        "supersized_min_size": 500,
+        "conflict_attributes": [
+          "birthdate"
+        ]
+      },
+      "stable_id": {
+        "enabled": true,
+        "jitter_alert_pct": 2.0
+      },
+      "survivorship": {
+        "source_priority": {
+          "loyalty": 1,
+          "crm": 2,
+          "ecommerce": 3,
+          "pos": 4
+        },
+        "field_priority": {},
+        "recency_field": "update_dt",
+        "attributes": [
+          "given_name",
+          "surname",
+          "email",
+          "phone",
+          "address",
+          "address2",
+          "city",
+          "state",
+          "postal",
+          "country",
+          "birthdate"
+        ]
+      },
+      "sources": {},
+      "tuning": {
+        "thresholds": [
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0
+        ],
+        "min_precision": 0.98
+      }
+    },
+    "windows_plan": [
+      {
+        "window": 0,
+        "run_date": "2017-01-31"
+      },
+      {
+        "window": 4,
+        "run_date": "2017-05-31"
+      },
+      {
+        "window": 8,
+        "run_date": "2017-09-28"
+      },
+      {
+        "window": 12,
+        "run_date": "2018-01-26"
+      }
+    ],
+    "per_window": [
+      {
+        "window": 0,
+        "run_date": "2017-01-31",
+        "records": 9003,
+        "elapsed_s": 1.66,
+        "engine_run_id": "run-20261022053929-ef227e",
+        "engine": {
+          "records": 9003,
+          "mode": "full",
+          "prev_run_id": null,
+          "blocks": 1943,
+          "skipped_blocks": 0,
+          "blocklisted_values": 0,
+          "pairs_blocked": 9461,
+          "pairs_scored": 9461,
+          "edges": 9461,
+          "carried_edges": 0,
+          "match_rate": 1.0,
+          "clusters": 4700,
+          "multi_record_clusters": 1943,
+          "records_in_multi_record_clusters_pct": 69.38,
+          "components": 4700,
+          "max_component_size": 17,
+          "max_cluster_size": 17,
+          "supersized_components": 0,
+          "split_components": 0,
+          "edges_rejected_by_conflict": 0,
+          "cluster_size_distribution": {
+            "11-50": 13,
+            "6-10": 126,
+            "3-5": 977,
+            "2": 827,
+            "1": 2757
+          },
+          "singleton_pct": 58.66,
+          "jitter": {
+            "records_total": 9003,
+            "records_compared": 0,
+            "records_changed": 0,
+            "jitter_pct": 0.0,
+            "ids_minted": 4700,
+            "ids_retired": 0,
+            "alert": false
+          },
+          "timings_sec": {
+            "load": 0.107,
+            "blocking": 0.021,
+            "scoring": 0.173,
+            "clustering": 0.094,
+            "stable_id": 0.024,
+            "persist": 0.121
+          },
+          "threshold": 3.0
+        },
+        "match_category_counts": {
+          "exact": 9461
+        },
+        "resumed": false
+      },
+      {
+        "window": 4,
+        "run_date": "2017-05-31",
+        "records": 32585,
+        "elapsed_s": 8.5,
+        "engine_run_id": "run-20261022053933-a86c4d",
+        "engine": {
+          "records": 32585,
+          "mode": "full",
+          "prev_run_id": "seed",
+          "blocks": 3093,
+          "skipped_blocks": 0,
+          "blocklisted_values": 0,
+          "pairs_blocked": 158925,
+          "pairs_scored": 158925,
+          "edges": 158925,
+          "carried_edges": 0,
+          "match_rate": 1.0,
+          "clusters": 9671,
+          "multi_record_clusters": 3093,
+          "records_in_multi_record_clusters_pct": 79.81,
+          "components": 9671,
+          "max_component_size": 78,
+          "max_cluster_size": 78,
+          "supersized_components": 0,
+          "split_components": 0,
+          "edges_rejected_by_conflict": 0,
+          "cluster_size_distribution": {
+            "50+": 6,
+            "11-50": 713,
+            "6-10": 1230,
+            "3-5": 1063,
+            "2": 81,
+            "1": 6578
+          },
+          "singleton_pct": 68.02,
+          "jitter": {
+            "records_total": 32585,
+            "records_compared": 9003,
+            "records_changed": 0,
+            "jitter_pct": 0.0,
+            "ids_minted": 4971,
+            "ids_retired": 0,
+            "alert": false
+          },
+          "timings_sec": {
+            "load": 0.338,
+            "blocking": 0.177,
+            "scoring": 3.092,
+            "clustering": 0.607,
+            "stable_id": 0.071,
+            "persist": 0.478
+          },
+          "threshold": 3.0
+        },
+        "match_category_counts": {
+          "exact": 158925
+        },
+        "resumed": false
+      },
+      {
+        "window": 8,
+        "run_date": "2017-09-28",
+        "records": 45395,
+        "elapsed_s": 14.83,
+        "engine_run_id": "run-20261022053943-0faa27",
+        "engine": {
+          "records": 45395,
+          "mode": "full",
+          "prev_run_id": "seed",
+          "blocks": 3093,
+          "skipped_blocks": 0,
+          "blocklisted_values": 0,
+          "pairs_blocked": 369040,
+          "pairs_scored": 369040,
+          "edges": 369040,
+          "carried_edges": 0,
+          "match_rate": 1.0,
+          "clusters": 12217,
+          "multi_record_clusters": 3093,
+          "records_in_multi_record_clusters_pct": 79.9,
+          "components": 12217,
+          "max_component_size": 82,
+          "max_cluster_size": 82,
+          "supersized_components": 0,
+          "split_components": 0,
+          "edges_rejected_by_conflict": 0,
+          "cluster_size_distribution": {
+            "50+": 43,
+            "11-50": 1165,
+            "6-10": 909,
+            "3-5": 902,
+            "2": 74,
+            "1": 9124
+          },
+          "singleton_pct": 74.68,
+          "jitter": {
+            "records_total": 45395,
+            "records_compared": 32585,
+            "records_changed": 0,
+            "jitter_pct": 0.0,
+            "ids_minted": 2546,
+            "ids_retired": 0,
+            "alert": false
+          },
+          "timings_sec": {
+            "load": 0.398,
+            "blocking": 0.151,
+            "scoring": 7.189,
+            "clustering": 1.335,
+            "stable_id": 0.116,
+            "persist": 0.547
+          },
+          "threshold": 3.0
+        },
+        "match_category_counts": {
+          "exact": 369040
+        },
+        "resumed": false
+      },
+      {
+        "window": 12,
+        "run_date": "2018-01-26",
+        "records": 50017,
+        "elapsed_s": 15.41,
+        "engine_run_id": "run-20261022053958-79975e",
+        "engine": {
+          "records": 50017,
+          "mode": "full",
+          "prev_run_id": "seed",
+          "blocks": 3093,
+          "skipped_blocks": 0,
+          "blocklisted_values": 0,
+          "pairs_blocked": 495406,
+          "pairs_scored": 495406,
+          "edges": 495406,
+          "carried_edges": 0,
+          "match_rate": 1.0,
+          "clusters": 13157,
+          "multi_record_clusters": 3093,
+          "records_in_multi_record_clusters_pct": 79.88,
+          "components": 13157,
+          "max_component_size": 87,
+          "max_cluster_size": 87,
+          "supersized_components": 0,
+          "split_components": 0,
+          "edges_rejected_by_conflict": 0,
+          "cluster_size_distribution": {
+            "50+": 82,
+            "11-50": 1140,
+            "6-10": 895,
+            "3-5": 902,
+            "2": 74,
+            "1": 10064
+          },
+          "singleton_pct": 76.49,
+          "jitter": {
+            "records_total": 50017,
+            "records_compared": 45395,
+            "records_changed": 0,
+            "jitter_pct": 0.0,
+            "ids_minted": 940,
+            "ids_retired": 0,
+            "alert": false
+          },
+          "timings_sec": {
+            "load": 0.405,
+            "blocking": 0.243,
+            "scoring": 7.86,
+            "clustering": 1.096,
+            "stable_id": 0.156,
+            "persist": 0.413
+          },
+          "threshold": 3.0
+        },
+        "match_category_counts": {
+          "exact": 495406
+        },
+        "resumed": false
+      }
+    ],
+    "candidate_pairs": 495406,
+    "blocking": {
+      "engine (final snapshot)": {
+        "pairs": 495406,
+        "groups": 3093,
+        "skipped_over_cap": 0,
+        "rows_in_skipped": -1
+      }
+    },
+    "timing_s": {
+      "engine_load": 1.25,
+      "engine_blocking": 0.59,
+      "engine_scoring": 18.31,
+      "engine_clustering": 3.14,
+      "engine_stable_id": 0.37,
+      "engine_persist": 1.56,
+      "resolve_windows": 40.4,
+      "wall_total": 42.61
+    },
+    "windows": {
+      "windows": 4,
+      "edges_total": 495406,
+      "per_window": [
+        {
+          "window": 0,
+          "profiles": 9003,
+          "edges": 9461,
+          "clusters": 4700
+        },
+        {
+          "window": 4,
+          "profiles": 32585,
+          "edges": 158925,
+          "clusters": 9671
+        },
+        {
+          "window": 8,
+          "profiles": 45395,
+          "edges": 369040,
+          "clusters": 12217
+        },
+        {
+          "window": 12,
+          "profiles": 50017,
+          "edges": 495406,
+          "clusters": 13157
+        }
+      ]
+    },
+    "jitter_per_window": [
+      {
+        "window": 0,
+        "run_date": "2017-01-31",
+        "records_total": 9003,
+        "records_compared": 0,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 4700,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 4,
+        "run_date": "2017-05-31",
+        "records_total": 32585,
+        "records_compared": 9003,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 4971,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 8,
+        "run_date": "2017-09-28",
+        "records_total": 45395,
+        "records_compared": 32585,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 2546,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 12,
+        "run_date": "2018-01-26",
+        "records_total": 50017,
+        "records_compared": 45395,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 940,
+        "ids_retired": 0,
+        "alert": false
+      }
+    ],
+    "engine_metrics_final": {
+      "records": 50017,
+      "mode": "full",
+      "prev_run_id": "seed",
+      "blocks": 3093,
+      "skipped_blocks": 0,
+      "blocklisted_values": 0,
+      "pairs_blocked": 495406,
+      "pairs_scored": 495406,
+      "edges": 495406,
+      "carried_edges": 0,
+      "match_rate": 1.0,
+      "clusters": 13157,
+      "multi_record_clusters": 3093,
+      "records_in_multi_record_clusters_pct": 79.88,
+      "components": 13157,
+      "max_component_size": 87,
+      "max_cluster_size": 87,
+      "supersized_components": 0,
+      "split_components": 0,
+      "edges_rejected_by_conflict": 0,
+      "cluster_size_distribution": {
+        "50+": 82,
+        "11-50": 1140,
+        "6-10": 895,
+        "3-5": 902,
+        "2": 74,
+        "1": 10064
+      },
+      "singleton_pct": 76.49,
+      "jitter": {
+        "records_total": 50017,
+        "records_compared": 45395,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 940,
+        "ids_retired": 0,
+        "alert": false
+      },
+      "timings_sec": {
+        "load": 0.405,
+        "blocking": 0.243,
+        "scoring": 7.86,
+        "clustering": 1.096,
+        "stable_id": 0.156,
+        "persist": 0.413
+      },
+      "threshold": 3.0
+    },
+    "scores_store_fraction": 1.0
+  },
+  "dataset": {
+    "name": "sample-50000",
+    "manifest": {
+      "schema_version": "1",
+      "public_dataset": "instacart2017",
+      "generated_at": "2026-10-22T05:21:19+00:00",
+      "epoch": "2017-01-01",
+      "window_days": 30,
+      "timeline_days": 365,
+      "n_windows_at_30d": 13,
+      "counts": {
+        "profiles": 50017,
+        "persons": 3106,
+        "true_pairs": 775145,
+        "profiles_per_person_max": 100,
+        "singleton_persons": 0
+      },
+      "source_url": "https://www.instacart.com/datasets/grocery-shopping-2017 (mirror: kaggle psparks/instacart-market-basket-analysis)",
+      "license": "Instacart dataset terms (non-commercial research)",
+      "raw_files": [
+        "orders.csv"
+      ],
+      "loy_capture": 0.8,
+      "sample": 50000,
+      "seed": 20261022,
+      "base_date": "2017-01-01",
+      "mapping": {
+        "profile_id": "order_id",
+        "person_id": "user_id",
+        "source": "eval_set",
+        "created_at": "2017-01-01 + cumsum(days_since_prior_order) per user + order_hour_of_day",
+        "loy_id": "sha1('instacart2017:' + user_id)[:16] on loy_capture share"
+      },
+      "assumptions": [
+        "absolute timestamps do not exist in the data; the timeline is reconstructed from relative days",
+        "no geography, names or contact fields exist: the only matching signal is the pseudonymous loy_id",
+        "user_id is ground truth and is never exposed to the resolver"
+      ],
+      "out": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/instacart2017/sample-50000",
+      "fingerprint": 10527857023365178332
+    }
+  },
+  "metrics": {
+    "n_profiles_scored": 50017,
+    "n_profiles_labelled": 50017,
+    "n_windows": 4,
+    "pairwise": {
+      "precision": 1.0,
+      "recall": 0.6391139722245516,
+      "f1": 0.7798285940509275,
+      "tp_pairs": 495406,
+      "fp_pairs": 0,
+      "fn_pairs": 279739,
+      "predicted_pairs": 495406,
+      "true_pairs": 775145
+    },
+    "cluster": {
+      "n_profiles": 50017,
+      "n_pred_clusters": 13157,
+      "n_truth_persons": 3106,
+      "cluster_count_ratio": 4.235994848679974,
+      "bcubed_precision": 1.0,
+      "bcubed_recall": 0.6604996567509727,
+      "bcubed_f1": 0.7955432620122832,
+      "exact_match_clusters": 452,
+      "exact_match_rate": 0.14552479072762395,
+      "false_merge": {
+        "clusters": 0,
+        "cluster_rate": 0.0,
+        "profiles": 0,
+        "profile_rate": 0.0,
+        "persons_affected": 0,
+        "max_persons_in_cluster": 1
+      },
+      "split": {
+        "persons": 2654,
+        "person_rate": 0.8544752092723761,
+        "profiles": 47361,
+        "profile_rate": 0.9468980546614151
+      },
+      "pred_size_dist": {
+        "mean": 3.8015505054343697,
+        "p50": 1.0,
+        "p90": 10.0,
+        "p99": 41.0,
+        "max": 87,
+        "singletons": 10064
+      },
+      "truth_size_dist": {
+        "mean": 16.103348358016742,
+        "p50": 10.0,
+        "p90": 36.0,
+        "p99": 85.94999999999982,
+        "max": 100,
+        "singletons": 0
+      },
+      "size_hist": {
+        "labels": [
+          "1",
+          "2",
+          "3",
+          "4-5",
+          "6-10",
+          "11-20",
+          "21-50",
+          "51-100",
+          ">100"
+        ],
+        "pred": [
+          10064,
+          74,
+          247,
+          655,
+          895,
+          682,
+          458,
+          82,
+          0
+        ],
+        "truth": [
+          0,
+          0,
+          0,
+          691,
+          894,
+          777,
+          613,
+          131,
+          0
+        ]
+      }
+    },
+    "churn": {
+      "windows": [
+        {
+          "window": 0,
+          "profiles": 9003,
+          "clusters": 4700
+        },
+        {
+          "window": 4,
+          "profiles": 32585,
+          "clusters": 9671,
+          "new_profiles": 23582,
+          "carried": 9003,
+          "churned": 0,
+          "churn_rate": 0.0,
+          "churn_merge_profiles": 0,
+          "churn_split_profiles": 0,
+          "clusters_changed": 0
+        },
+        {
+          "window": 8,
+          "profiles": 45395,
+          "clusters": 12217,
+          "new_profiles": 12810,
+          "carried": 32585,
+          "churned": 0,
+          "churn_rate": 0.0,
+          "churn_merge_profiles": 0,
+          "churn_split_profiles": 0,
+          "clusters_changed": 0
+        },
+        {
+          "window": 12,
+          "profiles": 50017,
+          "clusters": 13157,
+          "new_profiles": 4622,
+          "carried": 45395,
+          "churned": 0,
+          "churn_rate": 0.0,
+          "churn_merge_profiles": 0,
+          "churn_split_profiles": 0,
+          "clusters_changed": 0
+        }
+      ],
+      "n_windows": 4,
+      "mean_churn_rate": 0.0,
+      "max_churn_rate": 0.0,
+      "total_churned": 0,
+      "total_carried": 86983,
+      "harmful_churn_share": 0.0
+    },
+    "per_window": [
+      {
+        "window": 0,
+        "profiles": 9003,
+        "precision": 1.0,
+        "recall": 0.646640694415966,
+        "f1": 0.7854059438817864,
+        "false_merge_cluster_rate": 0.0,
+        "bcubed_f1": 0.8682017698580119
+      },
+      {
+        "window": 4,
+        "profiles": 32585,
+        "precision": 1.0,
+        "recall": 0.6370326723505574,
+        "f1": 0.7782772856156434,
+        "false_merge_cluster_rate": 0.0,
+        "bcubed_f1": 0.8035196937997823
+      },
+      {
+        "window": 8,
+        "profiles": 45395,
+        "precision": 1.0,
+        "recall": 0.6389882570497526,
+        "f1": 0.7797350033489053,
+        "false_merge_cluster_rate": 0.0,
+        "bcubed_f1": 0.7974356173439944
+      },
+      {
+        "window": 12,
+        "profiles": 50017,
+        "precision": 1.0,
+        "recall": 0.6391139722245516,
+        "f1": 0.7798285940509275,
+        "false_merge_cluster_rate": 0.0,
+        "bcubed_f1": 0.7955432620122832
+      }
+    ],
+    "curves": {
+      "n_scored_pairs": 495406,
+      "positives_in_candidates": 495406,
+      "negatives_in_candidates": 0,
+      "scores_store_fraction": 1.0,
+      "blocking_recall": 0.6391139722245516,
+      "auc_roc": null,
+      "average_precision": null,
+      "roc": null,
+      "pr": null
+    },
+    "summary": "pairwise P=1.000 R=0.639 F1=0.780 | B3 F1=0.796 | false-merge clusters=0.00% (profiles 0.00%) | split persons=85.45% | ID churn/30d mean=0.00% max=0.00%",
+    "engine_jitter": [
+      {
+        "window": 0,
+        "run_date": "2017-01-31",
+        "records_total": 9003,
+        "records_compared": 0,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 4700,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 4,
+        "run_date": "2017-05-31",
+        "records_total": 32585,
+        "records_compared": 9003,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 4971,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 8,
+        "run_date": "2017-09-28",
+        "records_total": 45395,
+        "records_compared": 32585,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 2546,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 12,
+        "run_date": "2018-01-26",
+        "records_total": 50017,
+        "records_compared": 45395,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 940,
+        "ids_retired": 0,
+        "alert": false
+      }
+    ],
+    "validation": {
+      "ok": true,
+      "failed": [],
+      "n_cases": 17,
+      "n_checks": 91,
+      "metrics": {
+        "pairwise.precision/recall/f1": {
+          "status": "validated",
+          "case": "A: pairwise",
+          "failed_checks": []
+        },
+        "pairwise.tp/fp/fn pairs": {
+          "status": "validated",
+          "case": "A: pairwise",
+          "failed_checks": []
+        },
+        "cluster.bcubed_precision/recall/f1": {
+          "status": "validated",
+          "case": "A: B-cubed",
+          "failed_checks": []
+        },
+        "cluster.false_merge (cluster/profile/pair)": {
+          "status": "validated",
+          "case": "A: false-merge",
+          "failed_checks": []
+        },
+        "cluster.split (persons/profiles)": {
+          "status": "validated",
+          "case": "A: split",
+          "failed_checks": []
+        },
+        "cluster.exact_match_rate / cluster_count_ratio": {
+          "status": "validated",
+          "case": "A: exact / ratio",
+          "failed_checks": []
+        },
+        "cluster.pred_size_dist / truth_size_dist": {
+          "status": "validated",
+          "case": "A: size distributions",
+          "failed_checks": []
+        },
+        "churn.rate / merge vs split": {
+          "status": "validated",
+          "case": "C: churn rate, merge vs split",
+          "failed_checks": []
+        },
+        "churn.harmful vs justified": {
+          "status": "validated",
+          "case": "C: harmful vs justified",
+          "failed_checks": []
+        },
+        "curves.blocking_recall": {
+          "status": "validated",
+          "case": "A: blocking recall",
+          "failed_checks": []
+        },
+        "curves.auc_roc / average_precision": {
+          "status": "validated",
+          "case": "A: ROC / PR",
+          "failed_checks": []
+        },
+        "curves.operating_point": {
+          "status": "validated",
+          "case": "A: operating point @0.75",
+          "failed_checks": []
+        },
+        "per_window quality": {
+          "status": "validated",
+          "case": "C: per-window quality",
+          "failed_checks": []
+        },
+        "sanity: perfect input": {
+          "status": "validated",
+          "case": "perfect prediction",
+          "failed_checks": []
+        },
+        "sanity: all-singleton input": {
+          "status": "validated",
+          "case": "all singletons",
+          "failed_checks": []
+        },
+        "sanity: all-merged input": {
+          "status": "validated",
+          "case": "everything merged",
+          "failed_checks": []
+        },
+        "sanity: disjoint prediction": {
+          "status": "validated",
+          "case": "disjoint prediction",
+          "failed_checks": []
+        },
+        "sanity: disjoint pairs file": {
+          "status": "validated",
+          "case": "pairs file with no true pair",
+          "failed_checks": []
+        },
+        "threshold_sweep": {
+          "status": "approximation",
+          "note": "approximation \u2014 harness connected components over engine pair scores; not the engine's conflict-aware clustering"
+        },
+        "overmerge.dominant_feature": {
+          "status": "untrusted",
+          "note": "untrusted \u2014 attribution by engine match_type only (engine pair features are not exported)"
+        },
+        "curves.score_hist": {
+          "status": "untrusted",
+          "note": "untrusted \u2014 diagnostic histogram, no golden case"
+        },
+        "engine.metrics (pairs_blocked, skipped_blocks, cluster_size_distribution, timings)": {
+          "status": "untrusted",
+          "note": "untrusted \u2014 reported verbatim from the engine, not independently recomputed"
+        },
+        "engine.jitter_pct per snapshot": {
+          "status": "cross-checked",
+          "note": "engine jitter == harness churn rate per window",
+          "windows": [
+            {
+              "window": 4,
+              "engine_jitter": 0.0,
+              "harness_churn": 0.0,
+              "engine_compared": 9003,
+              "harness_carried": 9003,
+              "ok": true
+            },
+            {
+              "window": 8,
+              "engine_jitter": 0.0,
+              "harness_churn": 0.0,
+              "engine_compared": 32585,
+              "harness_carried": 32585,
+              "ok": true
+            },
+            {
+              "window": 12,
+              "engine_jitter": 0.0,
+              "harness_churn": 0.0,
+              "engine_compared": 45395,
+              "harness_carried": 45395,
+              "ok": true
+            }
+          ]
+        }
+      },
+      "cases": {
+        "pairwise": {
+          "case": "A: pairwise",
+          "ok": true,
+          "checks": [
+            {
+              "check": "precision",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "recall",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "f1",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "tp_pairs",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            },
+            {
+              "check": "fp_pairs",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            },
+            {
+              "check": "fn_pairs",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            },
+            {
+              "check": "predicted_pairs",
+              "expected": 4,
+              "got": 4,
+              "ok": true
+            },
+            {
+              "check": "true_pairs",
+              "expected": 4,
+              "got": 4,
+              "ok": true
+            }
+          ]
+        },
+        "bcubed": {
+          "case": "A: B-cubed",
+          "ok": true,
+          "checks": [
+            {
+              "check": "bcubed_precision",
+              "expected": 0.7777777777777778,
+              "got": 0.7777777777777778,
+              "ok": true
+            },
+            {
+              "check": "bcubed_recall",
+              "expected": 0.7777777777777778,
+              "got": 0.7777777777777777,
+              "ok": true
+            },
+            {
+              "check": "bcubed_f1",
+              "expected": 0.7777777777777778,
+              "got": 0.7777777777777778,
+              "ok": true
+            }
+          ]
+        },
+        "false_merge": {
+          "case": "A: false-merge",
+          "ok": true,
+          "checks": [
+            {
+              "check": "clusters",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "cluster_rate",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            },
+            {
+              "check": "profiles",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "profile_rate",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "pair_rate = 1-precision",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "persons_affected",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            },
+            {
+              "check": "max_persons_in_cluster",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            }
+          ]
+        },
+        "split": {
+          "case": "A: split",
+          "ok": true,
+          "checks": [
+            {
+              "check": "persons",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "person_rate",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            },
+            {
+              "check": "profiles",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "profile_rate",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            }
+          ]
+        },
+        "exact": {
+          "case": "A: exact / ratio",
+          "ok": true,
+          "checks": [
+            {
+              "check": "exact_match_clusters",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "exact_match_rate",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            },
+            {
+              "check": "cluster_count_ratio",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "n_pred_clusters",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "n_truth_persons",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            }
+          ]
+        },
+        "sizes": {
+          "case": "A: size distributions",
+          "ok": true,
+          "checks": [
+            {
+              "check": "pred.mean",
+              "expected": 2.0,
+              "got": 2.0,
+              "ok": true
+            },
+            {
+              "check": "pred.max",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "pred.singletons",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "truth.mean",
+              "expected": 2.0,
+              "got": 2.0,
+              "ok": true
+            },
+            {
+              "check": "truth.max",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "truth.singletons",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            }
+          ]
+        },
+        "blocking": {
+          "case": "A: blocking recall",
+          "ok": true,
+          "checks": [
+            {
+              "check": "blocking_recall",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "positives_in_candidates",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            },
+            {
+              "check": "n_scored_pairs",
+              "expected": 4,
+              "got": 4,
+              "ok": true
+            }
+          ]
+        },
+        "curves": {
+          "case": "A: ROC / PR",
+          "ok": true,
+          "checks": [
+            {
+              "check": "auc_roc",
+              "expected": 0.75,
+              "got": 0.75,
+              "ok": true
+            },
+            {
+              "check": "average_precision",
+              "expected": 0.8333333333333334,
+              "got": 0.8333333333333333,
+              "ok": true
+            }
+          ]
+        },
+        "operating": {
+          "case": "A: operating point @0.75",
+          "ok": true,
+          "checks": [
+            {
+              "check": "precision",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "recall_in_candidates",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "effective_recall",
+              "expected": 0.25,
+              "got": 0.25,
+              "ok": true
+            },
+            {
+              "check": "tp",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "fp",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "fn",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            }
+          ]
+        },
+        "churn": {
+          "case": "C: churn rate, merge vs split",
+          "ok": true,
+          "checks": [
+            {
+              "check": "w1.carried",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "w1.churned",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "w1.churn_rate",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            },
+            {
+              "check": "w1.merge",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "w1.split",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            },
+            {
+              "check": "w1.new",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "w2.carried",
+              "expected": 4,
+              "got": 4,
+              "ok": true
+            },
+            {
+              "check": "w2.churned",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "w2.churn_rate",
+              "expected": 0.25,
+              "got": 0.25,
+              "ok": true
+            },
+            {
+              "check": "w2.merge",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            },
+            {
+              "check": "w2.split",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "mean_churn_rate",
+              "expected": 0.29166666666666663,
+              "got": 0.29166666666666663,
+              "ok": true
+            },
+            {
+              "check": "max_churn_rate",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            }
+          ]
+        },
+        "churn_harm": {
+          "case": "C: harmful vs justified",
+          "ok": true,
+          "checks": [
+            {
+              "check": "w1.justified",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "w1.harmful",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            },
+            {
+              "check": "w2.harmful",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            },
+            {
+              "check": "harmful_share",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            }
+          ]
+        },
+        "per_window": {
+          "case": "C: per-window quality",
+          "ok": true,
+          "checks": [
+            {
+              "check": "w0.precision",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "w0.recall",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            },
+            {
+              "check": "w1.recall",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "w2.false_merge_cluster_rate",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            }
+          ]
+        },
+        "perfect": {
+          "case": "perfect prediction",
+          "ok": true,
+          "checks": [
+            {
+              "check": "f1",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "bcubed_f1",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "false_merge.cluster_rate",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "split.person_rate",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "exact_match_rate",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            }
+          ]
+        },
+        "singletons": {
+          "case": "all singletons",
+          "ok": true,
+          "checks": [
+            {
+              "check": "recall",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "precision (no predicted pairs -> 1 by convention)",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "f1",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "bcubed_precision",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "bcubed_recall",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "false_merge.clusters",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            },
+            {
+              "check": "split.persons",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            }
+          ]
+        },
+        "merged": {
+          "case": "everything merged",
+          "ok": true,
+          "checks": [
+            {
+              "check": "recall",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "precision",
+              "expected": 0.26666666666666666,
+              "got": 0.26666666666666666,
+              "ok": true
+            },
+            {
+              "check": "false_merge.cluster_rate",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "false_merge.profile_rate",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "bcubed_recall",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "bcubed_precision",
+              "expected": 0.38888888888888884,
+              "got": 0.38888888888888884,
+              "ok": true
+            }
+          ]
+        },
+        "disjoint": {
+          "case": "disjoint prediction",
+          "ok": true,
+          "checks": [
+            {
+              "check": "recall",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "precision",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "f1",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "false_merge.cluster_rate",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "split.person_rate",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            }
+          ]
+        },
+        "disjoint_pairs": {
+          "case": "pairs file with no true pair",
+          "ok": true,
+          "checks": [
+            {
+              "check": "blocking_recall",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "auc_roc (undefined -> None)",
+              "expected": null,
+              "got": null,
+              "ok": true
+            },
+            {
+              "check": "positives_in_candidates",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            }
+          ]
+        }
+      }
+    }
+  },
+  "threshold_sweep": [
+    {
+      "threshold": 0.3,
+      "precision": 1.0,
+      "recall": 0.6391139722245516,
+      "f1": 0.7798285940509275,
+      "bcubed_f1": 0.7955432620122832,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.8544752092723761,
+      "n_clusters": 13157
+    },
+    {
+      "threshold": 0.35,
+      "precision": 1.0,
+      "recall": 0.6391139722245516,
+      "f1": 0.7798285940509275,
+      "bcubed_f1": 0.7955432620122832,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.8544752092723761,
+      "n_clusters": 13157
+    },
+    {
+      "threshold": 0.4,
+      "precision": 1.0,
+      "recall": 0.6391139722245516,
+      "f1": 0.7798285940509275,
+      "bcubed_f1": 0.7955432620122832,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.8544752092723761,
+      "n_clusters": 13157
+    },
+    {
+      "threshold": 0.45,
+      "precision": 1.0,
+      "recall": 0.6391139722245516,
+      "f1": 0.7798285940509275,
+      "bcubed_f1": 0.7955432620122832,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.8544752092723761,
+      "n_clusters": 13157
+    },
+    {
+      "threshold": 0.5,
+      "precision": 1.0,
+      "recall": 0.6391139722245516,
+      "f1": 0.7798285940509275,
+      "bcubed_f1": 0.7955432620122832,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.8544752092723761,
+      "n_clusters": 13157
+    },
+    {
+      "threshold": 0.55,
+      "precision": 1.0,
+      "recall": 0.6391139722245516,
+      "f1": 0.7798285940509275,
+      "bcubed_f1": 0.7955432620122832,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.8544752092723761,
+      "n_clusters": 13157
+    },
+    {
+      "threshold": 0.6,
+      "precision": 1.0,
+      "recall": 0.6391139722245516,
+      "f1": 0.7798285940509275,
+      "bcubed_f1": 0.7955432620122832,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.8544752092723761,
+      "n_clusters": 13157
+    },
+    {
+      "threshold": 0.65,
+      "precision": 1.0,
+      "recall": 0.6391139722245516,
+      "f1": 0.7798285940509275,
+      "bcubed_f1": 0.7955432620122832,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.8544752092723761,
+      "n_clusters": 13157
+    },
+    {
+      "threshold": 0.7,
+      "precision": 1.0,
+      "recall": 0.6391139722245516,
+      "f1": 0.7798285940509275,
+      "bcubed_f1": 0.7955432620122832,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.8544752092723761,
+      "n_clusters": 13157
+    },
+    {
+      "threshold": 0.75,
+      "precision": 1.0,
+      "recall": 0.6391139722245516,
+      "f1": 0.7798285940509275,
+      "bcubed_f1": 0.7955432620122832,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.8544752092723761,
+      "n_clusters": 13157
+    },
+    {
+      "threshold": 0.8,
+      "precision": 1.0,
+      "recall": 0.6391139722245516,
+      "f1": 0.7798285940509275,
+      "bcubed_f1": 0.7955432620122832,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.8544752092723761,
+      "n_clusters": 13157
+    },
+    {
+      "threshold": 0.85,
+      "precision": 1.0,
+      "recall": 0.6391139722245516,
+      "f1": 0.7798285940509275,
+      "bcubed_f1": 0.7955432620122832,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.8544752092723761,
+      "n_clusters": 13157
+    },
+    {
+      "threshold": 0.9,
+      "precision": 1.0,
+      "recall": 0.6391139722245516,
+      "f1": 0.7798285940509275,
+      "bcubed_f1": 0.7955432620122832,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.8544752092723761,
+      "n_clusters": 13157
+    },
+    {
+      "threshold": 0.95,
+      "precision": 1.0,
+      "recall": 0.6391139722245516,
+      "f1": 0.7798285940509275,
+      "bcubed_f1": 0.7955432620122832,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.8544752092723761,
+      "n_clusters": 13157
+    }
+  ],
+  "overmerge_summary": {
+    "overmerged_clusters": 0,
+    "profiles_in_overmerged": 0,
+    "persons_in_overmerged": 0,
+    "cross_person_edges": 0,
+    "edge_feature_tally": {
+      "email": 0,
+      "phone": 0,
+      "dob": 0,
+      "postal": 0,
+      "name": 0,
+      "addr": 0,
+      "engine_deterministic": 0,
+      "engine_scored": 0,
+      "engine_trivial_duplicate": 0
+    },
+    "edge_feature_only_tally": {
+      "email": 0,
+      "phone": 0,
+      "dob": 0,
+      "postal": 0,
+      "name": 0,
+      "addr": 0,
+      "engine_deterministic": 0,
+      "engine_scored": 0,
+      "engine_trivial_duplicate": 0
+    }
+  },
+  "resources": {
+    "wall_s": 44.4,
+    "samples": 43,
+    "interval_s": 1.0,
+    "peak_rss_mb": 1402.1,
+    "mean_rss_mb": 881.7,
+    "mean_cpu_pct": 98.9,
+    "peak_cpu_pct": 112.1,
+    "cpu_count": 8,
+    "stage_wall_s": {
+      "init": 0.0,
+      "load": 0.14,
+      "resolve": 0.04,
+      "resolve:w0": 1.95,
+      "resolve:w4": 8.95,
+      "resolve:w8": 15.4,
+      "resolve:w12": 16.0,
+      "assemble": 0.31,
+      "persist": 0.56,
+      "metrics": 1.04,
+      "report": 0.0
+    },
+    "per_stage": {
+      "resolve:w0": {
+        "samples": 2,
+        "peak_rss_mb": 332.6,
+        "mean_cpu_pct": 98.6,
+        "wall_s": 1.95
+      },
+      "resolve:w4": {
+        "samples": 8,
+        "peak_rss_mb": 742.7,
+        "mean_cpu_pct": 98.3,
+        "wall_s": 8.95
+      },
+      "resolve:w8": {
+        "samples": 15,
+        "peak_rss_mb": 988.9,
+        "mean_cpu_pct": 98.8,
+        "wall_s": 15.4
+      },
+      "resolve:w12": {
+        "samples": 15,
+        "peak_rss_mb": 1382.9,
+        "mean_cpu_pct": 99.7,
+        "wall_s": 16.0
+      },
+      "persist": {
+        "samples": 1,
+        "peak_rss_mb": 1394.8,
+        "mean_cpu_pct": 103.1,
+        "wall_s": 0.56
+      },
+      "metrics": {
+        "samples": 1,
+        "peak_rss_mb": 1402.1,
+        "mean_cpu_pct": 93.8,
+        "wall_s": 1.04
+      },
+      "report": {
+        "samples": 1,
+        "peak_rss_mb": 1385.2,
+        "mean_cpu_pct": 97.5,
+        "wall_s": 0.0
+      }
+    }
+  },
+  "events": {
+    "stages": [
+      "load",
+      "metrics",
+      "report",
+      "resolve:w0",
+      "resolve:w12",
+      "resolve:w4",
+      "resolve:w8"
+    ],
+    "failures": 0,
+    "retries": 0,
+    "resumed": false,
+    "failure_details": []
+  },
+  "limitations": [
+    "Public-corpus sanity check on a 50,000-profile sample (whole customers sampled, seed 20261022); the full corpus was not evaluated locally. See aurora-eval-harness/datasets/public/instacart2017/README.md for the mapping and the pseudonymous loy_id assumption (recall ceiling ~0.64)."
+  ],
+  "notes": [
+    "Engine scores are normalised from the 0\u20135 band scale to [0, 1] (score/5); the operating threshold 0.60 is the engine's 3.0 on its own scale.",
+    "The threshold sweep re-clusters engine pair scores with plain connected components, so it approximates (does not reproduce) the engine's conflict-aware clustering at other thresholds."
+  ],
+  "plots": {
+    "cluster_sizes": "cluster_sizes.png",
+    "churn": "churn.png",
+    "sweep": "sweep.png",
+    "resources": "resources.png"
+  }
+}

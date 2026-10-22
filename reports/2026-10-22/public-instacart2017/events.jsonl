@@ -1,0 +1,15 @@
+{"t": 1792647568.376541, "ts": "2026-10-22T11:09:28", "kind": "run_start", "pid": 40228, "run_name": "public-instacart2017", "input_hash": "f1b484a7e469e95895ae", "completed_stages": []}
+{"t": 1792647568.419034, "ts": "2026-10-22T11:09:28", "kind": "stage_start", "pid": 40228, "stage": "load", "attempt": 0}
+{"t": 1792647568.553834, "ts": "2026-10-22T11:09:28", "kind": "stage_end", "pid": 40228, "stage": "load", "attempt": 0, "elapsed_s": 0.135}
+{"t": 1792647568.641385, "ts": "2026-10-22T11:09:28", "kind": "stage_start", "pid": 40228, "stage": "resolve:w0", "attempt": 0}
+{"t": 1792647570.5489202, "ts": "2026-10-22T11:09:30", "kind": "stage_end", "pid": 40228, "stage": "resolve:w0", "attempt": 0, "elapsed_s": 1.907}
+{"t": 1792647570.6959202, "ts": "2026-10-22T11:09:30", "kind": "stage_start", "pid": 40228, "stage": "resolve:w4", "attempt": 0}
+{"t": 1792647579.501152, "ts": "2026-10-22T11:09:39", "kind": "stage_end", "pid": 40228, "stage": "resolve:w4", "attempt": 0, "elapsed_s": 8.805}
+{"t": 1792647579.6222742, "ts": "2026-10-22T11:09:39", "kind": "stage_start", "pid": 40228, "stage": "resolve:w8", "attempt": 0}
+{"t": 1792647594.8974621, "ts": "2026-10-22T11:09:54", "kind": "stage_end", "pid": 40228, "stage": "resolve:w8", "attempt": 0, "elapsed_s": 15.275}
+{"t": 1792647595.0670269, "ts": "2026-10-22T11:09:55", "kind": "stage_start", "pid": 40228, "stage": "resolve:w12", "attempt": 0}
+{"t": 1792647610.902445, "ts": "2026-10-22T11:10:10", "kind": "stage_end", "pid": 40228, "stage": "resolve:w12", "attempt": 0, "elapsed_s": 15.835}
+{"t": 1792647611.774165, "ts": "2026-10-22T11:10:11", "kind": "stage_start", "pid": 40228, "stage": "metrics", "attempt": 0}
+{"t": 1792647612.8157299, "ts": "2026-10-22T11:10:12", "kind": "stage_end", "pid": 40228, "stage": "metrics", "attempt": 0, "elapsed_s": 1.041}
+{"t": 1792647612.8164082, "ts": "2026-10-22T11:10:12", "kind": "stage_start", "pid": 40228, "stage": "report"}
+{"t": 1792647613.209569, "ts": "2026-10-22T11:10:13", "kind": "run_complete", "pid": 40228, "report": "/Users/harshmaster/Desktop/Projects/aurora-cdp/reports/2026-10-22/public-instacart2017/report.md"}

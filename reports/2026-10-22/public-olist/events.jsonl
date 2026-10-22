@@ -1,0 +1,15 @@
+{"t": 1792647547.6766012, "ts": "2026-10-22T11:09:07", "kind": "run_start", "pid": 40000, "run_name": "public-olist", "input_hash": "87ce1685a11eb001d904", "completed_stages": []}
+{"t": 1792647547.715565, "ts": "2026-10-22T11:09:07", "kind": "stage_start", "pid": 40000, "stage": "load", "attempt": 0}
+{"t": 1792647547.850372, "ts": "2026-10-22T11:09:07", "kind": "stage_end", "pid": 40000, "stage": "load", "attempt": 0, "elapsed_s": 0.135}
+{"t": 1792647547.913692, "ts": "2026-10-22T11:09:07", "kind": "stage_start", "pid": 40000, "stage": "resolve:w0", "attempt": 0}
+{"t": 1792647548.2558231, "ts": "2026-10-22T11:09:08", "kind": "stage_end", "pid": 40000, "stage": "resolve:w0", "attempt": 0, "elapsed_s": 0.342}
+{"t": 1792647548.3021262, "ts": "2026-10-22T11:09:08", "kind": "stage_start", "pid": 40000, "stage": "resolve:w8", "attempt": 0}
+{"t": 1792647549.489651, "ts": "2026-10-22T11:09:09", "kind": "stage_end", "pid": 40000, "stage": "resolve:w8", "attempt": 0, "elapsed_s": 1.187}
+{"t": 1792647549.6398149, "ts": "2026-10-22T11:09:09", "kind": "stage_start", "pid": 40000, "stage": "resolve:w17", "attempt": 0}
+{"t": 1792647555.2230248, "ts": "2026-10-22T11:09:15", "kind": "stage_end", "pid": 40000, "stage": "resolve:w17", "attempt": 0, "elapsed_s": 5.583}
+{"t": 1792647555.422923, "ts": "2026-10-22T11:09:15", "kind": "stage_start", "pid": 40000, "stage": "resolve:w25", "attempt": 0}
+{"t": 1792647563.863147, "ts": "2026-10-22T11:09:23", "kind": "stage_end", "pid": 40000, "stage": "resolve:w25", "attempt": 0, "elapsed_s": 8.44}
+{"t": 1792647564.278311, "ts": "2026-10-22T11:09:24", "kind": "stage_start", "pid": 40000, "stage": "metrics", "attempt": 0}
+{"t": 1792647566.011594, "ts": "2026-10-22T11:09:26", "kind": "stage_end", "pid": 40000, "stage": "metrics", "attempt": 0, "elapsed_s": 1.733}
+{"t": 1792647566.012269, "ts": "2026-10-22T11:09:26", "kind": "stage_start", "pid": 40000, "stage": "report"}
+{"t": 1792647566.619071, "ts": "2026-10-22T11:09:26", "kind": "run_complete", "pid": 40000, "report": "/Users/harshmaster/Desktop/Projects/aurora-cdp/reports/2026-10-22/public-olist/report.md"}

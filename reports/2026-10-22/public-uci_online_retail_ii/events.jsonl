@@ -1,0 +1,15 @@
+{"t": 1792647191.812055, "ts": "2026-10-22T11:03:11", "kind": "run_start", "pid": 39290, "run_name": "public-uci_online_retail_ii", "input_hash": "a6229f1c71867e8697a4", "completed_stages": []}
+{"t": 1792647191.8516622, "ts": "2026-10-22T11:03:11", "kind": "stage_start", "pid": 39290, "stage": "load", "attempt": 0}
+{"t": 1792647192.069712, "ts": "2026-10-22T11:03:12", "kind": "stage_end", "pid": 39290, "stage": "load", "attempt": 0, "elapsed_s": 0.218}
+{"t": 1792647192.2032099, "ts": "2026-10-22T11:03:12", "kind": "stage_start", "pid": 39290, "stage": "resolve:w0", "attempt": 0}
+{"t": 1792647193.202791, "ts": "2026-10-22T11:03:13", "kind": "stage_end", "pid": 39290, "stage": "resolve:w0", "attempt": 0, "elapsed_s": 0.999}
+{"t": 1792647193.254587, "ts": "2026-10-22T11:03:13", "kind": "stage_start", "pid": 39290, "stage": "resolve:w8", "attempt": 0}
+{"t": 1792647196.361821, "ts": "2026-10-22T11:03:16", "kind": "stage_end", "pid": 39290, "stage": "resolve:w8", "attempt": 0, "elapsed_s": 3.107}
+{"t": 1792647196.4553359, "ts": "2026-10-22T11:03:16", "kind": "stage_start", "pid": 39290, "stage": "resolve:w16", "attempt": 0}
+{"t": 1792647204.794046, "ts": "2026-10-22T11:03:24", "kind": "stage_end", "pid": 39290, "stage": "resolve:w16", "attempt": 0, "elapsed_s": 8.339}
+{"t": 1792647205.0386071, "ts": "2026-10-22T11:03:25", "kind": "stage_start", "pid": 39290, "stage": "resolve:w24", "attempt": 0}
+{"t": 1792647216.855071, "ts": "2026-10-22T11:03:36", "kind": "stage_end", "pid": 39290, "stage": "resolve:w24", "attempt": 0, "elapsed_s": 11.816}
+{"t": 1792647217.674264, "ts": "2026-10-22T11:03:37", "kind": "stage_start", "pid": 39290, "stage": "metrics", "attempt": 0}
+{"t": 1792647219.933867, "ts": "2026-10-22T11:03:39", "kind": "stage_end", "pid": 39290, "stage": "metrics", "attempt": 0, "elapsed_s": 2.259}
+{"t": 1792647219.934815, "ts": "2026-10-22T11:03:39", "kind": "stage_start", "pid": 39290, "stage": "report"}
+{"t": 1792647221.2867908, "ts": "2026-10-22T11:03:41", "kind": "run_complete", "pid": 39290, "report": "/Users/harshmaster/Desktop/Projects/aurora-cdp/reports/2026-10-22/public-uci_online_retail_ii/report.md"}

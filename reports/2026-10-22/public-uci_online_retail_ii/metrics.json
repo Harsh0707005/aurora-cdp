@@ -1,0 +1,2403 @@
+{
+  "provenance": {
+    "adapter": "aurora_cdp",
+    "aurora_cdp_commit": "08be538f5996b0a909a71b047d33d5b696b470b3",
+    "aurora_cdp_commit_source": "git",
+    "aurora_cdp_dirty_worktree": false,
+    "aurora_cdp_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp",
+    "aurora_cdp_version": "0.1.0",
+    "aurora_cdp_config": {
+      "workspace": ".aurora",
+      "outputs_dir": "outputs",
+      "db_file": "aurora.duckdb",
+      "normalize": {
+        "default_region": "US",
+        "phone_use_last10_for_match": true,
+        "email_strip_plus_tag": true,
+        "email_strip_gmail_dots": false,
+        "email_junk_local_parts": [
+          "test",
+          "no",
+          "none",
+          "reservation",
+          "admin",
+          "contact",
+          "guest",
+          "info",
+          "noreply",
+          "no-reply",
+          "donotreply",
+          "unknown"
+        ],
+        "address_abbreviations": {
+          "ST": "STREET",
+          "AVE": "AVENUE",
+          "RD": "ROAD",
+          "BLVD": "BOULEVARD",
+          "DR": "DRIVE",
+          "LN": "LANE",
+          "CT": "COURT",
+          "STE": "SUITE",
+          "APT": "APARTMENT",
+          "N": "NORTH",
+          "S": "SOUTH",
+          "E": "EAST",
+          "W": "WEST",
+          "1ST": "FIRST",
+          "2ND": "SECOND",
+          "3RD": "THIRD"
+        }
+      },
+      "blocklist": {
+        "email_max_given_names": 20,
+        "email_max_surnames": 20,
+        "phone_max_given_names": 20,
+        "address_max_given_names": 40
+      },
+      "blocking": {
+        "block_size_limit": 100,
+        "fk_block_size_limit": 1000,
+        "strategies": [
+          {
+            "name": "email_exact",
+            "type": "email"
+          },
+          {
+            "name": "phone_exact",
+            "type": "phone"
+          },
+          {
+            "name": "name_postal",
+            "type": "name_postal"
+          },
+          {
+            "name": "name_birthdate",
+            "type": "name_birthdate"
+          },
+          {
+            "name": "loy_id_exact",
+            "type": "loy_id"
+          },
+          {
+            "name": "ck_exact",
+            "type": "ck"
+          },
+          {
+            "name": "fk",
+            "type": "fk"
+          }
+        ]
+      },
+      "matcher": {
+        "match_threshold": 3.0,
+        "deterministic": {
+          "ck_exact_score": 5.0,
+          "loy_exact_score": 5.0,
+          "email_exact_with_name_score": 4.5,
+          "phone_exact_with_name_score": 4.2,
+          "name_agreement_min": 0.85
+        },
+        "weights": {
+          "bias": -2.5,
+          "given_sim": 1.0,
+          "surname_sim": 1.2,
+          "email_exact": 3.0,
+          "email_sim": 0.5,
+          "email_sim_min": 0.92,
+          "phone_exact": 2.5,
+          "address_sim": 1.2,
+          "postal_exact": 0.6,
+          "birthdate_exact": 1.5,
+          "fk_shared": 1.0,
+          "name_mismatch_penalty": -1.5,
+          "birthdate_conflict": -3.0
+        },
+        "hard_conflicts": {
+          "birthdate": true,
+          "birthdate_typo_tolerance": 2
+        }
+      },
+      "cluster": {
+        "supersized_min_size": 500,
+        "conflict_attributes": [
+          "birthdate"
+        ]
+      },
+      "stable_id": {
+        "enabled": true,
+        "jitter_alert_pct": 2.0
+      },
+      "survivorship": {
+        "source_priority": {
+          "loyalty": 1,
+          "crm": 2,
+          "ecommerce": 3,
+          "pos": 4
+        },
+        "field_priority": {},
+        "recency_field": "update_dt",
+        "attributes": [
+          "given_name",
+          "surname",
+          "email",
+          "phone",
+          "address",
+          "address2",
+          "city",
+          "state",
+          "postal",
+          "country",
+          "birthdate"
+        ]
+      },
+      "sources": {},
+      "tuning": {
+        "thresholds": [
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0
+        ],
+        "min_precision": 0.98
+      }
+    },
+    "harness_commit": "2b160cb3d45caffe557202f1fc37b1e075118051",
+    "harness_version": "0.1.0",
+    "seed": 20261022,
+    "dataset": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/uci_online_retail_ii/sample-50000",
+    "run_at": "2026-10-22T05:33:11+00:00",
+    "host": {
+      "platform": "macOS",
+      "platform_release": "25.5.0",
+      "machine": "arm64",
+      "python": "3.11.11",
+      "cpu_count": 8,
+      "mem_total_gb": 8.59,
+      "hostname": "Harshs-Macbook-Air"
+    },
+    "run_name": "public-uci_online_retail_ii",
+    "input_hash": "a6229f1c71867e8697a4",
+    "adapter_config": {
+      "cdp_path": null,
+      "config": null,
+      "threshold": 0.6,
+      "datasource_column": "source",
+      "datasource": "input",
+      "windows": 4,
+      "deterministic_ids": true,
+      "seed": 20261022,
+      "isolate_windows": false,
+      "max_stored_pairs": 20000000,
+      "epoch": "2026-01-01",
+      "window_days": 30,
+      "retries": 1,
+      "timeout_s": null,
+      "threshold_raw": 3.0,
+      "score_scale": 5.0,
+      "engine_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp"
+    },
+    "dataset_manifest_fingerprint": 7481820924562800300,
+    "dataset_seed": null,
+    "sample": null,
+    "argv": [
+      "--adapter",
+      "aurora_cdp",
+      "--windows",
+      "4",
+      "--seed",
+      "20261022",
+      "--date",
+      "2026-10-22",
+      "--force",
+      "--dataset",
+      "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/uci_online_retail_ii/sample-50000",
+      "--run-name",
+      "public-uci_online_retail_ii",
+      "--limitation",
+      "Public-corpus sanity check on a 50,000-profile sample (whole customers sampled, seed 20261022); the full corpus was not evaluated locally. See aurora-eval-harness/datasets/public/uci_online_retail_ii/README.md for the mapping and the pseudonymous loy_id assumption (recall ceiling ~0.64)."
+    ]
+  },
+  "run": {
+    "run_id": "public-uci_online_retail_ii",
+    "dataset": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/uci_online_retail_ii/sample-50000",
+    "dataset_name": "sample-50000",
+    "dataset_fingerprint": 7481820924562800300,
+    "elapsed_s": 25.59,
+    "argv": [
+      "--adapter",
+      "aurora_cdp",
+      "--windows",
+      "4",
+      "--seed",
+      "20261022",
+      "--date",
+      "2026-10-22",
+      "--force",
+      "--dataset",
+      "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/uci_online_retail_ii/sample-50000",
+      "--run-name",
+      "public-uci_online_retail_ii",
+      "--limitation",
+      "Public-corpus sanity check on a 50,000-profile sample (whole customers sampled, seed 20261022); the full corpus was not evaluated locally. See aurora-eval-harness/datasets/public/uci_online_retail_ii/README.md for the mapping and the pseudonymous loy_id assumption (recall ceiling ~0.64)."
+    ],
+    "contract_files": {
+      "assignments": "/Users/harshmaster/Desktop/Projects/aurora-eval-harness/runs/public-uci_online_retail_ii/assignments.csv",
+      "pairs": "/Users/harshmaster/Desktop/Projects/aurora-eval-harness/runs/public-uci_online_retail_ii/pairs.csv"
+    },
+    "provenance": {
+      "adapter": "aurora_cdp",
+      "aurora_cdp_commit": "08be538f5996b0a909a71b047d33d5b696b470b3",
+      "aurora_cdp_commit_source": "git",
+      "aurora_cdp_dirty_worktree": false,
+      "aurora_cdp_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp",
+      "aurora_cdp_version": "0.1.0",
+      "aurora_cdp_config": {
+        "workspace": ".aurora",
+        "outputs_dir": "outputs",
+        "db_file": "aurora.duckdb",
+        "normalize": {
+          "default_region": "US",
+          "phone_use_last10_for_match": true,
+          "email_strip_plus_tag": true,
+          "email_strip_gmail_dots": false,
+          "email_junk_local_parts": [
+            "test",
+            "no",
+            "none",
+            "reservation",
+            "admin",
+            "contact",
+            "guest",
+            "info",
+            "noreply",
+            "no-reply",
+            "donotreply",
+            "unknown"
+          ],
+          "address_abbreviations": {
+            "ST": "STREET",
+            "AVE": "AVENUE",
+            "RD": "ROAD",
+            "BLVD": "BOULEVARD",
+            "DR": "DRIVE",
+            "LN": "LANE",
+            "CT": "COURT",
+            "STE": "SUITE",
+            "APT": "APARTMENT",
+            "N": "NORTH",
+            "S": "SOUTH",
+            "E": "EAST",
+            "W": "WEST",
+            "1ST": "FIRST",
+            "2ND": "SECOND",
+            "3RD": "THIRD"
+          }
+        },
+        "blocklist": {
+          "email_max_given_names": 20,
+          "email_max_surnames": 20,
+          "phone_max_given_names": 20,
+          "address_max_given_names": 40
+        },
+        "blocking": {
+          "block_size_limit": 100,
+          "fk_block_size_limit": 1000,
+          "strategies": [
+            {
+              "name": "email_exact",
+              "type": "email"
+            },
+            {
+              "name": "phone_exact",
+              "type": "phone"
+            },
+            {
+              "name": "name_postal",
+              "type": "name_postal"
+            },
+            {
+              "name": "name_birthdate",
+              "type": "name_birthdate"
+            },
+            {
+              "name": "loy_id_exact",
+              "type": "loy_id"
+            },
+            {
+              "name": "ck_exact",
+              "type": "ck"
+            },
+            {
+              "name": "fk",
+              "type": "fk"
+            }
+          ]
+        },
+        "matcher": {
+          "match_threshold": 3.0,
+          "deterministic": {
+            "ck_exact_score": 5.0,
+            "loy_exact_score": 5.0,
+            "email_exact_with_name_score": 4.5,
+            "phone_exact_with_name_score": 4.2,
+            "name_agreement_min": 0.85
+          },
+          "weights": {
+            "bias": -2.5,
+            "given_sim": 1.0,
+            "surname_sim": 1.2,
+            "email_exact": 3.0,
+            "email_sim": 0.5,
+            "email_sim_min": 0.92,
+            "phone_exact": 2.5,
+            "address_sim": 1.2,
+            "postal_exact": 0.6,
+            "birthdate_exact": 1.5,
+            "fk_shared": 1.0,
+            "name_mismatch_penalty": -1.5,
+            "birthdate_conflict": -3.0
+          },
+          "hard_conflicts": {
+            "birthdate": true,
+            "birthdate_typo_tolerance": 2
+          }
+        },
+        "cluster": {
+          "supersized_min_size": 500,
+          "conflict_attributes": [
+            "birthdate"
+          ]
+        },
+        "stable_id": {
+          "enabled": true,
+          "jitter_alert_pct": 2.0
+        },
+        "survivorship": {
+          "source_priority": {
+            "loyalty": 1,
+            "crm": 2,
+            "ecommerce": 3,
+            "pos": 4
+          },
+          "field_priority": {},
+          "recency_field": "update_dt",
+          "attributes": [
+            "given_name",
+            "surname",
+            "email",
+            "phone",
+            "address",
+            "address2",
+            "city",
+            "state",
+            "postal",
+            "country",
+            "birthdate"
+          ]
+        },
+        "sources": {},
+        "tuning": {
+          "thresholds": [
+            2.0,
+            2.5,
+            3.0,
+            3.5,
+            4.0
+          ],
+          "min_precision": 0.98
+        }
+      },
+      "harness_commit": "2b160cb3d45caffe557202f1fc37b1e075118051",
+      "harness_version": "0.1.0",
+      "seed": 20261022,
+      "dataset": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/uci_online_retail_ii/sample-50000",
+      "run_at": "2026-10-22T05:33:11+00:00",
+      "host": {
+        "platform": "macOS",
+        "platform_release": "25.5.0",
+        "machine": "arm64",
+        "python": "3.11.11",
+        "cpu_count": 8,
+        "mem_total_gb": 8.59,
+        "hostname": "Harshs-Macbook-Air"
+      },
+      "run_name": "public-uci_online_retail_ii",
+      "input_hash": "a6229f1c71867e8697a4",
+      "adapter_config": {
+        "cdp_path": null,
+        "config": null,
+        "threshold": 0.6,
+        "datasource_column": "source",
+        "datasource": "input",
+        "windows": 4,
+        "deterministic_ids": true,
+        "seed": 20261022,
+        "isolate_windows": false,
+        "max_stored_pairs": 20000000,
+        "epoch": "2026-01-01",
+        "window_days": 30,
+        "retries": 1,
+        "timeout_s": null,
+        "threshold_raw": 3.0,
+        "score_scale": 5.0,
+        "engine_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp"
+      },
+      "dataset_manifest_fingerprint": 7481820924562800300,
+      "dataset_seed": null,
+      "sample": null,
+      "argv": [
+        "--adapter",
+        "aurora_cdp",
+        "--windows",
+        "4",
+        "--seed",
+        "20261022",
+        "--date",
+        "2026-10-22",
+        "--force",
+        "--dataset",
+        "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/uci_online_retail_ii/sample-50000",
+        "--run-name",
+        "public-uci_online_retail_ii",
+        "--limitation",
+        "Public-corpus sanity check on a 50,000-profile sample (whole customers sampled, seed 20261022); the full corpus was not evaluated locally. See aurora-eval-harness/datasets/public/uci_online_retail_ii/README.md for the mapping and the pseudonymous loy_id assumption (recall ceiling ~0.64)."
+      ]
+    },
+    "resolver": "aurora_cdp",
+    "adapter": "aurora_cdp",
+    "config": {
+      "threshold": 0.6,
+      "threshold_raw": 3.0,
+      "score_scale": 5.0,
+      "seed": 20261022,
+      "windows": 4,
+      "deterministic_ids": true,
+      "datasource_column": "source",
+      "isolate_windows": false,
+      "block_cap": 100,
+      "engine_overlay": null
+    },
+    "engine_config": {
+      "workspace": ".aurora",
+      "outputs_dir": "outputs",
+      "db_file": "aurora.duckdb",
+      "normalize": {
+        "default_region": "US",
+        "phone_use_last10_for_match": true,
+        "email_strip_plus_tag": true,
+        "email_strip_gmail_dots": false,
+        "email_junk_local_parts": [
+          "test",
+          "no",
+          "none",
+          "reservation",
+          "admin",
+          "contact",
+          "guest",
+          "info",
+          "noreply",
+          "no-reply",
+          "donotreply",
+          "unknown"
+        ],
+        "address_abbreviations": {
+          "ST": "STREET",
+          "AVE": "AVENUE",
+          "RD": "ROAD",
+          "BLVD": "BOULEVARD",
+          "DR": "DRIVE",
+          "LN": "LANE",
+          "CT": "COURT",
+          "STE": "SUITE",
+          "APT": "APARTMENT",
+          "N": "NORTH",
+          "S": "SOUTH",
+          "E": "EAST",
+          "W": "WEST",
+          "1ST": "FIRST",
+          "2ND": "SECOND",
+          "3RD": "THIRD"
+        }
+      },
+      "blocklist": {
+        "email_max_given_names": 20,
+        "email_max_surnames": 20,
+        "phone_max_given_names": 20,
+        "address_max_given_names": 40
+      },
+      "blocking": {
+        "block_size_limit": 100,
+        "fk_block_size_limit": 1000,
+        "strategies": [
+          {
+            "name": "email_exact",
+            "type": "email"
+          },
+          {
+            "name": "phone_exact",
+            "type": "phone"
+          },
+          {
+            "name": "name_postal",
+            "type": "name_postal"
+          },
+          {
+            "name": "name_birthdate",
+            "type": "name_birthdate"
+          },
+          {
+            "name": "loy_id_exact",
+            "type": "loy_id"
+          },
+          {
+            "name": "ck_exact",
+            "type": "ck"
+          },
+          {
+            "name": "fk",
+            "type": "fk"
+          }
+        ]
+      },
+      "matcher": {
+        "match_threshold": 3.0,
+        "deterministic": {
+          "ck_exact_score": 5.0,
+          "loy_exact_score": 5.0,
+          "email_exact_with_name_score": 4.5,
+          "phone_exact_with_name_score": 4.2,
+          "name_agreement_min": 0.85
+        },
+        "weights": {
+          "bias": -2.5,
+          "given_sim": 1.0,
+          "surname_sim": 1.2,
+          "email_exact": 3.0,
+          "email_sim": 0.5,
+          "email_sim_min": 0.92,
+          "phone_exact": 2.5,
+          "address_sim": 1.2,
+          "postal_exact": 0.6,
+          "birthdate_exact": 1.5,
+          "fk_shared": 1.0,
+          "name_mismatch_penalty": -1.5,
+          "birthdate_conflict": -3.0
+        },
+        "hard_conflicts": {
+          "birthdate": true,
+          "birthdate_typo_tolerance": 2
+        }
+      },
+      "cluster": {
+        "supersized_min_size": 500,
+        "conflict_attributes": [
+          "birthdate"
+        ]
+      },
+      "stable_id": {
+        "enabled": true,
+        "jitter_alert_pct": 2.0
+      },
+      "survivorship": {
+        "source_priority": {
+          "loyalty": 1,
+          "crm": 2,
+          "ecommerce": 3,
+          "pos": 4
+        },
+        "field_priority": {},
+        "recency_field": "update_dt",
+        "attributes": [
+          "given_name",
+          "surname",
+          "email",
+          "phone",
+          "address",
+          "address2",
+          "city",
+          "state",
+          "postal",
+          "country",
+          "birthdate"
+        ]
+      },
+      "sources": {},
+      "tuning": {
+        "thresholds": [
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0
+        ],
+        "min_precision": 0.98
+      }
+    },
+    "windows_plan": [
+      {
+        "window": 0,
+        "run_date": "2009-12-31"
+      },
+      {
+        "window": 8,
+        "run_date": "2010-08-28"
+      },
+      {
+        "window": 16,
+        "run_date": "2011-04-25"
+      },
+      {
+        "window": 24,
+        "run_date": "2011-12-21"
+      }
+    ],
+    "per_window": [
+      {
+        "window": 0,
+        "run_date": "2009-12-31",
+        "records": 1900,
+        "elapsed_s": 0.95,
+        "engine_run_id": "run-20261022053312-c0f6ac",
+        "engine": {
+          "records": 1900,
+          "mode": "full",
+          "prev_run_id": null,
+          "blocks": 324,
+          "skipped_blocks": 0,
+          "blocklisted_values": 0,
+          "pairs_blocked": 1321,
+          "pairs_scored": 1321,
+          "edges": 1321,
+          "carried_edges": 0,
+          "match_rate": 1.0,
+          "clusters": 1307,
+          "multi_record_clusters": 324,
+          "records_in_multi_record_clusters_pct": 48.26,
+          "components": 1307,
+          "max_component_size": 13,
+          "max_cluster_size": 13,
+          "supersized_components": 0,
+          "split_components": 0,
+          "edges_rejected_by_conflict": 0,
+          "cluster_size_distribution": {
+            "11-50": 4,
+            "6-10": 14,
+            "3-5": 97,
+            "2": 209,
+            "1": 983
+          },
+          "singleton_pct": 75.21,
+          "jitter": {
+            "records_total": 1900,
+            "records_compared": 0,
+            "records_changed": 0,
+            "jitter_pct": 0.0,
+            "ids_minted": 1307,
+            "ids_retired": 0,
+            "alert": false
+          },
+          "timings_sec": {
+            "load": 0.024,
+            "blocking": 0.003,
+            "scoring": 0.018,
+            "clustering": 0.007,
+            "stable_id": 0.005,
+            "persist": 0.111
+          },
+          "threshold": 3.0
+        },
+        "match_category_counts": {
+          "exact": 1321
+        },
+        "resumed": false
+      },
+      {
+        "window": 8,
+        "run_date": "2010-08-28",
+        "records": 14812,
+        "elapsed_s": 2.93,
+        "engine_run_id": "run-20261022053314-fda9ce",
+        "engine": {
+          "records": 14812,
+          "mode": "full",
+          "prev_run_id": "seed",
+          "blocks": 1964,
+          "skipped_blocks": 1,
+          "blocklisted_values": 0,
+          "pairs_blocked": 67683,
+          "pairs_scored": 67683,
+          "edges": 67683,
+          "carried_edges": 0,
+          "match_rate": 1.0,
+          "clusters": 6254,
+          "multi_record_clusters": 1964,
+          "records_in_multi_record_clusters_pct": 71.04,
+          "components": 6254,
+          "max_component_size": 86,
+          "max_cluster_size": 86,
+          "supersized_components": 0,
+          "split_components": 0,
+          "edges_rejected_by_conflict": 0,
+          "cluster_size_distribution": {
+            "50+": 11,
+            "11-50": 163,
+            "6-10": 365,
+            "3-5": 819,
+            "2": 606,
+            "1": 4290
+          },
+          "singleton_pct": 68.6,
+          "jitter": {
+            "records_total": 14812,
+            "records_compared": 1900,
+            "records_changed": 10,
+            "jitter_pct": 0.5263,
+            "ids_minted": 4947,
+            "ids_retired": 0,
+            "alert": false
+          },
+          "timings_sec": {
+            "load": 0.092,
+            "blocking": 0.072,
+            "scoring": 0.967,
+            "clustering": 0.226,
+            "stable_id": 0.027,
+            "persist": 0.27
+          },
+          "threshold": 3.0
+        },
+        "match_category_counts": {
+          "exact": 67683
+        },
+        "resumed": false
+      },
+      {
+        "window": 16,
+        "run_date": "2011-04-25",
+        "records": 29624,
+        "elapsed_s": 7.94,
+        "engine_run_id": "run-20261022053318-165fb1",
+        "engine": {
+          "records": 29624,
+          "mode": "full",
+          "prev_run_id": "seed",
+          "blocks": 3134,
+          "skipped_blocks": 10,
+          "blocklisted_values": 0,
+          "pairs_blocked": 151692,
+          "pairs_scored": 151692,
+          "edges": 151692,
+          "carried_edges": 0,
+          "match_rate": 1.0,
+          "clusters": 11999,
+          "multi_record_clusters": 3134,
+          "records_in_multi_record_clusters_pct": 70.07,
+          "components": 11999,
+          "max_component_size": 89,
+          "max_cluster_size": 89,
+          "supersized_components": 0,
+          "split_components": 0,
+          "edges_rejected_by_conflict": 0,
+          "cluster_size_distribution": {
+            "50+": 19,
+            "11-50": 467,
+            "6-10": 685,
+            "3-5": 1166,
+            "2": 797,
+            "1": 8865
+          },
+          "singleton_pct": 73.88,
+          "jitter": {
+            "records_total": 29624,
+            "records_compared": 14812,
+            "records_changed": 631,
+            "jitter_pct": 4.2601,
+            "ids_minted": 5745,
+            "ids_retired": 0,
+            "alert": true
+          },
+          "timings_sec": {
+            "load": 0.267,
+            "blocking": 0.086,
+            "scoring": 2.44,
+            "clustering": 1.344,
+            "stable_id": 0.134,
+            "persist": 0.835
+          },
+          "threshold": 3.0
+        },
+        "match_category_counts": {
+          "exact": 151692
+        },
+        "resumed": false
+      },
+      {
+        "window": 24,
+        "run_date": "2011-12-21",
+        "records": 44876,
+        "elapsed_s": 11.29,
+        "engine_run_id": "run-20261022053328-333df5",
+        "engine": {
+          "records": 44876,
+          "mode": "full",
+          "prev_run_id": "seed",
+          "blocks": 4081,
+          "skipped_blocks": 19,
+          "blocklisted_values": 0,
+          "pairs_blocked": 263699,
+          "pairs_scored": 263699,
+          "edges": 263699,
+          "carried_edges": 0,
+          "match_rate": 1.0,
+          "clusters": 17722,
+          "multi_record_clusters": 4081,
+          "records_in_multi_record_clusters_pct": 69.6,
+          "components": 17722,
+          "max_component_size": 100,
+          "max_cluster_size": 100,
+          "supersized_components": 0,
+          "split_components": 0,
+          "edges_rejected_by_conflict": 0,
+          "cluster_size_distribution": {
+            "50+": 29,
+            "11-50": 791,
+            "6-10": 899,
+            "3-5": 1449,
+            "2": 913,
+            "1": 13641
+          },
+          "singleton_pct": 76.97,
+          "jitter": {
+            "records_total": 44876,
+            "records_compared": 29624,
+            "records_changed": 665,
+            "jitter_pct": 2.2448,
+            "ids_minted": 5723,
+            "ids_retired": 0,
+            "alert": true
+          },
+          "timings_sec": {
+            "load": 0.457,
+            "blocking": 0.132,
+            "scoring": 4.594,
+            "clustering": 1.089,
+            "stable_id": 0.113,
+            "persist": 0.72
+          },
+          "threshold": 3.0
+        },
+        "match_category_counts": {
+          "exact": 263699
+        },
+        "resumed": false
+      }
+    ],
+    "candidate_pairs": 263699,
+    "blocking": {
+      "engine (final snapshot)": {
+        "pairs": 263699,
+        "groups": 4081,
+        "skipped_over_cap": 19,
+        "rows_in_skipped": -1
+      }
+    },
+    "timing_s": {
+      "engine_load": 0.84,
+      "engine_blocking": 0.29,
+      "engine_scoring": 8.02,
+      "engine_clustering": 2.67,
+      "engine_stable_id": 0.28,
+      "engine_persist": 1.93,
+      "resolve_windows": 23.11,
+      "wall_total": 24.94
+    },
+    "windows": {
+      "windows": 4,
+      "edges_total": 263699,
+      "per_window": [
+        {
+          "window": 0,
+          "profiles": 1900,
+          "edges": 1321,
+          "clusters": 1307
+        },
+        {
+          "window": 8,
+          "profiles": 14812,
+          "edges": 67683,
+          "clusters": 6254
+        },
+        {
+          "window": 16,
+          "profiles": 29624,
+          "edges": 151692,
+          "clusters": 11999
+        },
+        {
+          "window": 24,
+          "profiles": 44876,
+          "edges": 263699,
+          "clusters": 17722
+        }
+      ]
+    },
+    "jitter_per_window": [
+      {
+        "window": 0,
+        "run_date": "2009-12-31",
+        "records_total": 1900,
+        "records_compared": 0,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 1307,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 8,
+        "run_date": "2010-08-28",
+        "records_total": 14812,
+        "records_compared": 1900,
+        "records_changed": 10,
+        "jitter_pct": 0.5263,
+        "ids_minted": 4947,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 16,
+        "run_date": "2011-04-25",
+        "records_total": 29624,
+        "records_compared": 14812,
+        "records_changed": 631,
+        "jitter_pct": 4.2601,
+        "ids_minted": 5745,
+        "ids_retired": 0,
+        "alert": true
+      },
+      {
+        "window": 24,
+        "run_date": "2011-12-21",
+        "records_total": 44876,
+        "records_compared": 29624,
+        "records_changed": 665,
+        "jitter_pct": 2.2448,
+        "ids_minted": 5723,
+        "ids_retired": 0,
+        "alert": true
+      }
+    ],
+    "engine_metrics_final": {
+      "records": 44876,
+      "mode": "full",
+      "prev_run_id": "seed",
+      "blocks": 4081,
+      "skipped_blocks": 19,
+      "blocklisted_values": 0,
+      "pairs_blocked": 263699,
+      "pairs_scored": 263699,
+      "edges": 263699,
+      "carried_edges": 0,
+      "match_rate": 1.0,
+      "clusters": 17722,
+      "multi_record_clusters": 4081,
+      "records_in_multi_record_clusters_pct": 69.6,
+      "components": 17722,
+      "max_component_size": 100,
+      "max_cluster_size": 100,
+      "supersized_components": 0,
+      "split_components": 0,
+      "edges_rejected_by_conflict": 0,
+      "cluster_size_distribution": {
+        "50+": 29,
+        "11-50": 791,
+        "6-10": 899,
+        "3-5": 1449,
+        "2": 913,
+        "1": 13641
+      },
+      "singleton_pct": 76.97,
+      "jitter": {
+        "records_total": 44876,
+        "records_compared": 29624,
+        "records_changed": 665,
+        "jitter_pct": 2.2448,
+        "ids_minted": 5723,
+        "ids_retired": 0,
+        "alert": true
+      },
+      "timings_sec": {
+        "load": 0.457,
+        "blocking": 0.132,
+        "scoring": 4.594,
+        "clustering": 1.089,
+        "stable_id": 0.113,
+        "persist": 0.72
+      },
+      "threshold": 3.0
+    },
+    "scores_store_fraction": 1.0
+  },
+  "dataset": {
+    "name": "sample-50000",
+    "manifest": {
+      "schema_version": "1",
+      "public_dataset": "uci_online_retail_ii",
+      "generated_at": "2026-10-22T05:23:25+00:00",
+      "epoch": "2009-12-01",
+      "window_days": 30,
+      "timeline_days": 738,
+      "n_windows_at_30d": 25,
+      "counts": {
+        "profiles": 44876,
+        "persons": 5942,
+        "true_pairs": 904835,
+        "profiles_per_person_max": 510,
+        "singleton_persons": 1461,
+        "raw_invoice_lines_with_customer": 824364
+      },
+      "source_url": "https://archive.ics.uci.edu/dataset/502/online+retail+ii",
+      "license": "CC BY 4.0",
+      "raw_files": [
+        "online_retail_II.xlsx"
+      ],
+      "loy_capture": 0.8,
+      "sample": 50000,
+      "seed": 20261022,
+      "mapping": {
+        "profile_id": "Invoice",
+        "person_id": "Customer ID",
+        "created_at": "min(InvoiceDate) per invoice",
+        "country": "Country",
+        "city": "Country (no finer locality exists)",
+        "source": "sheet (2009-2010 / 2010-2011)",
+        "loy_id": "sha1('uci_online_retail_ii:' + Customer ID)[:16] on loy_capture share"
+      },
+      "assumptions": [
+        "invoice lines without Customer ID are dropped (they cannot be labelled)",
+        "cancellation invoices (prefix C) are kept as records of the same customer",
+        "no names/addresses exist: the only matching signal is the pseudonymous loy_id"
+      ],
+      "out": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/uci_online_retail_ii/sample-50000",
+      "fingerprint": 7481820924562800300
+    }
+  },
+  "metrics": {
+    "n_profiles_scored": 44876,
+    "n_profiles_labelled": 44876,
+    "n_windows": 4,
+    "pairwise": {
+      "precision": 1.0,
+      "recall": 0.29143324473522797,
+      "f1": 0.4513330378063454,
+      "tp_pairs": 263699,
+      "fp_pairs": 0,
+      "fn_pairs": 641136,
+      "predicted_pairs": 263699,
+      "true_pairs": 904835
+    },
+    "cluster": {
+      "n_profiles": 44876,
+      "n_pred_clusters": 17722,
+      "n_truth_persons": 5942,
+      "cluster_count_ratio": 2.982497475597442,
+      "bcubed_precision": 1.0,
+      "bcubed_recall": 0.630541663747126,
+      "bcubed_f1": 0.7734137406806111,
+      "exact_match_clusters": 2903,
+      "exact_match_rate": 0.48855604173678896,
+      "false_merge": {
+        "clusters": 0,
+        "cluster_rate": 0.0,
+        "profiles": 0,
+        "profile_rate": 0.0,
+        "persons_affected": 0,
+        "max_persons_in_cluster": 1
+      },
+      "split": {
+        "persons": 3039,
+        "person_rate": 0.511443958263211,
+        "profiles": 38133,
+        "profile_rate": 0.8497415099384972
+      },
+      "pred_size_dist": {
+        "mean": 2.532219839747207,
+        "p50": 1.0,
+        "p90": 5.0,
+        "p99": 26.0,
+        "max": 100,
+        "singletons": 13641
+      },
+      "truth_size_dist": {
+        "mean": 7.552339279703803,
+        "p50": 4.0,
+        "p90": 17.0,
+        "p99": 56.590000000000146,
+        "max": 510,
+        "singletons": 1461
+      },
+      "size_hist": {
+        "labels": [
+          "1",
+          "2",
+          "3",
+          "4-5",
+          "6-10",
+          "11-20",
+          "21-50",
+          "51-100",
+          ">100"
+        ],
+        "pred": [
+          13641,
+          913,
+          615,
+          834,
+          899,
+          551,
+          240,
+          29,
+          0
+        ],
+        "truth": [
+          1461,
+          875,
+          622,
+          872,
+          1008,
+          687,
+          336,
+          58,
+          23
+        ]
+      }
+    },
+    "churn": {
+      "windows": [
+        {
+          "window": 0,
+          "profiles": 1900,
+          "clusters": 1307
+        },
+        {
+          "window": 8,
+          "profiles": 14812,
+          "clusters": 6254,
+          "new_profiles": 12912,
+          "carried": 1900,
+          "churned": 10,
+          "churn_rate": 0.005263157894736842,
+          "churn_merge_profiles": 0,
+          "churn_split_profiles": 10,
+          "clusters_changed": 1,
+          "churn_harmful_profiles": 0,
+          "churn_justified_profiles": 10
+        },
+        {
+          "window": 16,
+          "profiles": 29624,
+          "clusters": 11999,
+          "new_profiles": 14812,
+          "carried": 14812,
+          "churned": 631,
+          "churn_rate": 0.042600594112881446,
+          "churn_merge_profiles": 0,
+          "churn_split_profiles": 631,
+          "clusters_changed": 9,
+          "churn_harmful_profiles": 0,
+          "churn_justified_profiles": 631
+        },
+        {
+          "window": 24,
+          "profiles": 44876,
+          "clusters": 17722,
+          "new_profiles": 15252,
+          "carried": 29624,
+          "churned": 665,
+          "churn_rate": 0.022448015122873345,
+          "churn_merge_profiles": 0,
+          "churn_split_profiles": 665,
+          "clusters_changed": 9,
+          "churn_harmful_profiles": 0,
+          "churn_justified_profiles": 665
+        }
+      ],
+      "n_windows": 4,
+      "mean_churn_rate": 0.02343725571016388,
+      "max_churn_rate": 0.042600594112881446,
+      "total_churned": 1306,
+      "total_carried": 46336,
+      "harmful_churn_share": 0.0
+    },
+    "per_window": [
+      {
+        "window": 0,
+        "profiles": 1900,
+        "precision": 1.0,
+        "recall": 0.5963882618510158,
+        "f1": 0.7471719457013575,
+        "false_merge_cluster_rate": 0.0,
+        "bcubed_f1": 0.9043000098147592
+      },
+      {
+        "window": 8,
+        "profiles": 14812,
+        "precision": 1.0,
+        "recall": 0.5618571677610552,
+        "f1": 0.7194731750874321,
+        "false_merge_cluster_rate": 0.0,
+        "bcubed_f1": 0.8307972702933486
+      },
+      {
+        "window": 16,
+        "profiles": 29624,
+        "precision": 1.0,
+        "recall": 0.36401158563362235,
+        "f1": 0.5337367944195702,
+        "false_merge_cluster_rate": 0.0,
+        "bcubed_f1": 0.7924372212206549
+      },
+      {
+        "window": 24,
+        "profiles": 44876,
+        "precision": 1.0,
+        "recall": 0.29143324473522797,
+        "f1": 0.4513330378063454,
+        "false_merge_cluster_rate": 0.0,
+        "bcubed_f1": 0.7734137406806111
+      }
+    ],
+    "curves": {
+      "n_scored_pairs": 263699,
+      "positives_in_candidates": 263699,
+      "negatives_in_candidates": 0,
+      "scores_store_fraction": 1.0,
+      "blocking_recall": 0.29143324473522797,
+      "auc_roc": null,
+      "average_precision": null,
+      "roc": null,
+      "pr": null
+    },
+    "summary": "pairwise P=1.000 R=0.291 F1=0.451 | B3 F1=0.773 | false-merge clusters=0.00% (profiles 0.00%) | split persons=51.14% | ID churn/30d mean=2.34% max=4.26%",
+    "engine_jitter": [
+      {
+        "window": 0,
+        "run_date": "2009-12-31",
+        "records_total": 1900,
+        "records_compared": 0,
+        "records_changed": 0,
+        "jitter_pct": 0.0,
+        "ids_minted": 1307,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 8,
+        "run_date": "2010-08-28",
+        "records_total": 14812,
+        "records_compared": 1900,
+        "records_changed": 10,
+        "jitter_pct": 0.5263,
+        "ids_minted": 4947,
+        "ids_retired": 0,
+        "alert": false
+      },
+      {
+        "window": 16,
+        "run_date": "2011-04-25",
+        "records_total": 29624,
+        "records_compared": 14812,
+        "records_changed": 631,
+        "jitter_pct": 4.2601,
+        "ids_minted": 5745,
+        "ids_retired": 0,
+        "alert": true
+      },
+      {
+        "window": 24,
+        "run_date": "2011-12-21",
+        "records_total": 44876,
+        "records_compared": 29624,
+        "records_changed": 665,
+        "jitter_pct": 2.2448,
+        "ids_minted": 5723,
+        "ids_retired": 0,
+        "alert": true
+      }
+    ],
+    "validation": {
+      "ok": true,
+      "failed": [],
+      "n_cases": 17,
+      "n_checks": 91,
+      "metrics": {
+        "pairwise.precision/recall/f1": {
+          "status": "validated",
+          "case": "A: pairwise",
+          "failed_checks": []
+        },
+        "pairwise.tp/fp/fn pairs": {
+          "status": "validated",
+          "case": "A: pairwise",
+          "failed_checks": []
+        },
+        "cluster.bcubed_precision/recall/f1": {
+          "status": "validated",
+          "case": "A: B-cubed",
+          "failed_checks": []
+        },
+        "cluster.false_merge (cluster/profile/pair)": {
+          "status": "validated",
+          "case": "A: false-merge",
+          "failed_checks": []
+        },
+        "cluster.split (persons/profiles)": {
+          "status": "validated",
+          "case": "A: split",
+          "failed_checks": []
+        },
+        "cluster.exact_match_rate / cluster_count_ratio": {
+          "status": "validated",
+          "case": "A: exact / ratio",
+          "failed_checks": []
+        },
+        "cluster.pred_size_dist / truth_size_dist": {
+          "status": "validated",
+          "case": "A: size distributions",
+          "failed_checks": []
+        },
+        "churn.rate / merge vs split": {
+          "status": "validated",
+          "case": "C: churn rate, merge vs split",
+          "failed_checks": []
+        },
+        "churn.harmful vs justified": {
+          "status": "validated",
+          "case": "C: harmful vs justified",
+          "failed_checks": []
+        },
+        "curves.blocking_recall": {
+          "status": "validated",
+          "case": "A: blocking recall",
+          "failed_checks": []
+        },
+        "curves.auc_roc / average_precision": {
+          "status": "validated",
+          "case": "A: ROC / PR",
+          "failed_checks": []
+        },
+        "curves.operating_point": {
+          "status": "validated",
+          "case": "A: operating point @0.75",
+          "failed_checks": []
+        },
+        "per_window quality": {
+          "status": "validated",
+          "case": "C: per-window quality",
+          "failed_checks": []
+        },
+        "sanity: perfect input": {
+          "status": "validated",
+          "case": "perfect prediction",
+          "failed_checks": []
+        },
+        "sanity: all-singleton input": {
+          "status": "validated",
+          "case": "all singletons",
+          "failed_checks": []
+        },
+        "sanity: all-merged input": {
+          "status": "validated",
+          "case": "everything merged",
+          "failed_checks": []
+        },
+        "sanity: disjoint prediction": {
+          "status": "validated",
+          "case": "disjoint prediction",
+          "failed_checks": []
+        },
+        "sanity: disjoint pairs file": {
+          "status": "validated",
+          "case": "pairs file with no true pair",
+          "failed_checks": []
+        },
+        "threshold_sweep": {
+          "status": "approximation",
+          "note": "approximation \u2014 harness connected components over engine pair scores; not the engine's conflict-aware clustering"
+        },
+        "overmerge.dominant_feature": {
+          "status": "untrusted",
+          "note": "untrusted \u2014 attribution by engine match_type only (engine pair features are not exported)"
+        },
+        "curves.score_hist": {
+          "status": "untrusted",
+          "note": "untrusted \u2014 diagnostic histogram, no golden case"
+        },
+        "engine.metrics (pairs_blocked, skipped_blocks, cluster_size_distribution, timings)": {
+          "status": "untrusted",
+          "note": "untrusted \u2014 reported verbatim from the engine, not independently recomputed"
+        },
+        "engine.jitter_pct per snapshot": {
+          "status": "cross-checked",
+          "note": "engine jitter == harness churn rate per window",
+          "windows": [
+            {
+              "window": 8,
+              "engine_jitter": 0.005263,
+              "harness_churn": 0.005263157894736842,
+              "engine_compared": 1900,
+              "harness_carried": 1900,
+              "ok": true
+            },
+            {
+              "window": 16,
+              "engine_jitter": 0.04260100000000001,
+              "harness_churn": 0.042600594112881446,
+              "engine_compared": 14812,
+              "harness_carried": 14812,
+              "ok": true
+            },
+            {
+              "window": 24,
+              "engine_jitter": 0.022448000000000003,
+              "harness_churn": 0.022448015122873345,
+              "engine_compared": 29624,
+              "harness_carried": 29624,
+              "ok": true
+            }
+          ]
+        }
+      },
+      "cases": {
+        "pairwise": {
+          "case": "A: pairwise",
+          "ok": true,
+          "checks": [
+            {
+              "check": "precision",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "recall",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "f1",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "tp_pairs",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            },
+            {
+              "check": "fp_pairs",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            },
+            {
+              "check": "fn_pairs",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            },
+            {
+              "check": "predicted_pairs",
+              "expected": 4,
+              "got": 4,
+              "ok": true
+            },
+            {
+              "check": "true_pairs",
+              "expected": 4,
+              "got": 4,
+              "ok": true
+            }
+          ]
+        },
+        "bcubed": {
+          "case": "A: B-cubed",
+          "ok": true,
+          "checks": [
+            {
+              "check": "bcubed_precision",
+              "expected": 0.7777777777777778,
+              "got": 0.7777777777777778,
+              "ok": true
+            },
+            {
+              "check": "bcubed_recall",
+              "expected": 0.7777777777777778,
+              "got": 0.7777777777777777,
+              "ok": true
+            },
+            {
+              "check": "bcubed_f1",
+              "expected": 0.7777777777777778,
+              "got": 0.7777777777777778,
+              "ok": true
+            }
+          ]
+        },
+        "false_merge": {
+          "case": "A: false-merge",
+          "ok": true,
+          "checks": [
+            {
+              "check": "clusters",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "cluster_rate",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            },
+            {
+              "check": "profiles",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "profile_rate",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "pair_rate = 1-precision",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "persons_affected",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            },
+            {
+              "check": "max_persons_in_cluster",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            }
+          ]
+        },
+        "split": {
+          "case": "A: split",
+          "ok": true,
+          "checks": [
+            {
+              "check": "persons",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "person_rate",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            },
+            {
+              "check": "profiles",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "profile_rate",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            }
+          ]
+        },
+        "exact": {
+          "case": "A: exact / ratio",
+          "ok": true,
+          "checks": [
+            {
+              "check": "exact_match_clusters",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "exact_match_rate",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            },
+            {
+              "check": "cluster_count_ratio",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "n_pred_clusters",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "n_truth_persons",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            }
+          ]
+        },
+        "sizes": {
+          "case": "A: size distributions",
+          "ok": true,
+          "checks": [
+            {
+              "check": "pred.mean",
+              "expected": 2.0,
+              "got": 2.0,
+              "ok": true
+            },
+            {
+              "check": "pred.max",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "pred.singletons",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "truth.mean",
+              "expected": 2.0,
+              "got": 2.0,
+              "ok": true
+            },
+            {
+              "check": "truth.max",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "truth.singletons",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            }
+          ]
+        },
+        "blocking": {
+          "case": "A: blocking recall",
+          "ok": true,
+          "checks": [
+            {
+              "check": "blocking_recall",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "positives_in_candidates",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            },
+            {
+              "check": "n_scored_pairs",
+              "expected": 4,
+              "got": 4,
+              "ok": true
+            }
+          ]
+        },
+        "curves": {
+          "case": "A: ROC / PR",
+          "ok": true,
+          "checks": [
+            {
+              "check": "auc_roc",
+              "expected": 0.75,
+              "got": 0.75,
+              "ok": true
+            },
+            {
+              "check": "average_precision",
+              "expected": 0.8333333333333334,
+              "got": 0.8333333333333333,
+              "ok": true
+            }
+          ]
+        },
+        "operating": {
+          "case": "A: operating point @0.75",
+          "ok": true,
+          "checks": [
+            {
+              "check": "precision",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "recall_in_candidates",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "effective_recall",
+              "expected": 0.25,
+              "got": 0.25,
+              "ok": true
+            },
+            {
+              "check": "tp",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "fp",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "fn",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            }
+          ]
+        },
+        "churn": {
+          "case": "C: churn rate, merge vs split",
+          "ok": true,
+          "checks": [
+            {
+              "check": "w1.carried",
+              "expected": 3,
+              "got": 3,
+              "ok": true
+            },
+            {
+              "check": "w1.churned",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "w1.churn_rate",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            },
+            {
+              "check": "w1.merge",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "w1.split",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            },
+            {
+              "check": "w1.new",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "w2.carried",
+              "expected": 4,
+              "got": 4,
+              "ok": true
+            },
+            {
+              "check": "w2.churned",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "w2.churn_rate",
+              "expected": 0.25,
+              "got": 0.25,
+              "ok": true
+            },
+            {
+              "check": "w2.merge",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            },
+            {
+              "check": "w2.split",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "mean_churn_rate",
+              "expected": 0.29166666666666663,
+              "got": 0.29166666666666663,
+              "ok": true
+            },
+            {
+              "check": "max_churn_rate",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            }
+          ]
+        },
+        "churn_harm": {
+          "case": "C: harmful vs justified",
+          "ok": true,
+          "checks": [
+            {
+              "check": "w1.justified",
+              "expected": 1,
+              "got": 1,
+              "ok": true
+            },
+            {
+              "check": "w1.harmful",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            },
+            {
+              "check": "w2.harmful",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            },
+            {
+              "check": "harmful_share",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            }
+          ]
+        },
+        "per_window": {
+          "case": "C: per-window quality",
+          "ok": true,
+          "checks": [
+            {
+              "check": "w0.precision",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "w0.recall",
+              "expected": 0.3333333333333333,
+              "got": 0.3333333333333333,
+              "ok": true
+            },
+            {
+              "check": "w1.recall",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "w2.false_merge_cluster_rate",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            }
+          ]
+        },
+        "perfect": {
+          "case": "perfect prediction",
+          "ok": true,
+          "checks": [
+            {
+              "check": "f1",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "bcubed_f1",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "false_merge.cluster_rate",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "split.person_rate",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "exact_match_rate",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            }
+          ]
+        },
+        "singletons": {
+          "case": "all singletons",
+          "ok": true,
+          "checks": [
+            {
+              "check": "recall",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "precision (no predicted pairs -> 1 by convention)",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "f1",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "bcubed_precision",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "bcubed_recall",
+              "expected": 0.5,
+              "got": 0.5,
+              "ok": true
+            },
+            {
+              "check": "false_merge.clusters",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            },
+            {
+              "check": "split.persons",
+              "expected": 2,
+              "got": 2,
+              "ok": true
+            }
+          ]
+        },
+        "merged": {
+          "case": "everything merged",
+          "ok": true,
+          "checks": [
+            {
+              "check": "recall",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "precision",
+              "expected": 0.26666666666666666,
+              "got": 0.26666666666666666,
+              "ok": true
+            },
+            {
+              "check": "false_merge.cluster_rate",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "false_merge.profile_rate",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "bcubed_recall",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "bcubed_precision",
+              "expected": 0.38888888888888884,
+              "got": 0.38888888888888884,
+              "ok": true
+            }
+          ]
+        },
+        "disjoint": {
+          "case": "disjoint prediction",
+          "ok": true,
+          "checks": [
+            {
+              "check": "recall",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "precision",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "f1",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "false_merge.cluster_rate",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            },
+            {
+              "check": "split.person_rate",
+              "expected": 1.0,
+              "got": 1.0,
+              "ok": true
+            }
+          ]
+        },
+        "disjoint_pairs": {
+          "case": "pairs file with no true pair",
+          "ok": true,
+          "checks": [
+            {
+              "check": "blocking_recall",
+              "expected": 0.0,
+              "got": 0.0,
+              "ok": true
+            },
+            {
+              "check": "auc_roc (undefined -> None)",
+              "expected": null,
+              "got": null,
+              "ok": true
+            },
+            {
+              "check": "positives_in_candidates",
+              "expected": 0,
+              "got": 0,
+              "ok": true
+            }
+          ]
+        }
+      }
+    }
+  },
+  "threshold_sweep": [
+    {
+      "threshold": 0.3,
+      "precision": 1.0,
+      "recall": 0.29143324473522797,
+      "f1": 0.4513330378063454,
+      "bcubed_f1": 0.7734137406806111,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.511443958263211,
+      "n_clusters": 17722
+    },
+    {
+      "threshold": 0.35,
+      "precision": 1.0,
+      "recall": 0.29143324473522797,
+      "f1": 0.4513330378063454,
+      "bcubed_f1": 0.7734137406806111,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.511443958263211,
+      "n_clusters": 17722
+    },
+    {
+      "threshold": 0.4,
+      "precision": 1.0,
+      "recall": 0.29143324473522797,
+      "f1": 0.4513330378063454,
+      "bcubed_f1": 0.7734137406806111,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.511443958263211,
+      "n_clusters": 17722
+    },
+    {
+      "threshold": 0.45,
+      "precision": 1.0,
+      "recall": 0.29143324473522797,
+      "f1": 0.4513330378063454,
+      "bcubed_f1": 0.7734137406806111,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.511443958263211,
+      "n_clusters": 17722
+    },
+    {
+      "threshold": 0.5,
+      "precision": 1.0,
+      "recall": 0.29143324473522797,
+      "f1": 0.4513330378063454,
+      "bcubed_f1": 0.7734137406806111,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.511443958263211,
+      "n_clusters": 17722
+    },
+    {
+      "threshold": 0.55,
+      "precision": 1.0,
+      "recall": 0.29143324473522797,
+      "f1": 0.4513330378063454,
+      "bcubed_f1": 0.7734137406806111,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.511443958263211,
+      "n_clusters": 17722
+    },
+    {
+      "threshold": 0.6,
+      "precision": 1.0,
+      "recall": 0.29143324473522797,
+      "f1": 0.4513330378063454,
+      "bcubed_f1": 0.7734137406806111,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.511443958263211,
+      "n_clusters": 17722
+    },
+    {
+      "threshold": 0.65,
+      "precision": 1.0,
+      "recall": 0.29143324473522797,
+      "f1": 0.4513330378063454,
+      "bcubed_f1": 0.7734137406806111,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.511443958263211,
+      "n_clusters": 17722
+    },
+    {
+      "threshold": 0.7,
+      "precision": 1.0,
+      "recall": 0.29143324473522797,
+      "f1": 0.4513330378063454,
+      "bcubed_f1": 0.7734137406806111,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.511443958263211,
+      "n_clusters": 17722
+    },
+    {
+      "threshold": 0.75,
+      "precision": 1.0,
+      "recall": 0.29143324473522797,
+      "f1": 0.4513330378063454,
+      "bcubed_f1": 0.7734137406806111,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.511443958263211,
+      "n_clusters": 17722
+    },
+    {
+      "threshold": 0.8,
+      "precision": 1.0,
+      "recall": 0.29143324473522797,
+      "f1": 0.4513330378063454,
+      "bcubed_f1": 0.7734137406806111,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.511443958263211,
+      "n_clusters": 17722
+    },
+    {
+      "threshold": 0.85,
+      "precision": 1.0,
+      "recall": 0.29143324473522797,
+      "f1": 0.4513330378063454,
+      "bcubed_f1": 0.7734137406806111,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.511443958263211,
+      "n_clusters": 17722
+    },
+    {
+      "threshold": 0.9,
+      "precision": 1.0,
+      "recall": 0.29143324473522797,
+      "f1": 0.4513330378063454,
+      "bcubed_f1": 0.7734137406806111,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.511443958263211,
+      "n_clusters": 17722
+    },
+    {
+      "threshold": 0.95,
+      "precision": 1.0,
+      "recall": 0.29143324473522797,
+      "f1": 0.4513330378063454,
+      "bcubed_f1": 0.7734137406806111,
+      "false_merge_cluster_rate": 0.0,
+      "false_merge_profile_rate": 0.0,
+      "split_person_rate": 0.511443958263211,
+      "n_clusters": 17722
+    }
+  ],
+  "overmerge_summary": {
+    "overmerged_clusters": 0,
+    "profiles_in_overmerged": 0,
+    "persons_in_overmerged": 0,
+    "cross_person_edges": 0,
+    "edge_feature_tally": {
+      "email": 0,
+      "phone": 0,
+      "dob": 0,
+      "postal": 0,
+      "name": 0,
+      "addr": 0,
+      "engine_deterministic": 0,
+      "engine_scored": 0,
+      "engine_trivial_duplicate": 0
+    },
+    "edge_feature_only_tally": {
+      "email": 0,
+      "phone": 0,
+      "dob": 0,
+      "postal": 0,
+      "name": 0,
+      "addr": 0,
+      "engine_deterministic": 0,
+      "engine_scored": 0,
+      "engine_trivial_duplicate": 0
+    }
+  },
+  "resources": {
+    "wall_s": 28.09,
+    "samples": 27,
+    "interval_s": 1.0,
+    "peak_rss_mb": 554.3,
+    "mean_rss_mb": 308.1,
+    "mean_cpu_pct": 86.9,
+    "peak_cpu_pct": 97.5,
+    "cpu_count": 8,
+    "stage_wall_s": {
+      "init": 0.0,
+      "load": 0.22,
+      "resolve": 0.09,
+      "resolve:w0": 1.05,
+      "resolve:w8": 3.16,
+      "resolve:w16": 8.43,
+      "resolve:w24": 12.06,
+      "assemble": 0.26,
+      "persist": 0.56,
+      "metrics": 2.26,
+      "report": 0.0
+    },
+    "per_stage": {
+      "resolve:w0": {
+        "samples": 1,
+        "peak_rss_mb": 192.0,
+        "mean_cpu_pct": 52.8,
+        "wall_s": 1.05
+      },
+      "resolve:w8": {
+        "samples": 3,
+        "peak_rss_mb": 379.0,
+        "mean_cpu_pct": 94.7,
+        "wall_s": 3.16
+      },
+      "resolve:w16": {
+        "samples": 8,
+        "peak_rss_mb": 362.7,
+        "mean_cpu_pct": 83.7,
+        "wall_s": 8.43
+      },
+      "resolve:w24": {
+        "samples": 11,
+        "peak_rss_mb": 554.3,
+        "mean_cpu_pct": 92.4,
+        "wall_s": 12.06
+      },
+      "assemble": {
+        "samples": 1,
+        "peak_rss_mb": 335.3,
+        "mean_cpu_pct": 96.7,
+        "wall_s": 0.26
+      },
+      "metrics": {
+        "samples": 2,
+        "peak_rss_mb": 172.6,
+        "mean_cpu_pct": 70.2,
+        "wall_s": 2.26
+      },
+      "report": {
+        "samples": 1,
+        "peak_rss_mb": 270.1,
+        "mean_cpu_pct": 84.6,
+        "wall_s": 0.0
+      }
+    }
+  },
+  "events": {
+    "stages": [
+      "load",
+      "metrics",
+      "report",
+      "resolve:w0",
+      "resolve:w16",
+      "resolve:w24",
+      "resolve:w8"
+    ],
+    "failures": 0,
+    "retries": 0,
+    "resumed": false,
+    "failure_details": []
+  },
+  "limitations": [
+    "Public-corpus sanity check on a 50,000-profile sample (whole customers sampled, seed 20261022); the full corpus was not evaluated locally. See aurora-eval-harness/datasets/public/uci_online_retail_ii/README.md for the mapping and the pseudonymous loy_id assumption (recall ceiling ~0.64)."
+  ],
+  "notes": [
+    "Engine scores are normalised from the 0\u20135 band scale to [0, 1] (score/5); the operating threshold 0.60 is the engine's 3.0 on its own scale.",
+    "The threshold sweep re-clusters engine pair scores with plain connected components, so it approximates (does not reproduce) the engine's conflict-aware clustering at other thresholds."
+  ],
+  "plots": {
+    "cluster_sizes": "cluster_sizes.png",
+    "churn": "churn.png",
+    "sweep": "sweep.png",
+    "resources": "resources.png"
+  }
+}

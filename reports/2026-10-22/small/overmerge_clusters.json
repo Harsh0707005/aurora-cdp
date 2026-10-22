@@ -1,0 +1,464 @@
+{
+  "summary": {
+    "overmerged_clusters": 58,
+    "profiles_in_overmerged": 907,
+    "persons_in_overmerged": 124,
+    "cross_person_edges": 2082,
+    "edge_feature_tally": {
+      "email": 0,
+      "phone": 0,
+      "dob": 0,
+      "postal": 0,
+      "name": 0,
+      "addr": 0,
+      "engine_deterministic": 89,
+      "engine_scored": 1993,
+      "engine_trivial_duplicate": 0
+    },
+    "edge_feature_only_tally": {
+      "email": 0,
+      "phone": 0,
+      "dob": 0,
+      "postal": 0,
+      "name": 0,
+      "addr": 0,
+      "engine_deterministic": 89,
+      "engine_scored": 1993,
+      "engine_trivial_duplicate": 0
+    }
+  },
+  "clusters": [
+    {
+      "cluster_id": "w0-7b58aa4b1d968ec2",
+      "persons": 4,
+      "profiles": 18,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0001290": [
+          "Steven",
+          "steven dvis"
+        ],
+        "ps_0001220": [
+          "James Davis",
+          "james davis"
+        ],
+        "ps_0000858": [
+          "Christopher Davis"
+        ],
+        "ps_0000080": [
+          "Frank Davis",
+          "f davis"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-58f11bbee4bf5646",
+      "persons": 3,
+      "profiles": 104,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0000762": [
+          "james rodriguez"
+        ],
+        "ps_0001010": [
+          "Patrick Rodriguez",
+          "paddy rodriguez"
+        ],
+        "ps_0001991": [
+          "Jack Rodriguez",
+          "jack rodriguez"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-48a87a2e3d49ec6b",
+      "persons": 3,
+      "profiles": 61,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0000325": [
+          "Alex Lin",
+          "alexander lin"
+        ],
+        "ps_0000800": [
+          "Betty Lin",
+          "betty"
+        ],
+        "ps_0001987": [
+          "trish lin"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-b95b440e1bac9f6d",
+      "persons": 3,
+      "profiles": 27,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0001095": [
+          "matthew smith",
+          "matthew ssmith"
+        ],
+        "ps_0000362": [
+          "John Smith",
+          "john smith"
+        ],
+        "ps_0001041": [
+          "raymod smith",
+          "raymond smith"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-ad2d6dfb3f10e2ce",
+      "persons": 3,
+      "profiles": 22,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0001314": [
+          "James Rodriguez"
+        ],
+        "ps_0000640": [
+          "Margaret Rodriguez"
+        ],
+        "ps_0001237": [
+          "anthony rodriguez",
+          "tony rodriguez"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w1-ca74b78d5cbfbfb3",
+      "persons": 3,
+      "profiles": 19,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0000140": [
+          "Joshua Dunn",
+          "joshua dunn"
+        ],
+        "ps_0000682": [
+          "James Dunm",
+          "james dunn"
+        ],
+        "ps_0001458": [
+          "riya dunn"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-c147442332addb32",
+      "persons": 3,
+      "profiles": 15,
+      "dominant_feature": "engine_deterministic",
+      "sample": {
+        "ps_0001434": [
+          "Bobby Smith",
+          "Robert Smith"
+        ],
+        "ps_0000715": [
+          "Robert Smith",
+          "robert smith"
+        ],
+        "ps_0001974": [
+          "Rob",
+          "rogert simth"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w3-18d8f3a26014d957",
+      "persons": 3,
+      "profiles": 15,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0001178": [
+          "Michael",
+          "michael mith"
+        ],
+        "ps_0000349": [
+          "J SMITH",
+          "James Smiht"
+        ],
+        "ps_0000697": [
+          "nicholas smith"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-6c90db3ecdd0e6ea",
+      "persons": 3,
+      "profiles": 13,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0000617": [
+          "Thomas Smith"
+        ],
+        "ps_0000066": [
+          "Jason Smith",
+          "jason smith"
+        ],
+        "ps_0000128": [
+          "James Smith"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w2-8614aa45e6fd236b",
+      "persons": 3,
+      "profiles": 12,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0000167": [
+          "Shirley Huang"
+        ],
+        "ps_0000306": [
+          "Christopher Huang",
+          "c huang"
+        ],
+        "ps_0000939": [
+          "jsmes huang"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-b192a5e969176646",
+      "persons": 3,
+      "profiles": 11,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0000008": [
+          "John Soctt",
+          "john scott"
+        ],
+        "ps_0001502": [
+          "Charles Scott"
+        ],
+        "ps_0001336": [
+          "Robert Csott",
+          "Robert Scoft"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-433fbc8805540270",
+      "persons": 3,
+      "profiles": 10,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0001516": [
+          "John Cruz",
+          "john cruz"
+        ],
+        "ps_0000653": [
+          "Michael Cruz",
+          "Mike Cruz"
+        ],
+        "ps_0000203": [
+          "john cruz"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-4e96a5ede77b1f31",
+      "persons": 3,
+      "profiles": 8,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0000980": [
+          "Aisha Carter",
+          "aisha catrer"
+        ],
+        "ps_0001982": [
+          "Maria Carter"
+        ],
+        "ps_0001776": [
+          "Susan"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-c0f0f62ec742a5a3",
+      "persons": 2,
+      "profiles": 54,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0001239": [
+          "John Hernandez"
+        ],
+        "ps_0000736": [
+          "Robert Hernandez"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-4e2789527e660ee1",
+      "persons": 2,
+      "profiles": 37,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0000981": [
+          "PAMELA DAVIS",
+          "pamela"
+        ],
+        "ps_0000356": [
+          "Michelle Davis",
+          "michele davis"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-660abc5d6b5852a0",
+      "persons": 2,
+      "profiles": 28,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0000504": [
+          "Brian Cunningham",
+          "brian cunninfham"
+        ],
+        "ps_0001171": [
+          "B Cunningham"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-032446b0c57fdecc",
+      "persons": 2,
+      "profiles": 24,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0000792": [
+          "Richard Carpenter",
+          "richard carpenter"
+        ],
+        "ps_0001180": [
+          "Kimberly Carpenter"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-33c6b203c91f9710",
+      "persons": 2,
+      "profiles": 22,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0001395": [
+          "John",
+          "John Greene"
+        ],
+        "ps_0001674": [
+          "deborah",
+          "deborah greene"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-6964534e4edcf2da",
+      "persons": 2,
+      "profiles": 21,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0000416": [
+          "John Taylor",
+          "jon taylor"
+        ],
+        "ps_0001622": [
+          "A Tayllor",
+          "Anna Taylor"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-ff93d0e59620f37f",
+      "persons": 2,
+      "profiles": 20,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0001479": [
+          "Andrew",
+          "andrew hall"
+        ],
+        "ps_0000169": [
+          "Hua Hall"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-1c717c15ebbc3c0e",
+      "persons": 2,
+      "profiles": 19,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0000818": [
+          "JUSTIN BOSE",
+          "Justin Bose"
+        ],
+        "ps_0001492": [
+          "Gregory Bose",
+          "gregory bose"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-aa7c9f0b30c169ad",
+      "persons": 2,
+      "profiles": 18,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0001631": [
+          "Julie Lawson"
+        ],
+        "ps_0000230": [
+          "JOHN LAWSON",
+          "John Lawson"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w2-80289c631ddec1f9",
+      "persons": 2,
+      "profiles": 17,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0000187": [
+          "james gonzalez"
+        ],
+        "ps_0000174": [
+          "John Gonzalez"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w2-e99245b5bee51ff9",
+      "persons": 2,
+      "profiles": 17,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0000234": [
+          "SNEHA BUTLER",
+          "Sneha Butler"
+        ],
+        "ps_0001478": [
+          "joshua butler"
+        ]
+      }
+    },
+    {
+      "cluster_id": "w0-b8f47a51949e32f0",
+      "persons": 2,
+      "profiles": 16,
+      "dominant_feature": "engine_scored",
+      "sample": {
+        "ps_0000192": [
+          "Jjohn Davis",
+          "John Davis"
+        ],
+        "ps_0000245": [
+          "Virginia Davis",
+          "virgknia davis"
+        ]
+      }
+    }
+  ]
+}

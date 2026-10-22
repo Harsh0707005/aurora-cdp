@@ -1,0 +1,219 @@
+{
+  "adapter": "aurora_cdp",
+  "aurora_cdp_commit": "08be538f5996b0a909a71b047d33d5b696b470b3",
+  "aurora_cdp_commit_source": "git",
+  "aurora_cdp_dirty_worktree": false,
+  "aurora_cdp_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp",
+  "aurora_cdp_version": "0.1.0",
+  "aurora_cdp_config": {
+    "workspace": ".aurora",
+    "outputs_dir": "outputs",
+    "db_file": "aurora.duckdb",
+    "normalize": {
+      "default_region": "US",
+      "phone_use_last10_for_match": true,
+      "email_strip_plus_tag": true,
+      "email_strip_gmail_dots": false,
+      "email_junk_local_parts": [
+        "test",
+        "no",
+        "none",
+        "reservation",
+        "admin",
+        "contact",
+        "guest",
+        "info",
+        "noreply",
+        "no-reply",
+        "donotreply",
+        "unknown"
+      ],
+      "address_abbreviations": {
+        "ST": "STREET",
+        "AVE": "AVENUE",
+        "RD": "ROAD",
+        "BLVD": "BOULEVARD",
+        "DR": "DRIVE",
+        "LN": "LANE",
+        "CT": "COURT",
+        "STE": "SUITE",
+        "APT": "APARTMENT",
+        "N": "NORTH",
+        "S": "SOUTH",
+        "E": "EAST",
+        "W": "WEST",
+        "1ST": "FIRST",
+        "2ND": "SECOND",
+        "3RD": "THIRD"
+      }
+    },
+    "blocklist": {
+      "email_max_given_names": 20,
+      "email_max_surnames": 20,
+      "phone_max_given_names": 20,
+      "address_max_given_names": 40
+    },
+    "blocking": {
+      "block_size_limit": 100,
+      "fk_block_size_limit": 1000,
+      "strategies": [
+        {
+          "name": "email_exact",
+          "type": "email"
+        },
+        {
+          "name": "phone_exact",
+          "type": "phone"
+        },
+        {
+          "name": "name_postal",
+          "type": "name_postal"
+        },
+        {
+          "name": "name_birthdate",
+          "type": "name_birthdate"
+        },
+        {
+          "name": "loy_id_exact",
+          "type": "loy_id"
+        },
+        {
+          "name": "ck_exact",
+          "type": "ck"
+        },
+        {
+          "name": "fk",
+          "type": "fk"
+        }
+      ]
+    },
+    "matcher": {
+      "match_threshold": 3.0,
+      "deterministic": {
+        "ck_exact_score": 5.0,
+        "loy_exact_score": 5.0,
+        "email_exact_with_name_score": 4.5,
+        "phone_exact_with_name_score": 4.2,
+        "name_agreement_min": 0.85
+      },
+      "weights": {
+        "bias": -2.5,
+        "given_sim": 1.0,
+        "surname_sim": 1.2,
+        "email_exact": 3.0,
+        "email_sim": 0.5,
+        "email_sim_min": 0.92,
+        "phone_exact": 2.5,
+        "address_sim": 1.2,
+        "postal_exact": 0.6,
+        "birthdate_exact": 1.5,
+        "fk_shared": 1.0,
+        "name_mismatch_penalty": -1.5,
+        "birthdate_conflict": -3.0
+      },
+      "hard_conflicts": {
+        "birthdate": true,
+        "birthdate_typo_tolerance": 2
+      }
+    },
+    "cluster": {
+      "supersized_min_size": 500,
+      "conflict_attributes": [
+        "birthdate"
+      ]
+    },
+    "stable_id": {
+      "enabled": true,
+      "jitter_alert_pct": 2.0
+    },
+    "survivorship": {
+      "source_priority": {
+        "loyalty": 1,
+        "crm": 2,
+        "ecommerce": 3,
+        "pos": 4
+      },
+      "field_priority": {},
+      "recency_field": "update_dt",
+      "attributes": [
+        "given_name",
+        "surname",
+        "email",
+        "phone",
+        "address",
+        "address2",
+        "city",
+        "state",
+        "postal",
+        "country",
+        "birthdate"
+      ]
+    },
+    "sources": {},
+    "tuning": {
+      "thresholds": [
+        2.0,
+        2.5,
+        3.0,
+        3.5,
+        4.0
+      ],
+      "min_precision": 0.98
+    }
+  },
+  "harness_commit": "2b160cb3d45caffe557202f1fc37b1e075118051",
+  "harness_version": "0.1.0",
+  "seed": 20261022,
+  "dataset": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/uci_online_retail_ii/sample-50000",
+  "run_at": "2026-10-22T05:33:11+00:00",
+  "host": {
+    "platform": "macOS",
+    "platform_release": "25.5.0",
+    "machine": "arm64",
+    "python": "3.11.11",
+    "cpu_count": 8,
+    "mem_total_gb": 8.59,
+    "hostname": "Harshs-Macbook-Air"
+  },
+  "run_name": "public-uci_online_retail_ii",
+  "input_hash": "a6229f1c71867e8697a4",
+  "adapter_config": {
+    "cdp_path": null,
+    "config": null,
+    "threshold": 0.6,
+    "datasource_column": "source",
+    "datasource": "input",
+    "windows": 4,
+    "deterministic_ids": true,
+    "seed": 20261022,
+    "isolate_windows": false,
+    "max_stored_pairs": 20000000,
+    "epoch": "2026-01-01",
+    "window_days": 30,
+    "retries": 1,
+    "timeout_s": null,
+    "threshold_raw": 3.0,
+    "score_scale": 5.0,
+    "engine_path": "/Users/harshmaster/Desktop/Projects/aurora-cdp"
+  },
+  "dataset_manifest_fingerprint": 7481820924562800300,
+  "dataset_seed": null,
+  "sample": null,
+  "argv": [
+    "--adapter",
+    "aurora_cdp",
+    "--windows",
+    "4",
+    "--seed",
+    "20261022",
+    "--date",
+    "2026-10-22",
+    "--force",
+    "--dataset",
+    "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/uci_online_retail_ii/sample-50000",
+    "--run-name",
+    "public-uci_online_retail_ii",
+    "--limitation",
+    "Public-corpus sanity check on a 50,000-profile sample (whole customers sampled, seed 20261022); the full corpus was not evaluated locally. See aurora-eval-harness/datasets/public/uci_online_retail_ii/README.md for the mapping and the pseudonymous loy_id assumption (recall ceiling ~0.64)."
+  ]
+}

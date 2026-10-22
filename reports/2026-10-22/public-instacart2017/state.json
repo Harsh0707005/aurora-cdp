@@ -1,0 +1,153 @@
+{
+  "stages": {
+    "load": {
+      "status": "complete",
+      "at": "2026-10-22T05:39:28+00:00",
+      "profiles": 50017
+    },
+    "resolve": {
+      "status": "complete",
+      "at": "2026-10-22T05:40:11+00:00",
+      "elapsed_s": 43.22,
+      "clusters": 13157
+    },
+    "metrics": {
+      "status": "complete",
+      "at": "2026-10-22T05:40:12+00:00",
+      "summary": "pairwise P=1.000 R=0.639 F1=0.780 | B3 F1=0.796 | false-merge clusters=0.00% (profiles 0.00%) | split persons=85.45% | ID churn/30d mean=0.00% max=0.00%"
+    },
+    "report": {
+      "status": "complete",
+      "at": "2026-10-22T05:40:13+00:00",
+      "report": "/Users/harshmaster/Desktop/Projects/aurora-cdp/reports/2026-10-22/public-instacart2017/report.md"
+    }
+  },
+  "status": "complete",
+  "run_name": "public-instacart2017",
+  "input_hash": "f1b484a7e469e95895ae",
+  "dataset": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/instacart2017/sample-50000",
+  "adapter": "aurora_cdp",
+  "report_dir": "/Users/harshmaster/Desktop/Projects/aurora-cdp/reports/2026-10-22/public-instacart2017",
+  "spec": {
+    "dataset": "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/instacart2017/sample-50000",
+    "adapter": "aurora_cdp",
+    "run_name": "public-instacart2017",
+    "seed": 20261022,
+    "adapter_kwargs": {
+      "max_stored_pairs": 20000000,
+      "threshold": null,
+      "windows": 4,
+      "config": null,
+      "cdp_path": null,
+      "isolate_windows": false,
+      "deterministic_ids": true,
+      "datasource_column": "source",
+      "timeout_s": null
+    },
+    "data_dir": null,
+    "reports_root": null,
+    "date": "2026-10-22",
+    "runs_dir": "/Users/harshmaster/Desktop/Projects/aurora-eval-harness/runs",
+    "link_dir": "/Users/harshmaster/Desktop/Projects/aurora-eval-harness/reports/engine",
+    "resume": true,
+    "force": true,
+    "rebuild_report": false,
+    "sweep": true,
+    "sweep_grid": "0.3:0.95:0.05",
+    "sample": null,
+    "top_k": 25,
+    "notes": [],
+    "limitations": [
+      "Public-corpus sanity check on a 50,000-profile sample (whole customers sampled, seed 20261022); the full corpus was not evaluated locally. See aurora-eval-harness/datasets/public/instacart2017/README.md for the mapping and the pseudonymous loy_id assumption (recall ceiling ~0.64)."
+    ],
+    "resource_interval": 1.0,
+    "retries": 1,
+    "argv": [
+      "--adapter",
+      "aurora_cdp",
+      "--windows",
+      "4",
+      "--seed",
+      "20261022",
+      "--date",
+      "2026-10-22",
+      "--force",
+      "--dataset",
+      "/Users/harshmaster/Documents/aanya/datasets/aurora-testdata/public/instacart2017/sample-50000",
+      "--run-name",
+      "public-instacart2017",
+      "--limitation",
+      "Public-corpus sanity check on a 50,000-profile sample (whole customers sampled, seed 20261022); the full corpus was not evaluated locally. See aurora-eval-harness/datasets/public/instacart2017/README.md for the mapping and the pseudonymous loy_id assumption (recall ceiling ~0.64)."
+    ]
+  },
+  "pid": 40228,
+  "summary": "pairwise P=1.000 R=0.639 F1=0.780 | B3 F1=0.796 | false-merge clusters=0.00% (profiles 0.00%) | split persons=85.45% | ID churn/30d mean=0.00% max=0.00%",
+  "finished_at": "2026-10-22T05:40:13+00:00",
+  "resources": {
+    "wall_s": 44.4,
+    "samples": 43,
+    "interval_s": 1.0,
+    "peak_rss_mb": 1402.1,
+    "mean_rss_mb": 881.7,
+    "mean_cpu_pct": 98.9,
+    "peak_cpu_pct": 112.1,
+    "cpu_count": 8,
+    "stage_wall_s": {
+      "init": 0.0,
+      "load": 0.14,
+      "resolve": 0.04,
+      "resolve:w0": 1.95,
+      "resolve:w4": 8.95,
+      "resolve:w8": 15.4,
+      "resolve:w12": 16.0,
+      "assemble": 0.31,
+      "persist": 0.56,
+      "metrics": 1.04,
+      "report": 0.0
+    },
+    "per_stage": {
+      "resolve:w0": {
+        "samples": 2,
+        "peak_rss_mb": 332.6,
+        "mean_cpu_pct": 98.6,
+        "wall_s": 1.95
+      },
+      "resolve:w4": {
+        "samples": 8,
+        "peak_rss_mb": 742.7,
+        "mean_cpu_pct": 98.3,
+        "wall_s": 8.95
+      },
+      "resolve:w8": {
+        "samples": 15,
+        "peak_rss_mb": 988.9,
+        "mean_cpu_pct": 98.8,
+        "wall_s": 15.4
+      },
+      "resolve:w12": {
+        "samples": 15,
+        "peak_rss_mb": 1382.9,
+        "mean_cpu_pct": 99.7,
+        "wall_s": 16.0
+      },
+      "persist": {
+        "samples": 1,
+        "peak_rss_mb": 1394.8,
+        "mean_cpu_pct": 103.1,
+        "wall_s": 0.56
+      },
+      "metrics": {
+        "samples": 1,
+        "peak_rss_mb": 1402.1,
+        "mean_cpu_pct": 93.8,
+        "wall_s": 1.04
+      },
+      "report": {
+        "samples": 1,
+        "peak_rss_mb": 1385.2,
+        "mean_cpu_pct": 97.5,
+        "wall_s": 0.0
+      }
+    }
+  }
+}
