@@ -112,10 +112,14 @@ def cluster_indices(
     score: np.ndarray,
     conflict_values: list[dict[str, list[str | None]]] | dict[str, list],
     cfg,
+    forbidden: list[tuple[int, int]] | None = None,
 ) -> ClusterResult:
     """Integer core. ``left/right/score`` are parallel edge arrays over indices 0..n-1;
     ``conflict_values`` maps attr -> list (length n) of that record's value (or None).
-    Returns a ClusterResult with only the integer views filled (``rids`` empty)."""
+    ``forbidden`` lists index pairs that must never share a cluster (Stitch *split* labels): a union that would
+    bring such a pair together is rejected like a hard attribute conflict (counted in
+    ``edges_rejected_by_label``). Returns a ClusterResult with only the integer views filled (``rids`` empty).
+    """
     max_size = int(cfg.get("supersized_min_size", 500))
     conflict_attrs = list(cfg.get("conflict_attributes", ["birthdate"]))
     tol = int(cfg.get("birthdate_typo_tolerance", 2))
@@ -165,13 +169,30 @@ def cluster_indices(
         v = values[attr][root]
         return {v} if v else set()
 
+    # pair-level vetoes (split labels): per root, the record indices its members must not be clustered with
+    forbid: dict[int, set[int]] = defaultdict(set)
+    for a, b in forbidden or ():
+        if a != b:
+            forbid[int(a)].add(int(b))
+            forbid[int(b)].add(int(a))
+
+    def label_blocks(ra: int, rb: int) -> bool:
+        fa, fb = forbid.get(ra), forbid.get(rb)
+        if fa and any(uf2.find(x) == rb for x in fa):
+            return True
+        return fb is not None and any(uf2.find(x) == ra for x in fb)
+
     rejected = 0
+    rejected_label = 0
     for e in order.tolist():
         a, b = int(left[e]), int(right[e])
         if group[a] != group[b]:
             continue
         ra, rb = uf2.find(a), uf2.find(b)
         if ra == rb:
+            continue
+        if forbid and label_blocks(ra, rb):
+            rejected_label += 1
             continue
         ok = True
         for attr in conflict_attrs:
@@ -186,6 +207,10 @@ def cluster_indices(
         root_vals.pop(ra, None)
         root_vals.pop(rb, None)
         root_vals[root] = merged
+        if forbid:
+            fa, fb = forbid.pop(ra, set()), forbid.pop(rb, set())
+            if fa or fb:
+                forbid[root] = fa | fb
     cluster = uf2.roots().copy()
 
     sizes = np.bincount(cluster, minlength=n)
@@ -197,20 +222,31 @@ def cluster_indices(
     split_components = int(np.sum(per_comp > 1))
     hist: dict[str, int] = defaultdict(int)
     for s in cluster_sizes.tolist():
-        bucket = "1" if s == 1 else "2" if s == 2 else "3-5" if s <= 5 else "6-10" if s <= 10 else "11-50" if s <= 50 else "50+"
+        bucket = (
+            "1"
+            if s == 1
+            else (
+                "2"
+                if s == 2
+                else "3-5" if s <= 5 else "6-10" if s <= 10 else "11-50" if s <= 50 else "50+"
+            )
+        )
         hist[bucket] += 1
     res = ClusterResult(cluster_idx=cluster, component_idx=comp, supersized_idx=supersized)
     res.qa = {
         "components": comp_count,
         "clusters": int(len(cluster_sizes)),
-        "max_component_size": int(comp_sizes.max()) if n else 0,
-        "max_cluster_size": int(cluster_sizes.max()) if n else 0,
+        "max_component_size": int(np.max(comp_sizes)) if n else 0,
+        "max_cluster_size": int(np.max(cluster_sizes)) if n else 0,
         "supersized_components": int(len(big_roots)),
         "split_components": split_components,  # components split by hard conflicts (over-merge guard)
         "edges_rejected_by_conflict": rejected,
+        "edges_rejected_by_label": rejected_label,
         "edges": int(m),
         "cluster_size_distribution": dict(hist),
-        "singleton_pct": round(100.0 * int(np.sum(cluster_sizes == 1)) / max(1, len(cluster_sizes)), 2),
+        "singleton_pct": round(
+            100.0 * int(np.sum(cluster_sizes == 1)) / max(1, len(cluster_sizes)), 2
+        ),
     }
     return res
 
@@ -219,8 +255,9 @@ def attach_rids(res: ClusterResult, rids: list[str]) -> ClusterResult:
     """Fill the string views (assignment / component / supersized / members) from the integer views."""
     res.rids = rids
     cl, comp, sup = res.cluster_idx, res.component_idx, res.supersized_idx
-    cluster_ids = {}
-    comp_ids = {}
+    assert cl is not None and comp is not None and sup is not None
+    cluster_ids: dict[int, str] = {}
+    comp_ids: dict[int, str] = {}
     for i, rid in enumerate(rids):
         r = int(cl[i])
         cid = cluster_ids.get(r)
@@ -245,13 +282,19 @@ def cluster_records(
     edges: list[tuple[str, str, float]],
     conflict_values: dict[str, dict[str, str | None]],
     cfg,
+    forbidden: list[tuple[str, str]] | None = None,
 ) -> ClusterResult:
     """rids: all record ids; edges: (a, b, score) positive edges; conflict_values: rid -> {attr: value}.
-    cfg: the `cluster` config section (+ optional birthdate_typo_tolerance)."""
+    cfg: the `cluster` config section (+ optional birthdate_typo_tolerance); ``forbidden``: rid pairs that must
+    never share a cluster (split labels)."""
     rids = sorted(rids)
     pos = {rid: i for i, rid in enumerate(rids)}
+    forbid_idx = [(pos[a], pos[b]) for a, b in (forbidden or ()) if a in pos and b in pos]
     conflict_attrs = list(cfg.get("conflict_attributes", ["birthdate"]))
-    cv = {attr: [(conflict_values.get(rid) or {}).get(attr) for rid in rids] for attr in conflict_attrs}
+    cv = {
+        attr: [(conflict_values.get(rid) or {}).get(attr) for rid in rids]
+        for attr in conflict_attrs
+    }
     if edges:
         left = np.array([pos[a] for a, _, _ in edges], dtype=np.int64)
         right = np.array([pos[b] for _, b, _ in edges], dtype=np.int64)
@@ -260,10 +303,14 @@ def cluster_records(
         # duplicate edges keep the max score (as before)
         import pandas as pd
 
-        e = pd.DataFrame({"l": lo, "r": hi, "s": score}).groupby(["l", "r"], as_index=False)["s"].max()
+        e = (
+            pd.DataFrame({"l": lo, "r": hi, "s": score})
+            .groupby(["l", "r"], as_index=False)["s"]
+            .max()
+        )
         left, right, score = e["l"].to_numpy(), e["r"].to_numpy(), e["s"].to_numpy()
     else:
         left = right = np.empty(0, dtype=np.int64)
         score = np.empty(0, dtype=np.float64)
-    res = cluster_indices(len(rids), left, right, score, cv, cfg)
+    res = cluster_indices(len(rids), left, right, score, cv, cfg, forbidden=forbid_idx or None)
     return attach_rids(res, rids)

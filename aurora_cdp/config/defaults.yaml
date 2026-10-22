@@ -52,6 +52,9 @@ blocklist:
   email_max_surnames: 20
   phone_max_given_names: 20
   address_max_given_names: 40
+  manual: {}                  # [AMP: BlocklistValues] values ignored for matching regardless of the counts above, per
+                              # semantic: {email: [...], phone: [...], address: [...]} (normalised like the records:
+                              # lower-case e-mail, last-10-digit phone, canonical address; raw forms are normalised on load)
 
 blocking:
   # [AMP] documents a blocking size limit of 100 (1000 for foreign keys) above which a block is *skipped*.
@@ -164,6 +167,10 @@ matcher:
 cluster:
   supersized_min_size: 500      # [AMP] (docs inconsistent: 64 vs 500); BFS partition above this size
   conflict_attributes: [birthdate]
+
+labels:                         # [AMP: Stitch labels] operator-forced merges / splits, see stitch/labels.py
+  file: null                    # CSV: left_datasource,left_pk,right_datasource,right_pk,label (merge|split);
+                                # merge -> score-5 edge (match_type label_merge), split -> pair veto in clustering
 
 storage:
   duckdb:

@@ -33,7 +33,8 @@ from aurora_cdp.storage.duck import apply_settings, latest_run_id, read_df, writ
 
 from .blocking import REC_COLUMNS, add_derived_columns, build_candidate_pairs
 from .cluster import _short_id, cluster_indices
-from .features import SIDE_COLUMNS, features_frame
+from .features import SIDE_COLUMNS, features_frame  # noqa: F401 - kept for callers
+from .labels import apply_split_labels, load_labels, resolve_labels
 from .matcher import score_frame  # noqa: F401 - kept for callers
 from .ordinal import prepare_scorer
 from .stable_id import assign_stable_ids_duck
@@ -108,10 +109,69 @@ def load_records_table(con: duckdb.DuckDBPyConnection) -> int:
     return con.execute("SELECT COUNT(*) FROM _rec").fetchall()[0][0]
 
 
+def manual_blocklist(cfg: Config) -> list[tuple[str, str, list[str]]]:
+    """``blocklist.manual`` -> [(value column, semantic, normalised values)] (Amperity: BlocklistValues table).
+
+    Values are normalised the way the records are (e-mail canonicalisation, last-10-digit phone, canonical
+    address); the raw form is kept as well so a value is matched whichever way it was written."""
+    from aurora_cdp.ingestion.normalize import canonical_address, canonical_email, canonical_phone
+
+    manual = cfg.blocklist.get("manual") or {}
+    ncfg = cfg.get("normalize") or {}
+    out: list[tuple[str, str, list[str]]] = []
+    for semantic, col in (
+        ("email", "email_norm"),
+        ("phone", "phone_match"),
+        ("address", "address_norm"),
+    ):
+        raw_values = manual.get(semantic) or []
+        if isinstance(raw_values, str):
+            raw_values = [raw_values]
+        values: list[str] = []
+        for v in raw_values:
+            raw = str(v).strip()
+            if not raw:
+                continue
+            if semantic == "email":
+                norm = canonical_email(raw, ncfg) or raw.lower()
+            elif semantic == "phone":
+                norm = canonical_phone(raw, ncfg.get("default_region", "US"))[1] or raw
+            else:
+                norm = (
+                    canonical_address(
+                        raw,
+                        ncfg.get("address_abbreviations"),
+                        bool(ncfg.get("address_parsing", False)),
+                    )
+                    or raw
+                )
+            for cand in (raw, norm):
+                if cand not in values:
+                    values.append(cand)
+        if values:
+            out.append((col, semantic, values))
+    return out
+
+
 def apply_blocklist(df: pd.DataFrame, cfg: Config) -> tuple[pd.DataFrame, list[dict]]:
-    """Automatic bad-value detection on a frame (kept for callers/tests; the run uses the SQL variant)."""
+    """Automatic bad-value detection + manual blocklist on a frame (kept for callers/tests; the run uses the
+    SQL variant)."""
     flagged: list[dict] = []
     df = df.copy()
+    for value_col, semantic, values in manual_blocklist(cfg):
+        if value_col not in df.columns:
+            continue
+        for value in values:
+            hit = df[value_col] == value
+            flagged.append(
+                {
+                    "semantic": semantic,
+                    "value": value,
+                    "reason": "manual",
+                    "distinct_count": int(hit.sum()),
+                }
+            )
+            df.loc[hit, value_col] = None
     for value_col, name_col, limit, semantic in _blocklist_rules(cfg):
         sub = df[[value_col, name_col]].dropna()
         if sub.empty:
@@ -142,8 +202,24 @@ def _blocklist_rules(cfg: Config):
 
 
 def apply_blocklist_sql(con: duckdb.DuckDBPyConnection, cfg: Config) -> list[dict]:
-    """Null out values linked to too many distinct names, in place on ``_rec`` (dossier §3.8)."""
+    """Null out manual blocklist values and values linked to too many distinct names, in place on ``_rec``
+    (dossier §3.8). ``distinct_count`` of a manual entry is the number of records it blanked."""
     flagged: list[dict] = []
+    for value_col, semantic, values in manual_blocklist(cfg):
+        for value in values:
+            hit = con.execute(
+                f"SELECT COUNT(*) FROM _rec WHERE {value_col} = ?", [value]
+            ).fetchall()[0][0]
+            flagged.append(
+                {
+                    "semantic": semantic,
+                    "value": value,
+                    "reason": "manual",
+                    "distinct_count": int(hit),
+                }
+            )
+            if hit:
+                con.execute(f"UPDATE _rec SET {value_col} = NULL WHERE {value_col} = ?", [value])
     for value_col, name_col, limit, semantic in _blocklist_rules(cfg):
         bad = con.execute(
             f"SELECT {value_col}, COUNT(DISTINCT {name_col}) AS n FROM _rec WHERE {value_col} IS NOT NULL AND {name_col} IS NOT NULL "
@@ -471,6 +547,43 @@ def run_stitch(
     expansion = expand_scores(con, run_id, cfg)
     left, right, score = edge_arrays(con)
     rids: list[str] = [r[0] for r in con.execute("SELECT rid FROM _rec ORDER BY idx").fetchall()]
+    # Stitch labels: forced merges become edges, splits drop edges and veto unions in clustering
+    lcfg = cfg.get("labels") or {}
+    labels = load_labels(lcfg.get("file"))
+    resolved = (
+        resolve_labels(labels, {rid: i for i, rid in enumerate(rids)}) if len(labels) else None
+    )
+    edges_removed_by_label = 0
+    label_rows: list[dict] = []
+    if resolved is not None:
+        left, right, score, edges_removed_by_label = apply_split_labels(
+            left, right, score, resolved
+        )
+        merge_score = 5.0  # a forced merge is an exact-category edge, like a carried cluster edge
+        if len(resolved.merge_left):
+            left = np.concatenate([left, resolved.merge_left])
+            right = np.concatenate([right, resolved.merge_right])
+            score = np.concatenate([score, np.full(len(resolved.merge_left), merge_score)])
+        for kind, ls, rs in (
+            ("merge", resolved.merge_left, resolved.merge_right),
+            ("split", resolved.split_left, resolved.split_right),
+        ):
+            for a, b in zip(ls.tolist(), rs.tolist(), strict=True):
+                ra, rb = rids[a], rids[b]
+                label_rows.append(
+                    {
+                        "run_id": run_id,
+                        "left_datasource": ra.split("|", 1)[0],
+                        "left_pk": ra.split("|", 1)[1],
+                        "right_datasource": rb.split("|", 1)[0],
+                        "right_pk": rb.split("|", 1)[1],
+                        "score": merge_score if kind == "merge" else 0.0,
+                        "match_category": "exact" if kind == "merge" else "hard_conflict",
+                        "match_type": f"label_{kind}",
+                        "is_edge": kind == "merge",
+                        "features_json": None,
+                    }
+                )
     if carried:
         pos = {rid: i for i, rid in enumerate(rids)}
         cl = np.array([pos[a] for a, _, _ in carried], dtype=np.int64)
@@ -489,7 +602,15 @@ def run_stitch(
     ccfg["birthdate_typo_tolerance"] = cfg.matcher.get("hard_conflicts", {}).get(
         "birthdate_typo_tolerance", 2
     )
-    clusters = cluster_indices(n, left, right, score, {"birthdate": birthdates}, ccfg)
+    clusters = cluster_indices(
+        n,
+        left,
+        right,
+        score,
+        {"birthdate": birthdates},
+        ccfg,
+        forbidden=resolved.forbidden if resolved is not None else None,
+    )
     del birthdates, left, right, score
     cluster_tables(con, clusters, rids)
     del rids
@@ -504,7 +625,7 @@ def run_stitch(
 
     t = time.perf_counter()
     now = datetime.utcnow()
-    _persist(con, run_id, now, cfg, bstats, flagged, carried, jitter)
+    _persist(con, run_id, now, cfg, bstats, flagged, carried, jitter, label_rows)
     timings["persist"] = round(time.perf_counter() - t, 3)
 
     assert clusters.cluster_idx is not None
@@ -524,6 +645,12 @@ def run_stitch(
         "pairs_expansion_truncated": expansion["pairs_expansion_truncated"],
         "edges": edges_total,
         "carried_edges": len(carried),
+        **(
+            resolved.as_metrics()
+            if resolved is not None
+            else {"labels_merge": 0, "labels_split": 0, "labels_unmatched": 0}
+        ),
+        "edges_removed_by_label": edges_removed_by_label,
         "match_rate": (
             round(scoring["edges_representative"] / scoring["pairs_scored_representative"], 4)
             if scoring["pairs_scored_representative"]
@@ -593,7 +720,7 @@ def cluster_tables(con: duckdb.DuckDBPyConnection, clusters, rids: list[str]) ->
         """)
 
 
-def _persist(con, run_id, now, cfg, bstats, flagged, carried, jitter):
+def _persist(con, run_id, now, cfg, bstats, flagged, carried, jitter, label_rows=None):
     if cfg.blocking.get("persist_blocking_keys", True):
         con.execute(
             "INSERT INTO stitch_blocking_keys (run_id, bk, datasource, pk, strategy) "
@@ -645,6 +772,8 @@ def _persist(con, run_id, now, cfg, bstats, flagged, carried, jitter):
             ]
         )
         write_df(con, "stitch_scores", cr)
+    if label_rows:
+        write_df(con, "stitch_scores", pd.DataFrame(label_rows))
 
     con.execute(
         """
