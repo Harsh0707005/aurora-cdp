@@ -22,11 +22,11 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 
 import duckdb
 import numpy as np
 import pandas as pd
-from pathlib import Path
 
 from aurora_cdp.config import Config
 from aurora_cdp.storage.duck import apply_settings, latest_run_id, read_df, write_df
@@ -39,8 +39,26 @@ from .ordinal import prepare_scorer
 from .stable_id import assign_stable_ids_duck
 
 log = logging.getLogger(__name__)
-TEMP_TABLES = ("_rec", "_bk", "_blk", "_blk_full", "_budget", "_pairs", "_pairs_n", "_scores", "_gs", "_changed",
-               "_clu", "_cid", "_cur", "_prev", "_cmap", "_rid_map", "_pkchg", "_cluchg")
+TEMP_TABLES = (
+    "_rec",
+    "_bk",
+    "_blk",
+    "_blk_full",
+    "_budget",
+    "_pairs",
+    "_pairs_n",
+    "_scores",
+    "_gs",
+    "_changed",
+    "_clu",
+    "_cid",
+    "_cur",
+    "_prev",
+    "_cmap",
+    "_rid_map",
+    "_pkchg",
+    "_cluchg",
+)
 
 
 @dataclass
@@ -77,8 +95,7 @@ def load_current_records(con: duckdb.DuckDBPyConnection) -> pd.DataFrame:
 def load_records_table(con: duckdb.DuckDBPyConnection) -> int:
     """``_rec``: the current version of every record, integer-indexed in rid order."""
     cols = ", ".join(c for c in REC_COLUMNS if c not in ("idx", "rid"))
-    con.execute(
-        f"""
+    con.execute(f"""
         CREATE OR REPLACE TEMP TABLE _rec AS
         SELECT (ROW_NUMBER() OVER (ORDER BY rid) - 1)::INTEGER AS idx, rid, {cols}
         FROM (
@@ -86,10 +103,9 @@ def load_records_table(con: duckdb.DuckDBPyConnection) -> int:
             FROM silver_unified_preprocessed
             QUALIFY ROW_NUMBER() OVER (PARTITION BY datasource, pk ORDER BY preprocessed_at DESC) = 1
         )
-        """
-    )
+        """)
     add_derived_columns(con, "_rec")
-    return con.execute("SELECT COUNT(*) FROM _rec").fetchone()[0]
+    return con.execute("SELECT COUNT(*) FROM _rec").fetchall()[0][0]
 
 
 def apply_blocklist(df: pd.DataFrame, cfg: Config) -> tuple[pd.DataFrame, list[dict]]:
@@ -103,7 +119,14 @@ def apply_blocklist(df: pd.DataFrame, cfg: Config) -> tuple[pd.DataFrame, list[d
         counts = sub.groupby(value_col)[name_col].nunique()
         bad = counts[counts > limit]
         for value, n in bad.items():
-            flagged.append({"semantic": semantic, "value": value, "reason": f"{name_col} distinct > {limit}", "distinct_count": int(n)})
+            flagged.append(
+                {
+                    "semantic": semantic,
+                    "value": value,
+                    "reason": f"{name_col} distinct > {limit}",
+                    "distinct_count": int(n),
+                }
+            )
             df.loc[df[value_col] == value, value_col] = None
     return df, flagged
 
@@ -128,10 +151,19 @@ def apply_blocklist_sql(con: duckdb.DuckDBPyConnection, cfg: Config) -> list[dic
             [limit],
         ).fetchall()
         for value, n in bad:
-            flagged.append({"semantic": semantic, "value": value, "reason": f"{name_col} distinct > {limit}", "distinct_count": int(n)})
+            flagged.append(
+                {
+                    "semantic": semantic,
+                    "value": value,
+                    "reason": f"{name_col} distinct > {limit}",
+                    "distinct_count": int(n),
+                }
+            )
         if bad:
             con.register("_bad", pd.DataFrame({"v": [b[0] for b in bad]}))
-            con.execute(f"UPDATE _rec SET {value_col} = NULL WHERE {value_col} IN (SELECT v FROM _bad)")
+            con.execute(
+                f"UPDATE _rec SET {value_col} = NULL WHERE {value_col} IN (SELECT v FROM _bad)"
+            )
             con.unregister("_bad")
     return flagged
 
@@ -142,7 +174,10 @@ def records_from_frame(df: pd.DataFrame) -> dict[str, dict]:
     cols = list(df.columns)
     for row in df.itertuples(index=False):
         d = dict(zip(cols, row, strict=False))
-        d = {k: (None if (isinstance(v, float) and pd.isna(v)) or v is pd.NaT else v) for k, v in d.items()}
+        d = {
+            k: (None if (isinstance(v, float) and pd.isna(v)) or v is pd.NaT else v)
+            for k, v in d.items()
+        }
         recs[f"{d['datasource']}|{d['pk']}"] = d
     return recs
 
@@ -151,7 +186,9 @@ def _changed_rids(con: duckdb.DuckDBPyConnection, prev_run_id: str | None) -> se
     """rids ingested after the previous run or not yet in the ledger; None = everything."""
     if prev_run_id is None:
         return None
-    started = con.execute("SELECT started_at FROM stitch_runs WHERE run_id = ?", [prev_run_id]).fetchone()[0]
+    started = con.execute(
+        "SELECT started_at FROM stitch_runs WHERE run_id = ?", [prev_run_id]
+    ).fetchall()[0][0]
     rows = con.execute(
         """
         SELECT r.rid FROM _rec r
@@ -166,29 +203,60 @@ def _changed_rids(con: duckdb.DuckDBPyConnection, prev_run_id: str | None) -> se
 
 
 # ----------------------------------------------------------------------------------------- strategies
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def learned_strategies_path(path: str | None, cfg: Config) -> Path | None:
+    """Resolve ``blocking.learned_strategies_file``: absolute paths as given; a relative path is tried against the
+    working directory, then the workspace's parent, then the repository root (overlays written by
+    ``tools/learn_dnf.py`` are absolute, so this only matters for hand-written overlays)."""
+    if not path:
+        return None
+    p = Path(path)
+    if p.is_absolute():
+        return p
+    for base in (Path.cwd(), Path(cfg.get("workspace", ".")).resolve().parent, _REPO_ROOT):
+        if (base / p).exists():
+            return base / p
+    return p
+
+
 def resolve_strategies(cfg: Config) -> tuple[dict, dict]:
     """Blocking config with the strategy list chosen by ``blocking.strategy_source``:
-    ``fixed`` (defaults.yaml), ``learned`` (``blocking.learned_strategies_file``) or ``union``. Falls back to the
-    fixed list, with a reason, when the learned file is missing/empty."""
-    import yaml
+    ``fixed`` (defaults.yaml), ``learned`` (``blocking.learned_strategies_file`` + the ``learned_keep_types``
+    key strategies) or ``union`` (fixed + learned). Falls back to the fixed list — logged as a warning and
+    reported in ``blocking_learned_fallback_reason`` — when the learned file is unset, missing, empty or
+    malformed; an unknown ``strategy_source`` is a configuration error."""
+    from .dnf import load_learned_strategies
 
     bcfg = dict(cfg.blocking)
     source = str(bcfg.get("strategy_source", "fixed"))
-    info = {"blocking_strategy_source": "fixed", "blocking_learned_fallback_reason": None, "blocking_learned_strategies": 0}
+    info = {
+        "blocking_strategy_source": "fixed",
+        "blocking_learned_fallback_reason": None,
+        "blocking_learned_strategies": 0,
+    }
     if source == "fixed":
         return bcfg, info
-    path = bcfg.get("learned_strategies_file")
-    learned: list[dict] = []
-    if path and Path(path).exists():
-        doc = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
-        learned = list(doc.get("strategies", doc if isinstance(doc, list) else []))
+    if source not in ("learned", "union"):
+        raise ValueError(
+            f"blocking.strategy_source must be fixed | learned | union, got {source!r}"
+        )
+    path = learned_strategies_path(bcfg.get("learned_strategies_file"), cfg)
+    learned, reason = load_learned_strategies(path)
     if not learned:
-        info["blocking_learned_fallback_reason"] = f"no learned strategies at {path!r}; using the fixed list"
+        info["blocking_learned_fallback_reason"] = f"{reason}; using the fixed strategies"
+        log.warning(
+            "blocking.strategy_source=%s: %s", source, info["blocking_learned_fallback_reason"]
+        )
         return bcfg, info
     info["blocking_learned_strategies"] = len(learned)
+    info["blocking_learned_strategies_file"] = str(path)
     info["blocking_strategy_source"] = source
     fixed = list(bcfg.get("strategies", []))
-    keep_types = set(bcfg.get("learned_keep_types", ["ck", "loy_id", "fk"]))  # key-only matches must stay blocked together
+    keep_types = set(
+        bcfg.get("learned_keep_types", ["ck", "loy_id", "fk"])
+    )  # key-only matches must stay blocked together
     kept = [s for s in fixed if s["type"] in keep_types]
     bcfg["strategies"] = (fixed + learned) if source == "union" else (kept + learned)
     return bcfg, info
@@ -205,12 +273,14 @@ def score_candidates(con: duckdb.DuckDBPyConnection, cfg: Config, scorer=None) -
         scorer = RulesScorer(mcfg)
     chunk = int(mcfg.get("score_chunk_size", 250_000))
     keep_features = bool(mcfg.get("persist_features", False))
-    con.execute("CREATE OR REPLACE TEMP TABLE _pairs_n AS SELECT (ROW_NUMBER() OVER (ORDER BY l, r) - 1) AS n, l, r FROM _pairs")
+    con.execute(
+        "CREATE OR REPLACE TEMP TABLE _pairs_n AS SELECT (ROW_NUMBER() OVER (ORDER BY l, r) - 1) AS n, l, r FROM _pairs"
+    )
     con.execute(
         "CREATE OR REPLACE TEMP TABLE _scores (l INTEGER, r INTEGER, score DOUBLE, match_category VARCHAR, "
         "match_type VARCHAR, is_edge BOOLEAN, features_json VARCHAR)"
     )
-    total = con.execute("SELECT COUNT(*) FROM _pairs_n").fetchone()[0]
+    total = con.execute("SELECT COUNT(*) FROM _pairs_n").fetchall()[0][0]
     lcols = ", ".join(f"a.{c} AS l_{c}" for c in SIDE_COLUMNS)
     rcols = ", ".join(f"b.{c} AS r_{c}" for c in SIDE_COLUMNS)
     counts: dict[str, int] = {}
@@ -224,12 +294,23 @@ def score_candidates(con: duckdb.DuckDBPyConnection, cfg: Config, scorer=None) -
         left = df[[f"l_{c}" for c in SIDE_COLUMNS]].rename(columns=lambda c: c[2:])
         right = df[[f"r_{c}" for c in SIDE_COLUMNS]].rename(columns=lambda c: c[2:])
         F, S = scorer.score_pairs(left, right)
-        out = pd.DataFrame({"l": df["l"].to_numpy(), "r": df["r"].to_numpy(), "score": S["score"].to_numpy(),
-                            "match_category": S["match_category"].to_numpy(), "match_type": S["match_type"].to_numpy(),
-                            "is_edge": S["is_edge"].to_numpy()})
+        out = pd.DataFrame(
+            {
+                "l": df["l"].to_numpy(),
+                "r": df["r"].to_numpy(),
+                "score": S["score"].to_numpy(),
+                "match_category": S["match_category"].to_numpy(),
+                "match_type": S["match_type"].to_numpy(),
+                "is_edge": S["is_edge"].to_numpy(),
+            }
+        )
         out["features_json"] = (
-            [json.dumps({k: (None if pd.isna(v) else float(v)) for k, v in row.items()}) for row in F.to_dict("records")]
-            if keep_features else None
+            [
+                json.dumps({k: (None if pd.isna(v) else float(v)) for k, v in row.items()})
+                for row in F.to_dict("records")
+            ]
+            if keep_features
+            else None
         )
         con.register("_chunk", out)
         con.execute("INSERT INTO _scores SELECT * FROM _chunk")
@@ -238,7 +319,11 @@ def score_candidates(con: duckdb.DuckDBPyConnection, cfg: Config, scorer=None) -
             counts[cat] = counts.get(cat, 0) + int(n)
         edges += int(S["is_edge"].sum())
         del df, left, right, F, S, out
-    return {"pairs_scored_representative": int(total), "edges_representative": edges, "match_category_counts": counts}
+    return {
+        "pairs_scored_representative": int(total),
+        "edges_representative": edges,
+        "match_category_counts": counts,
+    }
 
 
 def expand_scores(con: duckdb.DuckDBPyConnection, run_id: str, cfg: Config) -> dict:
@@ -246,9 +331,13 @@ def expand_scores(con: duckdb.DuckDBPyConnection, run_id: str, cfg: Config) -> d
     mcfg = cfg.matcher
     expand = bool(mcfg.get("export_expanded_dupe_pairs", True))
     cap = int(mcfg.get("max_expanded_pairs", 50_000_000))
-    con.execute("CREATE OR REPLACE TEMP TABLE _gs AS SELECT dupe_group AS g, COUNT(*) AS k FROM _rec GROUP BY dupe_group")
-    within = con.execute("SELECT COALESCE(SUM(k * (k - 1) / 2), 0) FROM _gs").fetchone()[0]
-    cross = con.execute("SELECT COALESCE(SUM(ga.k * gb.k), 0) FROM _scores s JOIN _gs ga ON ga.g = s.l JOIN _gs gb ON gb.g = s.r").fetchone()[0]
+    con.execute(
+        "CREATE OR REPLACE TEMP TABLE _gs AS SELECT dupe_group AS g, COUNT(*) AS k FROM _rec GROUP BY dupe_group"
+    )
+    within = con.execute("SELECT COALESCE(SUM(k * (k - 1) / 2), 0) FROM _gs").fetchall()[0][0]
+    cross = con.execute(
+        "SELECT COALESCE(SUM(ga.k * gb.k), 0) FROM _scores s JOIN _gs ga ON ga.g = s.l JOIN _gs gb ON gb.g = s.r"
+    ).fetchall()[0][0]
     total_expanded = int(within) + int(cross)
     truncated = not expand or total_expanded > cap
     cols = "run_id, left_datasource, left_pk, right_datasource, right_pk, score, match_category, match_type, is_edge, features_json"
@@ -286,32 +375,53 @@ def expand_scores(con: duckdb.DuckDBPyConnection, run_id: str, cfg: Config) -> d
             """,
             [run_id],
         )
-    written = con.execute("SELECT COUNT(*) FROM stitch_scores WHERE run_id = ?", [run_id]).fetchone()[0]
-    return {"pairs_scored": int(written), "pairs_expanded_total": total_expanded, "pairs_expansion_truncated": bool(truncated),
-            "pairs_within_dupe_groups": int(within)}
+    written = con.execute(
+        "SELECT COUNT(*) FROM stitch_scores WHERE run_id = ?", [run_id]
+    ).fetchall()[0][0]
+    return {
+        "pairs_scored": int(written),
+        "pairs_expanded_total": total_expanded,
+        "pairs_expansion_truncated": bool(truncated),
+        "pairs_within_dupe_groups": int(within),
+    }
 
 
 def edge_arrays(con: duckdb.DuckDBPyConnection) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Positive edges over record indices: representative pairs that are edges + member->representative links."""
     e = con.execute("SELECT l, r, score FROM _scores WHERE is_edge").fetchnumpy()
-    d = con.execute("SELECT dupe_group AS l, idx AS r, 5.0 AS score FROM _rec WHERE idx <> dupe_group").fetchnumpy()
+    d = con.execute(
+        "SELECT dupe_group AS l, idx AS r, 5.0 AS score FROM _rec WHERE idx <> dupe_group"
+    ).fetchnumpy()
     left = np.concatenate([np.asarray(e["l"], dtype=np.int64), np.asarray(d["l"], dtype=np.int64)])
     right = np.concatenate([np.asarray(e["r"], dtype=np.int64), np.asarray(d["r"], dtype=np.int64)])
-    score = np.concatenate([np.asarray(e["score"], dtype=np.float64), np.asarray(d["score"], dtype=np.float64)])
+    score = np.concatenate(
+        [np.asarray(e["score"], dtype=np.float64), np.asarray(d["score"], dtype=np.float64)]
+    )
     return left, right, score
 
 
 # ----------------------------------------------------------------------------------------- run
-def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", run_id: str | None = None) -> StitchRunResult:
+def run_stitch(
+    con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", run_id: str | None = None
+) -> StitchRunResult:
     if mode not in {"full", "incremental"}:
         raise ValueError("mode must be 'full' or 'incremental'")
     run_id = run_id or f"run-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
     started = datetime.utcnow()
     timings: dict[str, float] = {}
-    duck_settings = apply_settings(con, (cfg.get("storage") or {}).get("duckdb"), getattr(cfg, "workspace_path", None))
+    duck_settings = apply_settings(
+        con, (cfg.get("storage") or {}).get("duckdb"), getattr(cfg, "workspace_path", None)
+    )
     con.execute(
         "INSERT INTO stitch_runs (run_id, mode, started_at, status, config_json) VALUES (?, ?, ?, 'running', ?)",
-        [run_id, mode, started, json.dumps({"matcher": cfg["matcher"], "blocking": cfg["blocking"], "cluster": cfg["cluster"]})],
+        [
+            run_id,
+            mode,
+            started,
+            json.dumps(
+                {"matcher": cfg["matcher"], "blocking": cfg["blocking"], "cluster": cfg["cluster"]}
+            ),
+        ],
     )
     prev_run_id = latest_run_id(con)
 
@@ -328,15 +438,21 @@ def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", 
     if mode == "incremental":
         previous = {
             f"{r[0]}|{r[1]}": r[2]
-            for r in con.execute("SELECT datasource, pk, aurora_id FROM id_ledger WHERE is_current").fetchall()
+            for r in con.execute(
+                "SELECT datasource, pk, aurora_id FROM id_ledger WHERE is_current"
+            ).fetchall()
         }
     if mode == "incremental" and previous:
         changed = _changed_rids(con, prev_run_id)
         if changed is not None:
             con.register("_changed_src", pd.DataFrame({"rid": sorted(changed)}))
-            con.execute("CREATE OR REPLACE TEMP TABLE _changed AS SELECT DISTINCT r.dupe_group AS g FROM _rec r JOIN _changed_src c USING (rid)")
+            con.execute(
+                "CREATE OR REPLACE TEMP TABLE _changed AS SELECT DISTINCT r.dupe_group AS g FROM _rec r JOIN _changed_src c USING (rid)"
+            )
             con.unregister("_changed_src")
-            con.execute("DELETE FROM _pairs WHERE l NOT IN (SELECT g FROM _changed) AND r NOT IN (SELECT g FROM _changed)")
+            con.execute(
+                "DELETE FROM _pairs WHERE l NOT IN (SELECT g FROM _changed) AND r NOT IN (SELECT g FROM _changed)"
+            )
         rids_present = set(r[0] for r in con.execute("SELECT rid FROM _rec").fetchall())
         by_id: dict[str, list[str]] = {}
         for rid, aid in previous.items():
@@ -366,9 +482,13 @@ def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", 
     timings["scoring"] = round(time.perf_counter() - t, 3)
 
     t = time.perf_counter()
-    birthdates = [r[0] for r in con.execute("SELECT birthdate_norm FROM _rec ORDER BY idx").fetchall()]
+    birthdates = [
+        r[0] for r in con.execute("SELECT birthdate_norm FROM _rec ORDER BY idx").fetchall()
+    ]
     ccfg = dict(cfg.cluster)
-    ccfg["birthdate_typo_tolerance"] = cfg.matcher.get("hard_conflicts", {}).get("birthdate_typo_tolerance", 2)
+    ccfg["birthdate_typo_tolerance"] = cfg.matcher.get("hard_conflicts", {}).get(
+        "birthdate_typo_tolerance", 2
+    )
     clusters = cluster_indices(n, left, right, score, {"birthdate": birthdates}, ccfg)
     del birthdates, left, right, score
     cluster_tables(con, clusters, rids)
@@ -376,7 +496,9 @@ def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", 
     timings["clustering"] = round(time.perf_counter() - t, 3)
 
     t = time.perf_counter()
-    con.execute("CREATE OR REPLACE TEMP TABLE _prev AS SELECT datasource || '|' || pk AS rid, datasource, pk, aurora_id FROM id_ledger WHERE is_current")
+    con.execute(
+        "CREATE OR REPLACE TEMP TABLE _prev AS SELECT datasource || '|' || pk AS rid, datasource, pk, aurora_id FROM id_ledger WHERE is_current"
+    )
     jitter = assign_stable_ids_duck(con, float(cfg.stable_id.get("jitter_alert_pct", 2.0)))
     timings["stable_id"] = round(time.perf_counter() - t, 3)
 
@@ -385,6 +507,7 @@ def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", 
     _persist(con, run_id, now, cfg, bstats, flagged, carried, jitter)
     timings["persist"] = round(time.perf_counter() - t, 3)
 
+    assert clusters.cluster_idx is not None
     sizes = np.bincount(clusters.cluster_idx, minlength=n)
     sizes = sizes[sizes > 0]
     edges_total = int(clusters.qa.get("edges", 0))
@@ -401,12 +524,18 @@ def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", 
         "pairs_expansion_truncated": expansion["pairs_expansion_truncated"],
         "edges": edges_total,
         "carried_edges": len(carried),
-        "match_rate": round(scoring["edges_representative"] / scoring["pairs_scored_representative"], 4) if scoring["pairs_scored_representative"] else 0.0,
+        "match_rate": (
+            round(scoring["edges_representative"] / scoring["pairs_scored_representative"], 4)
+            if scoring["pairs_scored_representative"]
+            else 0.0
+        ),
         "match_category_counts": scoring["match_category_counts"],
         **scorer_info,
         "clusters": clusters.qa["clusters"],
         "multi_record_clusters": int((sizes > 1).sum()),
-        "records_in_multi_record_clusters_pct": round(100.0 * int(sizes[sizes > 1].sum()) / max(1, n), 2),
+        "records_in_multi_record_clusters_pct": round(
+            100.0 * int(sizes[sizes > 1].sum()) / max(1, n), 2
+        ),
         **{k: v for k, v in clusters.qa.items() if k not in ("clusters", "edges")},
         "jitter": jitter.as_dict(),
         "timings_sec": timings,
@@ -425,27 +554,43 @@ def run_stitch(con: duckdb.DuckDBPyConnection, cfg: Config, mode: str = "full", 
 
 def cluster_tables(con: duckdb.DuckDBPyConnection, clusters, rids: list[str]) -> None:
     """``_clu(idx, cluster_root, comp_root, sup_root)`` (integers per record) + ``_cid(root, cluster_id,
-    component_id)`` (strings per cluster) + ``_cur(rid, datasource, pk, cid, component_id, supersized_id, is_supersized)``."""
+    component_id)`` (strings per cluster) + ``_cur(rid, datasource, pk, cid, component_id, supersized_id, is_supersized)``.
+    """
     cl, comp, sup = clusters.cluster_idx, clusters.component_idx, clusters.supersized_idx
-    con.register("_clu_src", pd.DataFrame({"idx": np.arange(len(cl), dtype=np.int64), "cluster_root": cl.astype(np.int64),
-                                           "comp_root": comp.astype(np.int64), "sup_root": sup.astype(np.int64)}))
+    con.register(
+        "_clu_src",
+        pd.DataFrame(
+            {
+                "idx": np.arange(len(cl), dtype=np.int64),
+                "cluster_root": cl.astype(np.int64),
+                "comp_root": comp.astype(np.int64),
+                "sup_root": sup.astype(np.int64),
+            }
+        ),
+    )
     con.execute("CREATE OR REPLACE TEMP TABLE _clu AS SELECT * FROM _clu_src")
     con.unregister("_clu_src")
     roots = np.unique(np.concatenate([cl, comp, sup[sup >= 0]])).astype(np.int64)
-    con.register("_cid_src", pd.DataFrame({"root": roots, "cluster_id": [_short_id("cluster:" + rids[int(r)]) for r in roots],
-                                           "component_id": [_short_id(rids[int(r)]) for r in roots]}))
+    con.register(
+        "_cid_src",
+        pd.DataFrame(
+            {
+                "root": roots,
+                "cluster_id": [_short_id("cluster:" + rids[int(r)]) for r in roots],
+                "component_id": [_short_id(rids[int(r)]) for r in roots],
+            }
+        ),
+    )
     con.execute("CREATE OR REPLACE TEMP TABLE _cid AS SELECT * FROM _cid_src")
     con.unregister("_cid_src")
-    con.execute(
-        """
+    con.execute("""
         CREATE OR REPLACE TEMP TABLE _cur AS
         SELECT r.rid, r.datasource, r.pk, c1.cluster_id AS cid, c2.component_id, c3.component_id AS supersized_id,
                l.sup_root >= 0 AS is_supersized
         FROM _clu l JOIN _rec r USING (idx)
         JOIN _cid c1 ON c1.root = l.cluster_root JOIN _cid c2 ON c2.root = l.comp_root
         LEFT JOIN _cid c3 ON c3.root = l.sup_root
-        """
-    )
+        """)
 
 
 def _persist(con, run_id, now, cfg, bstats, flagged, carried, jitter):
@@ -456,21 +601,45 @@ def _persist(con, run_id, now, cfg, bstats, flagged, carried, jitter):
             [run_id],
         )
     if bstats.oversized:
-        ov = pd.DataFrame([{"run_id": run_id, "strategy": o.strategy, "bk": o.bk, "block_size": o.size, "size_limit": o.limit,
-                            "handling": o.handling, "sub_blocks": o.sub_blocks, "pairs": o.pairs} for o in bstats.oversized])
+        ov = pd.DataFrame(
+            [
+                {
+                    "run_id": run_id,
+                    "strategy": o.strategy,
+                    "bk": o.bk,
+                    "block_size": o.size,
+                    "size_limit": o.limit,
+                    "handling": o.handling,
+                    "sub_blocks": o.sub_blocks,
+                    "pairs": o.pairs,
+                }
+                for o in bstats.oversized
+            ]
+        )
         write_df(con, "stitch_oversized_blocks", ov)
     if flagged:
         fl = pd.DataFrame(flagged)
         fl["run_id"] = run_id
-        write_df(con, "stitch_blocklist_values", fl, ["run_id", "semantic", "value", "reason", "distinct_count"])
+        write_df(
+            con,
+            "stitch_blocklist_values",
+            fl,
+            ["run_id", "semantic", "value", "reason", "distinct_count"],
+        )
     if carried:
         cr = pd.DataFrame(
             [
                 {
                     "run_id": run_id,
-                    "left_datasource": a.split("|", 1)[0], "left_pk": a.split("|", 1)[1],
-                    "right_datasource": b.split("|", 1)[0], "right_pk": b.split("|", 1)[1],
-                    "score": s, "match_category": "exact", "match_type": "carried", "is_edge": True, "features_json": None,
+                    "left_datasource": a.split("|", 1)[0],
+                    "left_pk": a.split("|", 1)[1],
+                    "right_datasource": b.split("|", 1)[0],
+                    "right_pk": b.split("|", 1)[1],
+                    "score": s,
+                    "match_category": "exact",
+                    "match_type": "carried",
+                    "is_edge": True,
+                    "features_json": None,
                 }
                 for a, b, s in carried
             ]
@@ -520,5 +689,16 @@ def _persist(con, run_id, now, cfg, bstats, flagged, carried, jitter):
     prev_run = latest_run_id(con)
     con.execute(
         "INSERT INTO jitter_reports VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [run_id, prev_run, j.records_total, j.records_compared, j.records_changed, j.jitter_pct, j.ids_minted, j.ids_retired, j.alert, now],
+        [
+            run_id,
+            prev_run,
+            j.records_total,
+            j.records_compared,
+            j.records_changed,
+            j.jitter_pct,
+            j.ids_minted,
+            j.ids_retired,
+            j.alert,
+            now,
+        ],
     )
