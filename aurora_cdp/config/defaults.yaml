@@ -1,0 +1,118 @@
+# Aurora CDP default configuration.
+# Overlay order (later wins): defaults.yaml -> ./aurora.yaml (optional) -> .aurora/last_best.yaml (tuner output)
+# Values annotated [AMP] mirror documented Amperity defaults (docs/research/*). Values annotated
+# [ASSUMPTION] are our own and are listed in docs/feature-parity.md.
+
+workspace: .aurora            # local state: DuckDB file, run history, demo data
+outputs_dir: outputs          # exports, reports
+db_file: aurora.duckdb        # relative to workspace
+
+normalize:
+  default_region: US          # phonenumbers region for national-format numbers
+  phone_use_last10_for_match: true   # [AMP] identity resolution uses only the last 10 digits
+  email_strip_plus_tag: true         # [AMP] derek+1234@ -> derek@
+  email_strip_gmail_dots: false      # [ASSUMPTION] optional gmail-style dot folding; default off
+  email_junk_local_parts:            # [AMP] junk local-part patterns are NULLed for matching
+    - test
+    - no
+    - none
+    - reservation
+    - admin
+    - contact
+    - guest
+    - info
+    - noreply
+    - no-reply
+    - donotreply
+    - unknown
+  address_abbreviations:             # [AMP] expand common abbreviations, strip punctuation, uppercase
+    ST: STREET
+    AVE: AVENUE
+    RD: ROAD
+    BLVD: BOULEVARD
+    DR: DRIVE
+    LN: LANE
+    CT: COURT
+    STE: SUITE
+    APT: APARTMENT
+    N: NORTH
+    S: SOUTH
+    E: EAST
+    W: WEST
+    "1ST": FIRST
+    "2ND": SECOND
+    "3RD": THIRD
+
+blocklist:
+  # [AMP] automatic bad-value detection thresholds: a value linked to more than N distinct names is ignored
+  email_max_given_names: 20
+  email_max_surnames: 20
+  phone_max_given_names: 20
+  address_max_given_names: 40
+
+blocking:
+  block_size_limit: 100         # [AMP] blocking size limit 100; larger blocks are skipped and logged
+  fk_block_size_limit: 1000     # [AMP] foreign-key blocking limit 1000
+  strategies:                   # each strategy maps a record to zero or more blocking keys
+    - name: email_exact
+      type: email
+    - name: phone_exact
+      type: phone
+    - name: name_postal
+      type: name_postal         # first3(given_name) + surname + postal   [AMP]
+    - name: name_birthdate
+      type: name_birthdate      # first3(given_name) + first(surname) + birthdate  [AMP]
+    - name: fk
+      type: fk                  # one strategy per fk-<namespace>; exact match on the key
+
+matcher:
+  match_threshold: 3.0          # [AMP] default pairwise scoring threshold is 3.0 on a 0-5 scale
+  # Ordered deterministic rules (first match wins) applied before probabilistic scoring. [AMP: Rules Editor]
+  deterministic:
+    ck_exact_score: 5.0
+    loy_exact_score: 5.0
+    email_exact_with_name_score: 4.5
+    phone_exact_with_name_score: 4.2
+    name_agreement_min: 0.85    # given+surname similarity needed for the "with_name" rules
+  # Probabilistic model: score = 5 * sigmoid(bias + sum(w_i * f_i)). Weights are hand-set for the scaffold
+  # [ASSUMPTION]; Amperity uses a learned ordinal-regression classifier.
+  weights:
+    bias: -2.5
+    given_sim: 1.0
+    surname_sim: 1.2
+    email_exact: 3.0
+    email_sim: 0.8
+    phone_exact: 2.5
+    address_sim: 1.2
+    postal_exact: 0.6
+    birthdate_exact: 1.5
+    fk_shared: 1.0
+    name_mismatch_penalty: -1.5
+    birthdate_conflict: -3.0
+  hard_conflicts:
+    birthdate: true             # [AMP] birthdate is the canonical hard conflict
+    birthdate_typo_tolerance: 2 # Levenshtein distance treated as a typo rather than a conflict [ASSUMPTION]
+
+cluster:
+  supersized_min_size: 500      # [AMP] (docs inconsistent: 64 vs 500); BFS partition above this size
+  conflict_attributes: [birthdate]
+
+stable_id:
+  enabled: true
+  jitter_alert_pct: 2.0         # [AMP] alert when >=2% of records change ID between runs
+
+survivorship:
+  # [AMP] Source_Priority: lower number wins; unassigned -> 999. Field_Priority overrides per attribute.
+  source_priority:
+    loyalty: 1
+    crm: 2
+    ecommerce: 3
+    pos: 4
+  field_priority: {}            # e.g. email: {ecommerce: 1}
+  recency_field: update_dt      # [AMP] update-dt semantic enables recency-aware survivorship
+  attributes: [given_name, surname, email, phone, address, address2, city, state, postal, country, birthdate]
+
+sources: {}                     # per-source semantic mappings; the demo registers its own (see demo.py)
+
+tuning:
+  thresholds: [2.0, 2.5, 3.0, 3.5, 4.0]

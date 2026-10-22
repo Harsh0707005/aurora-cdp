@@ -36,12 +36,22 @@ dev = [
   "mypy>=1.8",
   "httpx>=0.27",
 ]
+# Optional Spark/Delta backend used by the sibling `aurora` package (not required for aurora_cdp).
+spark = [
+  "pyspark>=3.5,<4.0",
+  "delta-spark>=3.2,<4.0",
+  "pyarrow>=14",
+  "scipy>=1.11",
+  "scikit-learn>=1.3",
+  "python-multipart>=0.0.9",
+  "Faker>=22.0",
+]
 
 [project.scripts]
 aurora = "aurora_cdp.cli:app"
 
 [tool.setuptools.packages.find]
-include = ["aurora_cdp*"]
+include = ["aurora*"]
 
 [tool.setuptools.package-data]
 "aurora_cdp.config" = ["*.yaml"]
