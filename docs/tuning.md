@@ -98,6 +98,22 @@ selectable and falls back to rules with `scorer_fallback_reason` when training d
 | medium 200k (before: `medium`, engine `08be538`) | 0.980 / 0.853 / 0.912 | 0.936 | 0.690 | 2.12 % | ❌ blocking, false-merge | `medium` |
 | **medium 200k, swept defaults** | 0.990 / 0.869 / 0.926 | 0.934 | 0.893 | **2.51 %** | ❌ false-merge only | `medium-v2` |
 
+### Final defaults (HC_fusion + trivial-dupe identifier rule), seed 42, harness — `small-v5`, `medium-v3`
+
+HC_fusion sweep (`reports/2026-10-22/tuning-hc`): linkage {single, fusion} × contact conflict {off, on} ×
+trivial-dupe requires-identifier {off, on} × min_cross_edges {1, 2} = 16 trials on small seeds 7/11; the
+contact conflict fails the B³ gate (0.924), the other axes are within noise on 20k corpora (F1 0.922 ± 0.001),
+so the defaults were chosen by mechanism (fusion + identifier rule, the diagnosed medium failure mode), not by
+small-tier score. Confirmation on seeds never tuned on:
+
+| tier | P / R / F1 | B³ F1 | blocking R | false-merge clusters | gates |
+|---|---|---|---|---|---|
+| small 20k, final defaults (`small-v5`) | 0.998 / 0.872 / 0.931 | 0.937 | 0.878 | **1.04 %** | ✅ all five |
+| medium 200k, final defaults (`medium-v3`) | 0.994 / 0.860 / 0.923 | 0.932 | 0.893 | **2.22 %** (was 2.51 %) | ❌ false-merge only (ceiling 2.0 %) |
+
+The medium false-merge ceiling is still missed by 0.22 pt after the fusion/trivial-dupe fix; reported as measured.
+Cost at 200k: 6.7 M scored pairs, wall 708 s, peak RSS 2.3 GB.
+
 Generalisation gap of the chosen config: tune (small 7/11) false-merge 1.32 % → small seed 42 1.01 % (−0.3 pt)
 → medium seed 7 2.33 % → medium seed 42 2.51 % (+1.2 pt). The false-merge ceiling is met on the small tier and
 **missed on the medium tier (2.51 % vs 2.0 %)** — reported as measured; the medium residue is not fixable by

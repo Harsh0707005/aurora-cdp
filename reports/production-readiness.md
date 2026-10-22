@@ -25,7 +25,7 @@ union-find, and stable IDs / change feeds / the ledger are computed inside DuckD
 Update (engine `26bea50`, swept defaults threshold 3.25 + given-name conflict 0.6; `docs/tuning.md`): small seed 42
 → P/R/F1 0.999/0.882/0.937, B³ 0.940, blocking recall 0.878, false merges **1.01 %** (all gates); medium seed 42
 (`reports/2026-10-22/medium-v2`) → 0.990/0.869/0.926, B³ 0.934, blocking recall 0.893, false merges **2.51 %**
-(all gates except the 2.0 % false-merge ceiling). The large tier is owned by the AWS task (an `r6a.4xlarge`
+(all gates except the 2.0 % false-merge ceiling). With HC_fusion and the trivial-dupe identifier rule (engine `300a425`+): small `small-v5` 0.998/0.872/0.931, B³ 0.937, 1.04 %; medium `medium-v3` 0.994/0.860/0.923, B³ 0.932, blocking recall 0.893, false merges **2.22 %** (ceiling still missed). The large tier is owned by the AWS task (an `r6a.4xlarge`
 benchmark box was running at the time of writing). A 1M-row blocking-only probe with the new engine was interrupted before completing, so no 1M
 number is claimed here. Tuning protocol: `tools/sweep_blocking.py` (held-out seeds 7/11, confirm medium seed 7)
 was started and stopped for the same reason — the shipped defaults are the documented Amperity values plus
