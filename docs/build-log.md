@@ -53,7 +53,39 @@ headless session, no subagent delegation.
 - [x] CDC tables, JSONL sink, Kafka stub
 - [x] Delta/Parquet lake I/O and Spark-free reader
 - [x] End-to-end runner
-- [ ] Evaluation suite
-- [ ] FastAPI + Jinja/HTMX UI
-- [ ] Snowflake / Delta DDL
-- [ ] Tests, Makefile, Docker, docs
+- [x] Evaluation suite (`aurora/pipeline/eval.py`, `docs/aurora/evaluation.md`)
+- [x] FastAPI + Jinja/HTMX UI (smoke-tested end to end against a 3k lake)
+- [x] Snowflake / Delta DDL
+- [x] Tests (16, ~40 s), `aurora/Makefile`, `aurora/docker/`, `docs/aurora/`
+
+### Issues found and fixed during verification
+- Delta appends failed across runs: all-null pandas columns arrived as `void`
+  and int columns with NaN became `double`. `LakeIO.write_pandas` now casts
+  null-typed columns to string, appends use `mergeSchema`, and the runner
+  casts the CDC integer columns explicitly.
+- A failed run could overwrite `Unified_Customer` before the stable-ID
+  mapping was persisted, so a retry compared the run with itself (0 %
+  jitter). Serving tables are now written only after all CDC tables are
+  computed, and the previous assignment is snapshotted to
+  `data/runs/<job_id>/prev_assignments.parquet`.
+- Arrow nulls reached the standardiser as NaN floats and became the literal
+  string `"nan"`; ~250 nameless rows then blocked and merged into one
+  supersized cluster (pair precision 0.07). Nulls are coerced before
+  standardising and `clean_text` treats NaN as null. Added `given_conflict`
+  as a hard conflict so household members sharing phone/address do not merge.
+  After the fix on the 3k sample: pair F1 0.94, B-cubed F1 0.986, run-2
+  jitter 0.0 % / churn 0.04 %.
+- API: `/profiles/by_pk` was shadowed by `/profiles/{aurora_id}` (route
+  order); email/phone search used positions from a filtered frame; UUIDs in
+  the UI search were treated as phone numbers.
+
+### Shared workspace
+A second Claude session (`aurora-cdp-10`) builds the sibling `aurora_cdp/`
+(DuckDB) package in the same repo. Path split agreed over cross-session
+messaging: this session owns `aurora/`, `configs/`, `data/`, `.tmp/`,
+`docs/aurora/`, `docs/build-log.md`, `scripts/cdc_consumer.py` and its own
+test files; the peer owns the root `Makefile`, `CHANGELOG.md`, `docker/`,
+`deploy/`, top-level `docs/*.md` and the base `pyproject.toml` dependency set
+(this session's deps live in the `[spark]` extra). Commits use explicit
+pathspecs only.
+

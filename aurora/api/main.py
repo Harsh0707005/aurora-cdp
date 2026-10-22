@@ -60,8 +60,9 @@ class Store:
         if not self.unified.empty:
             self.unified = self.unified.astype(object).where(pd.notna(self.unified), None)
             self._by_id = self.unified.groupby("aurora_id").indices
-            self._by_email = self.unified.dropna(subset=["email_canon"]).groupby("email_canon").indices
-            self._by_phone = self.unified.dropna(subset=["phone_std"]).groupby("phone_std").indices
+            # groupby drops null keys itself; positions must stay relative to self.unified for iloc
+            self._by_email = self.unified.groupby("email_canon").indices
+            self._by_phone = self.unified.groupby("phone_std").indices
             self._by_cluster = self.unified.groupby("cluster_id").indices
             self.merged = self.merged.astype(object).where(pd.notna(self.merged), None).set_index("aurora_id", drop=False)
         else:
@@ -193,20 +194,21 @@ def health() -> Health:
                   tables={t: table_exists(store.lake, t) for t in TABLES.values()})
 
 
-@app.get("/profiles/{aurora_id}", response_model=Profile)
-def get_profile(aurora_id: str) -> Profile:
-    p = store.profile(aurora_id)
-    if p is None:
-        raise HTTPException(404, "unknown aurora_id")
-    return p
-
-
+# by_pk must be registered before the parametrised route or 'by_pk' is taken as an aurora_id
 @app.get("/profiles/by_pk", response_model=Profile)
 def profile_by_pk(datasource: str, pk: str) -> Profile:
     m = store.unified[(store.unified["datasource"] == datasource) & (store.unified["pk"] == pk)]
     if m.empty:
         raise HTTPException(404, "unknown (datasource, pk)")
     return store.profile(m.iloc[0]["aurora_id"])  # type: ignore[return-value]
+
+
+@app.get("/profiles/{aurora_id}", response_model=Profile)
+def get_profile(aurora_id: str) -> Profile:
+    p = store.profile(aurora_id)
+    if p is None:
+        raise HTTPException(404, "unknown aurora_id")
+    return p
 
 
 @app.get("/search", response_model=list[SearchHit])
@@ -263,13 +265,12 @@ def ui_search(request: Request, q: str = ""):
     q = q.strip()
     hits = []
     if q:
-        if "@" in q:
+        if q in store._by_id:
+            hits = [SearchHit(aurora_id=q, record_count=len(store.records_for(q)))]
+        elif "@" in q:
             hits = store.search(q, None, None)
         elif sum(ch.isdigit() for ch in q) >= 7:
             hits = store.search(None, q, None)
-        elif q in store._by_id:
-            hits = store.search(None, None, None) if False else [store.search.__self__ and SearchHit(
-                aurora_id=q, record_count=len(store.records_for(q)))]
         else:
             hits = store.search(None, None, q)
     return templates.TemplateResponse(request, "_results.html", {"hits": hits, "q": q})
