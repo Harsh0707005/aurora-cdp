@@ -193,6 +193,16 @@ cluster:
     loy_id: loy_id_norm
     contact: [email_norm, phone_match]   # list -> set-valued attribute
 
+household:                      # [AMP: Merged Households] owned entity with persistent ids and evidence edges (profile/households.py)
+  min_evidence_weight: 1.0      # summed active evidence a customer pair needs to share a household
+  evidence_ttl_days: 365        # evidence stays active this long after it was last observed (moves do not churn households)
+  max_customers_per_value: 25   # a value shared by more customers is not evidence (apartment towers, placeholder phones)
+  evidence:
+    shared_address:        {weight: 1.0, columns: [address_norm, postal_norm]}
+    shared_surname_postal: {weight: 0.4, columns: [surname_norm, postal_norm]}
+    shared_phone:          {weight: 0.6, columns: [phone_match]}
+    relationship:          {weight: 1.0}   # household_relationships rows (registry, gift, account owner)
+
 labels:                         # [AMP: Stitch labels] operator-forced merges / splits, see stitch/labels.py
   file: null                    # optional CSV overlay: left_datasource,left_pk,right_datasource,right_pk,label (merge|split)
                                 # persisted labels live in the workspace table stitch_labels (`aurora labels add|import|list`);

@@ -80,6 +80,55 @@ def labels_list(config: str = _config_opt, workspace: str = _workspace_opt, all:
         con.close()
 
 
+household_app = typer.Typer(help="Households: persistent household ids built from evidence edges", pretty_exceptions_enable=False)
+app.add_typer(household_app, name="household")
+
+
+@household_app.command("build")
+def household_build(config: str = _config_opt, workspace: str = _workspace_opt, stitch_run: str | None = typer.Option(None, "--run-id")) -> None:
+    """Observe evidence for the latest (or given) stitch run and (re)assign stable household ids."""
+    from aurora_cdp.profile.households import build_households
+
+    cfg = _cfg(config, workspace)
+    con = connect(cfg.db_path)
+    try:
+        init_schema(con)
+        r = build_households(con, cfg, stitch_run)
+        m = r.metrics
+        typer.echo(f"household run {r.run_id}: customers={m['customers']} households={m['households']} multi={m['multi_member_households']} "
+                   f"evidence new/refreshed/expired={m['evidence_new']}/{m['evidence_refreshed']}/{m['evidence_expired']} jitter={m['jitter'].get('jitter_pct')}%")
+    finally:
+        con.close()
+
+
+@household_app.command("show")
+def household_show(aurora_id: str, config: str = _config_opt, workspace: str = _workspace_opt) -> None:
+    from aurora_cdp.profile.households import household_of
+
+    cfg = _cfg(config, workspace)
+    con = connect(cfg.db_path, read_only=True)
+    try:
+        h = household_of(con, aurora_id)
+        typer.echo("no household" if h is None else json.dumps(h, default=str, indent=1))
+    finally:
+        con.close()
+
+
+@household_app.command("add-relationship")
+def household_add_relationship(left: str, right: str, kind: str = typer.Argument(..., help="registry | gift | account_owner | ..."),
+                               source: str | None = typer.Option(None, "--source"), config: str = _config_opt, workspace: str = _workspace_opt) -> None:
+    from aurora_cdp.profile.households import add_relationship
+
+    cfg = _cfg(config, workspace)
+    con = connect(cfg.db_path)
+    try:
+        init_schema(con)
+        add_relationship(con, tuple(left.split("|", 1)), tuple(right.split("|", 1)), kind, source)
+        typer.echo(f"relationship {left} -{kind}- {right} recorded")
+    finally:
+        con.close()
+
+
 @labels_app.command("remove")
 def labels_remove(label_id: str, config: str = _config_opt, workspace: str = _workspace_opt) -> None:
     cfg = _cfg(config, workspace)
