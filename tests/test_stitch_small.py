@@ -55,7 +55,8 @@ def _run(rows):
     blocks = build_blocks(records, CFG.blocking)
     scores = score_pairs(records, blocks.pairs, CFG.matcher)
     edges = [(r.left_rid, r.right_rid, float(r.score)) for r in scores[scores["is_edge"]].itertuples(index=False)]
-    conflict = {rid: {"birthdate": rec.get("birthdate_norm")} for rid, rec in records.items()}
+    cols = {"birthdate": "birthdate_norm", "given_name": "given_name_canon", **(CFG.cluster.get("conflict_columns") or {})}
+    conflict = {rid: {attr: rec.get(cols[attr]) for attr in CFG.cluster["conflict_attributes"]} for rid, rec in records.items()}
     clusters = cluster_records(sorted(records), edges, conflict, CFG.cluster)
     return records, scores, clusters
 
@@ -121,3 +122,19 @@ def test_stable_ids_greedy_max_overlap_and_jitter():
     # a 1->2 split forces exactly one new id; ties broken by ascending ids
     res2 = assign_stable_ids({"r1": "p", "r2": "q"}, {"r1": "A", "r2": "A"})
     assert res2.cluster_to_id["p"] == "A" and res2.cluster_to_id["q"] in res2.minted and len(res2.minted) == 1
+
+
+def test_given_name_conflict_separates_household_members():
+    """Same surname, address, postal and birthdate but clearly different given names must not merge; a nickname
+    variant of the same person must (given names are canonicalised before the conflict check)."""
+    rows = [
+        # a shared household e-mail makes Frank <-> James a strong scored edge (same surname/address/postal/birthdate)
+        {"datasource": "crm", "pk": "h1", "given_name": "Frank", "surname": "Davis", "email": "davis.family@example.org", "phone": "", "address": "12 Main St", "postal": "98101", "birthdate": "1970-01-01", "truth": "a"},
+        {"datasource": "web", "pk": "h2", "given_name": "James", "surname": "Davis", "email": "davis.family@example.org", "phone": "", "address": "12 Main St", "postal": "98101", "birthdate": "1970-01-01", "truth": "b"},
+        {"datasource": "pos", "pk": "h3", "given_name": "Jim", "surname": "Davis", "email": "davis.family@example.org", "phone": "", "address": "12 Main St", "postal": "98101", "birthdate": "1970-01-01", "truth": "b"},
+    ]
+    _, scores, clusters = _run(rows)
+    a = clusters.assignment
+    assert a["web|h2"] == a["pos|h3"], "nickname variant (Jim/James) is the same person"
+    assert a["crm|h1"] != a["web|h2"], "Frank and James Davis are household members, not one person"
+    assert clusters.qa["edges_rejected_by_conflict"] >= 1

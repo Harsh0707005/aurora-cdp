@@ -19,7 +19,7 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 
 import numpy as np
-from rapidfuzz.distance import Levenshtein
+from rapidfuzz.distance import JaroWinkler, Levenshtein
 
 log = logging.getLogger(__name__)
 
@@ -74,12 +74,41 @@ class UnionFind:
             p[:] = q
 
 
-def _values_compatible(attr: str, vals_a: set[str], vals_b: set[str], tol: int) -> bool:
+# per-attribute conflict tolerance (Amperity internals §2.8: a cluster is conflict-free when the weakest pairwise
+# similarity inside each attribute's value set stays above that attribute's tolerance t_j)
+DEFAULT_TOLERANCES = {"birthdate": {"measure": "levenshtein_max", "value": 2}}
+
+
+def tolerances_from_cfg(cfg) -> dict[str, dict]:
+    tol = {k: dict(v) for k, v in (cfg.get("conflict_tolerances") or {}).items()}
+    if "birthdate" not in tol:  # legacy knob
+        tol["birthdate"] = {"measure": "levenshtein_max", "value": int(cfg.get("birthdate_typo_tolerance", 2))}
+    return tol
+
+
+def _pair_ok(x: str, y: str, spec: dict | None) -> bool:
+    if x == y:
+        return True
+    if not spec:
+        return False  # exact agreement required
+    measure, value = spec.get("measure", "exact"), spec.get("value")
+    if measure == "levenshtein_max":
+        return Levenshtein.distance(x, y) <= int(value)
+    if measure == "jaro_winkler_min":
+        return JaroWinkler.normalized_similarity(x, y) >= float(value)
+    if measure == "exact":
+        return False
+    raise ValueError(f"unknown conflict measure {measure!r}")
+
+
+def _values_compatible(attr: str, vals_a: set[str], vals_b: set[str], tol) -> bool:
+    """``tol`` is either the legacy birthdate Levenshtein tolerance (int) or the tolerance dict per attribute."""
     if not vals_a or not vals_b:
         return True
+    spec = tol.get(attr) if isinstance(tol, dict) else ({"measure": "levenshtein_max", "value": tol} if attr == "birthdate" else None)
     for x in vals_a:
         for y in vals_b:
-            if x != y and (attr != "birthdate" or Levenshtein.distance(x, y) > tol):
+            if not _pair_ok(x, y, spec):
                 return False
     return True
 
@@ -122,7 +151,7 @@ def cluster_indices(
     """
     max_size = int(cfg.get("supersized_min_size", 500))
     conflict_attrs = list(cfg.get("conflict_attributes", ["birthdate"]))
-    tol = int(cfg.get("birthdate_typo_tolerance", 2))
+    tol = tolerances_from_cfg(cfg)
     left = np.asarray(left, dtype=np.int64)
     right = np.asarray(right, dtype=np.int64)
     score = np.asarray(score, dtype=np.float64)

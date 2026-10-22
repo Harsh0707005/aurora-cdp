@@ -117,9 +117,19 @@ def overlay(trial: dict) -> dict:
     for s in strategies:
         if s["type"] == "name":
             s["max_pairs_per_block"] = int(trial["blocking.name_budget"])
-    return {"blocking": {"max_pairs_per_block": int(trial["blocking.max_pairs_per_block"]), "sn_window": int(trial["blocking.sn_window"]),
-                         "strategies": strategies},
-            "matcher": {"match_threshold": float(trial["matcher.match_threshold"]), "scorer": str(trial.get("matcher.scorer", "rules"))}}
+    ov = {"blocking": {"max_pairs_per_block": int(trial["blocking.max_pairs_per_block"]), "sn_window": int(trial["blocking.sn_window"]),
+                       "strategies": strategies},
+          "matcher": {"match_threshold": float(trial["matcher.match_threshold"]), "scorer": str(trial.get("matcher.scorer", "rules"))}}
+    if "cluster.given_name_conflict_min" in trial:  # None -> birthdate-only conflicts; number -> JW tolerance for given names
+        gn = trial["cluster.given_name_conflict_min"]
+        base = load_config(use_last_best=False)["cluster"]
+        tol = dict(base.get("conflict_tolerances") or {})
+        if gn is None:
+            ov["cluster"] = {"conflict_attributes": ["birthdate"], "conflict_tolerances": {k: v for k, v in tol.items() if k != "given_name"}}
+        else:
+            tol["given_name"] = {"measure": "jaro_winkler_min", "value": float(gn)}
+            ov["cluster"] = {"conflict_attributes": ["birthdate", "given_name"], "conflict_tolerances": tol}
+    return ov
 
 
 def run_trial(trial: dict, corpora: list[tuple[str, pd.DataFrame, pd.Series, dict]]) -> dict:
@@ -223,7 +233,8 @@ def markdown(r: dict) -> str:
           "| # | scorer | threshold | name budget | max_pairs_per_block | sn_window | P | R | F1 | B³ F1 | blocking R | false-merge | pairs | wall s | gates (all tune corpora) |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for t in r["ranked"]:
         tr, g = t["trial"], t["mean"]
-        L.append(f"| {t['i']} | {tr.get('matcher.scorer', 'rules')} | {tr['matcher.match_threshold']} | {tr['blocking.name_budget']:,} | {tr['blocking.max_pairs_per_block']:,} | {tr['blocking.sn_window']} | {g['precision']} | {g['recall']} | {g['f1']} | {g['bcubed_f1']} | {g['blocking_recall']} | {g['false_merge_clusters']} | {int(g['pairs_scored']):,} | {g['wall_s']} | {'✅' if t['gates_pass'] else '❌'} |")
+        extra = f" gn-conflict={tr['cluster.given_name_conflict_min']}" if "cluster.given_name_conflict_min" in tr else ""
+        L.append(f"| {t['i']} | {tr.get('matcher.scorer', 'rules')}{extra} | {tr['matcher.match_threshold']} | {tr['blocking.name_budget']:,} | {tr['blocking.max_pairs_per_block']:,} | {tr['blocking.sn_window']} | {g['precision']} | {g['recall']} | {g['f1']} | {g['bcubed_f1']} | {g['blocking_recall']} | {g['false_merge_clusters']} | {int(g['pairs_scored']):,} | {g['wall_s']} | {'✅' if t['gates_pass'] else '❌'} |")
     n = r["noise"]
     L += ["", f"**Noise band:** top-{len(n['top_f1'])} F1 = {n['top_f1']}, spread {n['spread_top']} → " + ("the top configs are within noise of each other; the chosen one is the cheapest of them, not a clear winner." if n["within_noise"] else "the top config is separated from the runners-up by more than the noise band."), "",
           "## Confirmation on held-out corpora", "", "| config | tune F1 / blocking R / false-merge | confirm F1 / blocking R / false-merge | gates on confirm |", "|---|---|---|---|"]

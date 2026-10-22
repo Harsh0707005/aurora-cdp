@@ -166,7 +166,16 @@ matcher:
 
 cluster:
   supersized_min_size: 500      # [AMP] (docs inconsistent: 64 vs 500); BFS partition above this size
-  conflict_attributes: [birthdate]
+  conflict_attributes: [birthdate, given_name]   # [AMP] hard conflicts refuse a merge however strong the score
+  conflict_tolerances:          # per-attribute tolerance t_j (internals §2.8): values closer than this are not a conflict
+    birthdate:  {measure: levenshtein_max, value: 2}      # typo / transposition tolerance
+    given_name: {measure: jaro_winkler_min, value: 0.6}   # swept on held-out seeds 7/11 (reports/<date>/tuning); nicknames are canonicalised first
+  conflict_columns:             # attribute -> standardised column used for the conflict check
+    birthdate: birthdate_norm
+    given_name: given_name_canon
+    surname: surname_norm
+    ck: ck
+    loy_id: loy_id_norm
 
 labels:                         # [AMP: Stitch labels] operator-forced merges / splits, see stitch/labels.py
   file: null                    # CSV: left_datasource,left_pk,right_datasource,right_pk,label (merge|split);
