@@ -4,6 +4,39 @@ All notable changes to the `aurora_cdp` platform. Local-only history; one entry 
 
 ## [Unreleased]
 
+### 2026-10-22 — Amperity parity gaps: labels, manual blocklist, address parsing, webhook; learned DNF and ordinal completion (model: Claude Fable 5.1 via Claude Code)
+
+Every new capability is opt-in; the default configuration produces byte-identical scores (frozen snapshot in
+`tests/fixtures/handset_scores_frozen.json`) and the same blocking / clustering as before.
+
+- **Stitch labels** (`labels.file`, `stitch/labels.py`): CSV of record pairs labelled `merge` / `split`. Merges
+  become score-5 `label_merge` edges; splits drop the scored edge and install a pair-level veto in the
+  conflict-aware clustering (`cluster_indices(..., forbidden=)`), so even transitive merges through other
+  records are refused (`edges_rejected_by_label`). Rows are kept in `stitch_scores`; metrics `labels_merge`,
+  `labels_split`, `labels_unmatched`, `edges_removed_by_label`. Malformed label files fail the run.
+- **Manual blocklist** (`blocklist.manual {email, phone, address}`): values (raw or normalised form) NULLed
+  before blocking, logged in `stitch_blocklist_values` with reason `manual` and the records affected.
+- **Normalisation**: `normalize.nickname_file` (CSV merged over the built-in nickname dict, cached per path);
+  `normalize.address_parsing` (off) canonicalises unit/suite designators (`APT 4B`, `#4B`, `STE 200` →
+  `UNIT …`), PO Boxes and compound directionals (`NW` → `NORTHWEST`) via `parse_address()`.
+- **Webhook destination**: per-destination `batch_size`, `max_retries` + exponential backoff
+  (`backoff_base`, `backoff_max`), `headers`, `auth_token_env` (token from the environment, never logged),
+  `timeout`; 429/5xx/connection errors retried, failures logged (`destination_runs.status = failed`) and raised
+  as `WebhookDeliveryError`. Defaults unchanged (dry run; single legacy payload of ≤ 1000 profiles).
+- **Learned DNF blocking completed**: `blocking.dnf.beam_width` bounds the conjunction search; the learned
+  strategies YAML has a schema (`schema_version: 1`) with a validating loader; `blocking.strategy_source`
+  falls back to the fixed strategies with a *logged warning* on an unset / missing / empty / malformed file,
+  resolves relative paths (cwd, workspace parent, repo root) and rejects unknown sources; `tools/learn_dnf.py`
+  accepts `--csv` and `--duckdb --table` inputs next to evaluation corpora, `--seed`, `--config`, and writes an
+  absolute `learned_strategies_file` (the relative path had made the small-dnf smoke fall back silently).
+- **Ordinal scorer hardening**: `matcher.ordinal.monotone` (off) sign-constrains the fit so more agreement
+  never lowers the score; `tests/test_scoring_frozen.py` pins the hand-set scorer; new tests for monotone
+  scores in 0–5, identical category bands / threshold, rule precedence, model file round trip and reuse.
+- Docs: `docs/feature-parity.md` status table, assumptions, precise gaps list and audit resolution;
+  `docs/interfaces.md` v1.2 additive metrics and `label_*` match types.
+- Tests: `tests/test_normalize.py`, `tests/test_labels.py`, `tests/test_destinations.py`,
+  `tests/test_scoring_frozen.py`; extended `tests/test_dnf.py`, `tests/test_ordinal.py`.
+
 ### 2026-10-22 — Zero-discard blocking + memory-bounded stitch (model: Claude Fable 5.1 via Claude Code)
 
 - **Blocking never drops a block** (`stitch/blocking.py`, now DuckDB-backed). A block over

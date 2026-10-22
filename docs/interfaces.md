@@ -77,7 +77,8 @@ One row per source record.
 
 `left_datasource, left_record_id, right_datasource, right_record_id, score (float 0–5), match_category
 (hard_conflict | non_conflict | weak | moderate | high | excellent | exact), match_type (scored | deterministic |
-trivial_duplicate | carried), is_edge (bool; score ≥ threshold and not a hard conflict)`.
+trivial_duplicate | carried | label_merge | label_split), is_edge (bool; score ≥ threshold and not a hard conflict)`.
+`label_*` rows appear only when `labels.file` is configured (v1.2).
 
 ### `metrics` (subset guaranteed)
 
@@ -91,6 +92,11 @@ Added in v1.1 (additive): `oversized_blocks, oversized_handling{full, refined}, 
 representatives, records_with_keys, records_without_any_blocking_key, records_in_multi_record_blocks,
 records_in_candidate_pairs, records_dropped_by_blocking (always 0 — asserted), pairs_scored_representative,
 pairs_expanded_total, pairs_expansion_truncated, peak_rss_mb, duckdb_settings`.
+
+Added in v1.2 (additive): `blocking_strategy_source (fixed | learned | union), blocking_learned_strategies,
+blocking_learned_fallback_reason, scorer_requested, scorer_used (rules | ordinal), scorer_fallback_reason,
+blocklisted_values, labels_merge, labels_split, labels_unmatched, edges_removed_by_label,
+edges_rejected_by_label`.
 
 ## 4. Mapping file (raw column names → semantics)
 
