@@ -81,6 +81,14 @@ def score_features(f: dict[str, float | None], cfg) -> PairScore:
     if f.get("phone_exact") == 1.0 and names_agree:
         s = float(det.get("phone_exact_with_name_score", 4.2))
         return PairScore(s, category_for(s), "deterministic", False)
+    # identifier-only records (POS receipt e-mail, phone lookup): an exact identifier with *no name evidence either way*
+    no_names = f.get("name_both_present") != 1.0
+    if f.get("email_exact") == 1.0 and no_names and det.get("email_exact_no_name_score") is not None:
+        s = float(det["email_exact_no_name_score"])
+        return PairScore(s, category_for(s), "deterministic", False)
+    if f.get("phone_exact") == 1.0 and no_names and det.get("phone_exact_no_name_score") is not None:
+        s = float(det["phone_exact_no_name_score"])
+        return PairScore(s, category_for(s), "deterministic", False)
 
     # Probabilistic score.
     z = float(w.get("bias", -2.5))
@@ -149,11 +157,17 @@ def score_frame(F: pd.DataFrame, cfg) -> pd.DataFrame:
     phone_name = is_one("phone_exact") & names_agree
     s_email = float(det.get("email_exact_with_name_score", 4.5))
     s_phone = float(det.get("phone_exact_with_name_score", 4.2))
-    conds = [conflict, trivial, ck, loy, email_name, phone_name]
-    score = np.select(conds, [0.0, 5.0, float(det.get("ck_exact_score", 5.0)), float(det.get("loy_exact_score", 5.0)), s_email, s_phone], default=logistic)
+    no_names = ~is_one("name_both_present")
+    s_email_nn, s_phone_nn = det.get("email_exact_no_name_score"), det.get("phone_exact_no_name_score")
+    email_nn = is_one("email_exact") & no_names if s_email_nn is not None else np.zeros(n, dtype=bool)
+    phone_nn = is_one("phone_exact") & no_names if s_phone_nn is not None else np.zeros(n, dtype=bool)
+    conds = [conflict, trivial, ck, loy, email_name, phone_name, email_nn, phone_nn]
+    vals = [0.0, 5.0, float(det.get("ck_exact_score", 5.0)), float(det.get("loy_exact_score", 5.0)), s_email, s_phone,
+            float(s_email_nn) if s_email_nn is not None else 0.0, float(s_phone_nn) if s_phone_nn is not None else 0.0]
+    score = np.select(conds, vals, default=logistic)
     category = categories_for(score)
     category[conflict] = "hard_conflict"
-    match_type = np.select(conds, ["scored", "trivial_duplicate", "deterministic", "deterministic", "deterministic", "deterministic"], default="scored")
+    match_type = np.select(conds, ["scored", "trivial_duplicate"] + ["deterministic"] * 6, default="scored")
     return pd.DataFrame({
         "score": score, "match_category": category, "match_type": match_type, "hard_conflict": conflict,
         "is_edge": (~conflict) & (score >= threshold),

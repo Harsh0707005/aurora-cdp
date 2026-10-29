@@ -4,6 +4,26 @@ All notable changes to the `aurora_cdp` platform. Local-only history; one entry 
 
 ## [Unreleased]
 
+### 2026-10-29 — EDAP-shaped end-to-end test (Williams-Sonoma feed contract) and identifier-only matching rules (model: Claude Fable 5.1 via Claude Code)
+
+- **`tools/wsi_edap_sim.py` / `tools/wsi_edap_eval.py`**: synthetic EDAP → Amperity feeds in the shared DDL shapes
+  (ORDER_HEADER bill-to, ORDER_LINE ship-to, RETAIL_STORE_ESTIMATE_HEADER) with ground truth, seven concepts, three
+  channels with channel-specific PII capture (POS receipts carry only an e-mail, a phone, a loyalty id or nothing),
+  OMS account ids, loyalty ids, employees, gift recipients, clienteling estimates, households, moves, nicknames,
+  typos; the evaluator maps the feeds to identity records, runs `resolve_records` + households, builds the
+  Amperity → EDAP `CUSTOMER` rows (survivorship + FIRST/SECOND/LATEST order, LIFETIME/L12M/L6M/L3M/L30D aggregates,
+  RFM, flags) and scores identity, every CUSTOMER attribute, gift contamination and household pairs against the truth.
+  Reports in `reports/2026-10-29/wsi-edap-*`.
+- **Identifier-only deterministic rules** (`matcher.deterministic.email_exact_no_name_score: 4.0`,
+  `phone_exact_no_name_score: null`): an exact e-mail between a record with no name (POS receipt e-mail) and one with
+  a name was scored by the logistic model at 3.1, under the 3.25 threshold, so receipt-e-mail orders never joined the
+  account that owns the e-mail. The rule fires only when at least one side carries no name (no name evidence either
+  way); shared e-mails with two different names stay with the probabilistic model and the blocklist. 3k-person
+  EDAP corpus: recall 0.811 → 0.922, F1 0.894 → 0.958, false merges 0.32 % → 0.37 %; bill-to ↔ bill-to recall
+  0.747 → 0.873. Synthetic small tier: P 0.998 unchanged, R 0.872 → 0.869, false merges 0.75 % → 0.78 % (a handful
+  of name-less synthetic records now link; reported as measured). Phone-only rule kept off by default (household
+  phones). `tests/test_identifier_only_rules.py`.
+
 ### 2026-10-22 — Performance: quadratic blocking accounting removed, scoring/ingestion vectorised (model: Claude Fable 5.1 via Claude Code)
 
 Output is byte-identical (116 tests incl. the frozen score snapshot; small tier through the harness: `assignments.csv`

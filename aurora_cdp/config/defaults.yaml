@@ -145,6 +145,10 @@ matcher:
     email_exact_with_name_score: 4.5
     phone_exact_with_name_score: 4.2
     name_agreement_min: 0.85    # given+surname similarity needed for the "with_name" rules
+    email_exact_no_name_score: 4.0   # [ASSUMPTION] identifier-only records (POS receipt e-mail): exact e-mail with no name
+                                     # on at least one side and therefore no name evidence either way; hot e-mails are
+                                     # already NULLed by the blocklist. null disables the rule
+    phone_exact_no_name_score: null  # same for phone-only records (off: phones are shared inside households)
   # Probabilistic model: score = 5 * sigmoid(bias + sum(w_i * f_i)). Weights are hand-set for the scaffold
   # [ASSUMPTION]; Amperity uses a learned ordinal-regression classifier.
   weights:
