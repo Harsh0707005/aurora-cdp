@@ -102,12 +102,11 @@ def main() -> None:
     out = Path(a.reports_root) / a.date / a.run_name
     out.mkdir(parents=True, exist_ok=True)
     t0 = time.perf_counter()
-    oh = pd.read_parquet(data / "ORDER_HEADER.parquet")
-    ol = pd.read_parquet(data / "ORDER_LINE.parquet")
-    est = pd.read_parquet(data / "RETAIL_STORE_ESTIMATE_HEADER.parquet")
-    truth = pd.read_parquet(data / "truth_records.parquet")
-    expected = pd.read_parquet(data / "expected_CUSTOMER.parquet")
-    persons = pd.read_parquet(data / "truth_persons.parquet")
+    def _read(name: str) -> pd.DataFrame:  # single file (small corpora) or a directory of parts (batched corpora)
+        f, d = data / f"{name}.parquet", data / name
+        return pd.read_parquet(f) if f.exists() else pd.read_parquet(d)
+    oh, ol, est = _read("ORDER_HEADER"), _read("ORDER_LINE"), _read("RETAIL_STORE_ESTIMATE_HEADER")
+    truth, expected, persons = _read("truth_records"), _read("expected_CUSTOMER"), _read("truth_persons")
     manifest = json.loads((data / "manifest.json").read_text())
 
     # items per order for the aggregates (ORDER_LINE)

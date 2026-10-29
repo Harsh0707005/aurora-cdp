@@ -173,11 +173,21 @@ def _email_key(e: str) -> str:
     return f"{local.split('+')[0]}@{dom}"
 
 
+_SALT: int | None = None  # batch salt: every e-mail of a batch gets a number from its own range, so batches never collide
+
+
 def make_email(first: str, last: str, rng: random.Random, brand: str | None = None) -> str:
     """A person's e-mail; unique across persons after plus-tag stripping (two people never share a mailbox here;
     shared family mailboxes are a real phenomenon but are deliberately not modelled)."""
     for _ in range(50):
         e = _make_email(first, last, rng, brand)
+        if _SALT is not None:
+            local, dom = e.split("@")
+            tag = ""
+            if "+" in local:
+                local, tag = local.split("+", 1)
+                tag = "+" + tag
+            e = f"{local}{_SALT * 100000 + rng.randrange(0, 100000)}{tag}@{dom}"
         k = _email_key(e)
         if k not in _EMAILS_SEEN:
             _EMAILS_SEEN.add(k)
@@ -205,13 +215,13 @@ def _make_email(first: str, last: str, rng: random.Random, brand: str | None = N
     return f"{local}@{dom}"
 
 
-def make_people(n: int, rng: random.Random) -> list[Person]:
+def make_people(n: int, rng: random.Random, pid_offset: int = 0, hh_offset: int = 0) -> list[Person]:
     people: list[Person] = []
-    hh_counter = 0
+    hh_counter = hh_offset
     i = 0
     while i < n:
         hh_counter += 1
-        hh = f"HH{hh_counter:07d}"
+        hh = f"HH{hh_counter:09d}"
         size = 1
         r = rng.random()
         if r < 0.25:
@@ -241,7 +251,7 @@ def make_people(n: int, rng: random.Random) -> list[Person]:
             addresses = [(START_DT - timedelta(days=3650), addr)]
             if rng.random() < 0.18:  # mover during the window (the whole household does not necessarily move)
                 addresses.append((START_DT + timedelta(days=rng.randrange(60, 700)), make_address(rng)))
-            pid = f"P{i + 1:07d}"
+            pid = f"P{pid_offset + i + 1:09d}"
             loy = f"LOY{rng.randrange(10**8, 10**9)}" if rng.random() < 0.35 else None
             emp = f"E{rng.randrange(10**5, 10**6)}" if rng.random() < 0.02 else None
             p = Person(pid, first, last, middle, emails, phones, addresses, hh, brands, loy, emp)
@@ -298,17 +308,20 @@ def render_email(e: str, rng: random.Random) -> str:
     return e.upper() if r < 0.15 else (e.title() if r < 0.2 else e)
 
 
-def gen(persons: int, seed: int):
+def gen(persons: int, seed: int, batch: int = 0):
+    """One batch: ids carry the batch number so batches generated in parallel never collide."""
+    global _SALT
     rng = random.Random(seed)
     _EMAILS_SEEN.clear()
-    people = make_people(persons, rng)
+    _SALT = batch if batch else None
+    people = make_people(persons, rng, pid_offset=batch * 10_000_000, hh_offset=batch * 10_000_000)
     by_pid = {p.pid: p for p in people}
     headers, lines, estimates, truth = [], [], [], []
     expected_src: dict[str, list[dict]] = defaultdict(list)  # pid -> linkable orders
     pii_obs: dict[str, list[dict]] = defaultdict(list)       # pid -> observed pii per record (for survivorship truth)
-    oid = 0
-    lid = 0
-    est_id = 0
+    oid = batch * 100_000_000
+    lid = batch * 1_000_000_000
+    est_id = batch * 10_000_000
     for p in people:
         r = rng.random()
         n_orders = 1 if r < 0.45 else (rng.randrange(2, 4) if r < 0.75 else (rng.randrange(4, 9) if r < 0.93 else rng.randrange(9, 31)))
@@ -355,8 +368,8 @@ def gen(persons: int, seed: int):
             n_lines = rng.choice([1, 1, 1, 2, 2, 3, 4])
             subtotal = 0.0
             items = 0
-            ohid = f"OH{oid:09d}"
-            order_id = f"{brand}{src[0]}{oid:09d}"
+            ohid = f"OH{oid:011d}"
+            order_id = f"{brand}{src[0]}{oid:011d}"
             line_rows = []
             gift = channel != "RETAIL" and rng.random() < 0.10
             recipient = None
@@ -385,7 +398,7 @@ def gen(persons: int, seed: int):
                     ship = dict(first=first, last=last, mid=mid, l1=l1, l2=l2, city=city, state=state, postal=postal,
                                 email=email if rng.random() < 0.8 else "", phone=phone if rng.random() < 0.6 else "", pid=p.pid)
                 line_rows.append({
-                    "ORDER_LINE_KEY": lid, "ORDER_LINE_ID": f"OL{lid:010d}", "ORDER_HEADER_KEY": oid, "SOURCE_SYSTEM": src, "ORDER_DT": od,
+                    "ORDER_LINE_KEY": lid, "ORDER_LINE_ID": f"OL{lid:012d}", "ORDER_HEADER_KEY": oid, "SOURCE_SYSTEM": src, "ORDER_DT": od,
                     "PRIME_LINE_SEQ_NBR": li + 1, "ORDER_ITEM_ID": f"SKU{rng.randrange(10**5, 10**6)}", "ORDER_QTY": qty,
                     "ACT_SALE_UNIT_PRICE_AMT": price, "EXTENDED_AMT": ext, "LINE_TOTAL_AMT": ext, "GIFT_FLAG": "Y" if gift else "N",
                     "SHIP_TO_CUSTOMER_ID": (acct if ship.get("pid") == p.pid else None),
@@ -436,7 +449,7 @@ def gen(persons: int, seed: int):
                 l1, l2, city, state, postal = addr.render(rng)
                 brand = rng.choice(p.brands)
                 estimates.append({
-                    "RETAIL_STORE_ESTIMATE_HEADER_KEY": est_id, "RETAIL_STORE_ESTIMATE_HEADER_ID": f"EST{est_id:08d}", "SOURCE_ESTIMATE_ID": est_id,
+                    "RETAIL_STORE_ESTIMATE_HEADER_KEY": est_id, "RETAIL_STORE_ESTIMATE_HEADER_ID": f"EST{est_id:010d}", "SOURCE_ESTIMATE_ID": est_id,
                     "MARKET_CD": "US", "ORDER_DT": ed, "CUSTOMER_ID": p.clienteling_id, "HOUSEHOLD_ID": None,
                     "FIRST_EFFECTIVE_TS": datetime.combine(ed, datetime.min.time()), "LAST_EFFECTIVE_TS": datetime.combine(ed, datetime.min.time()),
                     "ESTIMATE_TXN_TYPE_DESC": "ESTIMATE", "CURRENT_STATUS": rng.choice(["OPEN", "CONVERTED", "EXPIRED"]), "CLIENTELING_SALE_FLAG": "Y",
@@ -447,7 +460,7 @@ def gen(persons: int, seed: int):
                     "TOTAL_AMT_BEFORE_TAX": round(float(np.exp(rng.gauss(6.0, 0.8))), 2), "SOURCE": "CLIENTELING",
                     "INSERT_TS": datetime.combine(ed, datetime.min.time()), "UPDATE_TS": datetime.combine(ed, datetime.min.time()),
                 })
-                truth.append({"record_id": f"EST{est_id:08d}", "table": "RETAIL_STORE_ESTIMATE_HEADER", "role": "estimate", "person_id": p.pid, "has_pii": True})
+                truth.append({"record_id": f"EST{est_id:010d}", "table": "RETAIL_STORE_ESTIMATE_HEADER", "role": "estimate", "person_id": p.pid, "has_pii": True})
                 pii_obs[p.pid].append({"dt": ed, "first": first, "last": last, "email": estimates[-1]["CUSTOMER_EMAIL_ID"], "phone": estimates[-1]["CUSTOMER_DAY_PHONE_NBR"], "l1": l1, "l2": l2, "city": city, "state": state, "postal": postal})
     expected = [expected_customer(by_pid[pid], orders, pii_obs.get(pid, [])) for pid, orders in expected_src.items()]
     return people, pd.DataFrame(headers), pd.DataFrame(lines), pd.DataFrame(estimates), pd.DataFrame(truth), pd.DataFrame(expected)
@@ -562,34 +575,57 @@ def expected_customer(p: Person | None, orders: list[dict], obs: list[dict], cus
     return row
 
 
+TABLES = ("ORDER_HEADER", "ORDER_LINE", "RETAIL_STORE_ESTIMATE_HEADER", "truth_records", "expected_CUSTOMER", "truth_persons")
+
+
+def _run_batch(args: tuple) -> dict:
+    batch, persons, seed, out = args
+    people, oh, ol, est, truth, expected = gen(persons, seed, batch=batch)
+    hh = pd.DataFrame([{"person_id": p.pid, "household_id": p.household, "first": p.first, "last": p.last, "loyalty_id": p.loyalty_id, "employee_id": p.employee_id} for p in people])
+    for name, df in zip(TABLES, (oh, ol, est, truth, expected, hh)):
+        d = Path(out) / name
+        d.mkdir(parents=True, exist_ok=True)
+        df.to_parquet(d / f"part-{batch:04d}.parquet", index=False)
+    return {
+        "batch": batch, "persons": persons, "orders": int(len(oh)), "order_lines": int(len(ol)), "estimates": int(len(est)),
+        "identity_records": int(len(truth)), "records_by_role": truth["role"].value_counts().to_dict(),
+        "anonymous_pos_orders": int(truth["person_id"].str.startswith("anon:").sum()),
+        "gift_recipients_in_base": int(((truth["role"] == "ship_to_gift") & ~truth["person_id"].str.startswith("stranger:")).sum()),
+        "persons_with_orders": int(expected["CUSTOMER_ID"].nunique()), "households": int(hh["household_id"].nunique()),
+        "channels": oh["SUB_CHANNEL_TYPE_CD"].value_counts().to_dict(), "concepts": oh["CONCEPT_CD"].value_counts().to_dict(),
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--persons", type=int, default=60000)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--batch-size", type=int, default=40000, help="persons per batch (each batch is one parquet part per table)")
+    ap.add_argument("--workers", type=int, default=1)
     a = ap.parse_args()
-    people, oh, ol, est, truth, expected = gen(a.persons, a.seed)
     out = Path(a.out).expanduser()
     out.mkdir(parents=True, exist_ok=True)
-    oh.to_parquet(out / "ORDER_HEADER.parquet", index=False)
-    ol.to_parquet(out / "ORDER_LINE.parquet", index=False)
-    est.to_parquet(out / "RETAIL_STORE_ESTIMATE_HEADER.parquet", index=False)
-    truth.to_parquet(out / "truth_records.parquet", index=False)
-    expected.to_parquet(out / "expected_CUSTOMER.parquet", index=False)
-    hh = pd.DataFrame([{"person_id": p.pid, "household_id": p.household, "first": p.first, "last": p.last, "loyalty_id": p.loyalty_id, "employee_id": p.employee_id} for p in people])
-    hh.to_parquet(out / "truth_persons.parquet", index=False)
-    roles = truth["role"].value_counts().to_dict()
-    manifest = {
-        "generator": "tools/wsi_edap_sim.py", "seed": a.seed, "persons": a.persons, "orders": int(len(oh)), "order_lines": int(len(ol)),
-        "estimates": int(len(est)), "identity_records": int(len(truth)), "records_by_role": roles,
-        "anonymous_pos_orders": int(truth["person_id"].str.startswith("anon:").sum()),
-        "gift_recipients_in_base": int(((truth["role"] == "ship_to_gift") & ~truth["person_id"].str.startswith("stranger:")).sum()),
-        "persons_with_orders": int(expected["CUSTOMER_ID"].nunique()), "households": int(hh["household_id"].nunique()),
-        "channels": oh["SUB_CHANNEL_TYPE_CD"].value_counts().to_dict(), "concepts": oh["CONCEPT_CD"].value_counts().to_dict(),
-        "window": [START_DT.isoformat(), END_DT.isoformat()],
-    }
-    (out / "manifest.json").write_text(json.dumps(manifest, indent=1))
-    print(json.dumps(manifest, indent=1))
+    sizes = [a.batch_size] * (a.persons // a.batch_size) + ([a.persons % a.batch_size] if a.persons % a.batch_size else [])
+    jobs = [(b, n, a.seed * 1000 + b, str(out)) for b, n in enumerate(sizes)]
+    if a.workers > 1 and len(jobs) > 1:
+        from multiprocessing import Pool
+        with Pool(a.workers) as pool:
+            parts = list(pool.imap_unordered(_run_batch, jobs))
+    else:
+        parts = [_run_batch(j) for j in jobs]
+    parts.sort(key=lambda d: d["batch"])
+    agg: dict = {"generator": "tools/wsi_edap_sim.py", "seed": a.seed, "persons": a.persons, "batches": len(parts), "batch_size": a.batch_size,
+                 "window": [START_DT.isoformat(), END_DT.isoformat()], "layout": "one parquet directory per table, part-<batch>.parquet"}
+    for k in ("orders", "order_lines", "estimates", "identity_records", "anonymous_pos_orders", "gift_recipients_in_base", "persons_with_orders", "households"):
+        agg[k] = sum(p[k] for p in parts)
+    for k in ("records_by_role", "channels", "concepts"):
+        c: Counter = Counter()
+        for p in parts:
+            c.update(p[k])
+        agg[k] = dict(c)
+    (out / "manifest.json").write_text(json.dumps(agg, indent=1))
+    print(json.dumps(agg, indent=1))
 
 
 if __name__ == "__main__":
