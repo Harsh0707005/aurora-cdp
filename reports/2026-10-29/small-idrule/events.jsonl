@@ -1,0 +1,19 @@
+{"t": 1793276760.754998, "ts": "2026-10-29T17:56:00", "kind": "run_start", "pid": 59391, "run_name": "small-idrule", "input_hash": "f76ad872710e8bd8b6fa", "completed_stages": []}
+{"t": 1793276760.7853508, "ts": "2026-10-29T17:56:00", "kind": "stage_start", "pid": 59391, "stage": "load", "attempt": 0}
+{"t": 1793276761.029402, "ts": "2026-10-29T17:56:01", "kind": "stage_end", "pid": 59391, "stage": "load", "attempt": 0, "elapsed_s": 0.244}
+{"t": 1793276761.0891058, "ts": "2026-10-29T17:56:01", "kind": "stage_start", "pid": 59391, "stage": "resolve:w0", "attempt": 0}
+{"t": 1793276761.83687, "ts": "2026-10-29T17:56:01", "kind": "stage_end", "pid": 59391, "stage": "resolve:w0", "attempt": 0, "elapsed_s": 0.748}
+{"t": 1793276761.86391, "ts": "2026-10-29T17:56:01", "kind": "stage_start", "pid": 59391, "stage": "resolve:w1", "attempt": 0}
+{"t": 1793276762.6312928, "ts": "2026-10-29T17:56:02", "kind": "stage_end", "pid": 59391, "stage": "resolve:w1", "attempt": 0, "elapsed_s": 0.767}
+{"t": 1793276762.664377, "ts": "2026-10-29T17:56:02", "kind": "stage_start", "pid": 59391, "stage": "resolve:w2", "attempt": 0}
+{"t": 1793276763.8005629, "ts": "2026-10-29T17:56:03", "kind": "stage_end", "pid": 59391, "stage": "resolve:w2", "attempt": 0, "elapsed_s": 1.136}
+{"t": 1793276763.8574212, "ts": "2026-10-29T17:56:03", "kind": "stage_start", "pid": 59391, "stage": "resolve:w3", "attempt": 0}
+{"t": 1793276765.384099, "ts": "2026-10-29T17:56:05", "kind": "stage_end", "pid": 59391, "stage": "resolve:w3", "attempt": 0, "elapsed_s": 1.527}
+{"t": 1793276765.435201, "ts": "2026-10-29T17:56:05", "kind": "stage_start", "pid": 59391, "stage": "resolve:w4", "attempt": 0}
+{"t": 1793276767.3091688, "ts": "2026-10-29T17:56:07", "kind": "stage_end", "pid": 59391, "stage": "resolve:w4", "attempt": 0, "elapsed_s": 1.874}
+{"t": 1793276767.365834, "ts": "2026-10-29T17:56:07", "kind": "stage_start", "pid": 59391, "stage": "resolve:w5", "attempt": 0}
+{"t": 1793276769.707008, "ts": "2026-10-29T17:56:09", "kind": "stage_end", "pid": 59391, "stage": "resolve:w5", "attempt": 0, "elapsed_s": 2.341}
+{"t": 1793276770.189088, "ts": "2026-10-29T17:56:10", "kind": "stage_start", "pid": 59391, "stage": "metrics", "attempt": 0}
+{"t": 1793276771.141404, "ts": "2026-10-29T17:56:11", "kind": "stage_end", "pid": 59391, "stage": "metrics", "attempt": 0, "elapsed_s": 0.952}
+{"t": 1793276771.1419368, "ts": "2026-10-29T17:56:11", "kind": "stage_start", "pid": 59391, "stage": "report"}
+{"t": 1793276771.69535, "ts": "2026-10-29T17:56:11", "kind": "run_complete", "pid": 59391, "report": "/Users/harshmaster/Desktop/Projects/aurora-cdp/reports/2026-10-29/small-idrule/report.md"}

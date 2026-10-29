@@ -1,0 +1,352 @@
+{
+ "run_name": "wsi-edap-p60k-phonerule",
+ "data": "/Users/harshmaster/Documents/aanya/datasets/wsi-edap-sim/p60k",
+ "manifest": {
+  "generator": "tools/wsi_edap_sim.py",
+  "seed": 42,
+  "persons": 60000,
+  "orders": 219974,
+  "order_lines": 439857,
+  "estimates": 4821,
+  "identity_records": 397512,
+  "records_by_role": {
+   "bill_to": 219974,
+   "ship_to_self": 149125,
+   "ship_to_gift": 23592,
+   "estimate": 4821
+  },
+  "anonymous_pos_orders": 12185,
+  "gift_recipients_in_base": 11975,
+  "persons_with_orders": 58453,
+  "households": 42256,
+  "channels": {
+   "WEB": 120963,
+   "RETAIL": 77151,
+   "CALL_CENTER": 21860
+  },
+  "concepts": {
+   "WS": 64925,
+   "PB": 61935,
+   "WE": 44058,
+   "PK": 17527,
+   "PT": 11191,
+   "OB": 11126,
+   "MG": 9212
+  },
+  "window": [
+   "2024-09-30",
+   "2026-09-30"
+  ]
+ },
+ "engine_run_id": "run-20261029122822-902355",
+ "records": 397512,
+ "clusters_total": 92464,
+ "customers_output": 76650,
+ "persons_with_orders_truth": 58453,
+ "identity": {
+  "pairwise_precision": 0.9928,
+  "pairwise_recall": 0.9661,
+  "pairwise_f1": 0.9793,
+  "tp": 2951842,
+  "fp": 21309,
+  "fn": 103524,
+  "b3_precision": 0.9955,
+  "b3_recall": 0.9442,
+  "b3_f1": 0.9692,
+  "false_merge_clusters": 432,
+  "false_merge_cluster_rate": 0.0047,
+  "split_persons": 8813,
+  "split_person_rate": 0.1491,
+  "linkable_records": 373710,
+  "recall_by_pair_kind": [
+   {
+    "kind": "bill_to <-> ship_to_self",
+    "pairs": 1509735,
+    "recall": 0.9727
+   },
+   {
+    "kind": "bill_to <-> bill_to",
+    "pairs": 951922,
+    "recall": 0.9497
+   },
+   {
+    "kind": "ship_to_self <-> ship_to_self",
+    "pairs": 488576,
+    "recall": 0.9939
+   },
+   {
+    "kind": "bill_to <-> ship_to_gift",
+    "pairs": 40733,
+    "recall": 0.8491
+   },
+   {
+    "kind": "ship_to_gift <-> ship_to_self",
+    "pairs": 14504,
+    "recall": 0.9089
+   },
+   {
+    "kind": "estimate <-> ship_to_self",
+    "pairs": 11887,
+    "recall": 0.9696
+   },
+   {
+    "kind": "ship_to_gift <-> ship_to_gift",
+    "pairs": 4835,
+    "recall": 0.8271
+   },
+   {
+    "kind": "estimate <-> estimate",
+    "pairs": 1203,
+    "recall": 0.9909
+   },
+   {
+    "kind": "estimate <-> ship_to_gift",
+    "pairs": 944,
+    "recall": 0.8231
+   }
+  ],
+  "gift_ship_to_records": 23592,
+  "gift_ship_to_merged_into_buyer": 0,
+  "false_merge_examples": [
+   [
+    "OH000068124",
+    "OL0000275058",
+    "P0018619",
+    "P0018618"
+   ],
+   [
+    "OL0000136294",
+    "OL0000275058",
+    "P0018619",
+    "P0018618"
+   ],
+   [
+    "OH000069016",
+    "OL0000138033",
+    "P0018889",
+    "P0018890"
+   ],
+   [
+    "OL0000138017",
+    "OL0000138033",
+    "P0018889",
+    "P0018890"
+   ],
+   [
+    "OH000069017",
+    "OL0000138033",
+    "P0018889",
+    "P0018890"
+   ],
+   [
+    "OH000069018",
+    "OL0000138033",
+    "P0018889",
+    "P0018890"
+   ],
+   [
+    "OL0000138022",
+    "OL0000138033",
+    "P0018889",
+    "P0018890"
+   ],
+   [
+    "OH000069019",
+    "OL0000138033",
+    "P0018889",
+    "P0018890"
+   ]
+  ]
+ },
+ "customer_table": {
+  "rows_compared": 58453,
+  "all_attributes_exact": 0.8799,
+  "attribute_accuracy": {
+   "FIRST_NAME": 0.9785,
+   "LAST_NAME": 0.9858,
+   "ADDRESS": 0.9714,
+   "ADDRESS2": 0.9787,
+   "CITY": 0.9812,
+   "STATE_CD": 0.9812,
+   "POSTAL_CD": 0.9812,
+   "COUNTRY_CD": 0.9832,
+   "PRIMARY_EMAIL_ID": 0.9768,
+   "RECENT_EMAIL_ID": 0.9727,
+   "PRIMARY_PHONE": 0.975,
+   "RECENT_PHONE": 0.9744,
+   "CURRENT_EMPLOYEE_FLAG": 0.9996,
+   "LOYALTY_MEMBER_FLAG": 0.9947,
+   "LOYALTY_ACCT_CNT": 0.994,
+   "FIRST_ORDER_BRAND": 0.9847,
+   "FIRST_ORDER_CHANNEL": 0.9783,
+   "FIRST_ORDER_STORE_ID": 0.9714,
+   "FIRST_ORDER_ID": 0.9667,
+   "FIRST_ORDER_DATE": 0.9668,
+   "FIRST_ORDER_NET_AMT": 0.9667,
+   "FIRST_ORDER_TOTAL_AMT": 0.9667,
+   "FIRST_ORDER_TOTAL_ITEMS": 0.9721,
+   "SECOND_ORDER_BRAND": 0.956,
+   "SECOND_ORDER_CHANNEL": 0.9493,
+   "SECOND_ORDER_STORE_ID": 0.9598,
+   "SECOND_ORDER_ID": 0.9368,
+   "SECOND_ORDER_DATE": 0.937,
+   "SECOND_ORDER_NET_AMT": 0.9368,
+   "SECOND_ORDER_TOTAL_AMT": 0.9368,
+   "SECOND_ORDER_TOTAL_ITEMS": 0.9423,
+   "LATEST_ORDER_BRAND": 0.9841,
+   "LATEST_ORDER_CHANNEL": 0.9772,
+   "LATEST_ORDER_STORE_ID": 0.9698,
+   "LATEST_ORDER_ID": 0.9652,
+   "LATEST_ORDER_DATE": 0.9653,
+   "LATEST_ORDER_NET_AMT": 0.9652,
+   "LATEST_ORDER_TOTAL_AMT": 0.9652,
+   "LATEST_ORDER_TOTAL_ITEMS": 0.9711,
+   "FIRST_TO_SECOND_ORDER_DAYS": 0.9368,
+   "FIRST_TO_LATEST_ORDER_DAYS": 0.9364,
+   "DAYS_SINCE_LATEST_ORDER": 0.9653,
+   "ONE_AND_DONE": 0.9695,
+   "SINGLE_BRAND": 0.9782,
+   "MULTI_BRAND": 0.9782,
+   "SINGLE_CHANNEL": 0.9668,
+   "MULTI_CHANNEL": 0.9668,
+   "EARLY_REPEAT_PURCHASER": 0.978,
+   "LIFETIME_BRANDS": 0.9697,
+   "LIFETIME_PREFERRED_BRAND": 0.9843,
+   "LIFETIME_CHANNELS": 0.9593,
+   "LIFETIME_PREFERRED_CHANNEL": 0.9776,
+   "LIFETIME_STORES": 0.9125,
+   "LIFETIME_PREFERRED_STORE_ID": 0.9508,
+   "LIFETIME_ORDER_NET_AMT": 0.8922,
+   "LIFETIME_ORDER_TOTAL_AMT": 0.8922,
+   "LIFETIME_ORDER_FREQUENCY": 0.8926,
+   "LIFETIME_TOTAL_ITEMS": 0.8923,
+   "LIFETIME_AVERAGE_ORDER_VALUE_AMT": 0.8922,
+   "LIFETIME_AVERAGE_ITEM_PRICE": 0.8922,
+   "LIFETIME_AVERAGE_NUM_ITEMS": 0.9512,
+   "LIFETIME_LARGEST_ORDER_VALUE_AMT": 0.9672,
+   "L12M_BRANDS": 0.9726,
+   "L12M_PREFERRED_BRAND": 0.9795,
+   "L12M_CHANNELS": 0.9672,
+   "L12M_PREFERRED_CHANNEL": 0.9758,
+   "L12M_STORES": 0.9521,
+   "L12M_PREFERRED_STORE_ID": 0.9665,
+   "L12M_ORDER_NET_AMT": 0.9399,
+   "L12M_ORDER_TOTAL_AMT": 0.9399,
+   "L12M_ORDER_FREQUENCY": 0.9402,
+   "L12M_TOTAL_ITEMS": 0.9399,
+   "L12M_AVERAGE_ORDER_VALUE_AMT": 0.9399,
+   "L12M_AVERAGE_ITEM_PRICE": 0.9399,
+   "L12M_AVERAGE_NUM_ITEMS": 0.9639,
+   "L6M_BRANDS": 0.9797,
+   "L6M_PREFERRED_BRAND": 0.9828,
+   "L6M_CHANNELS": 0.9776,
+   "L6M_PREFERRED_CHANNEL": 0.9816,
+   "L6M_STORES": 0.9742,
+   "L6M_PREFERRED_STORE_ID": 0.9792,
+   "L6M_ORDER_NET_AMT": 0.9664,
+   "L6M_ORDER_TOTAL_AMT": 0.9664,
+   "L6M_ORDER_FREQUENCY": 0.9665,
+   "L6M_TOTAL_ITEMS": 0.9664,
+   "L6M_AVERAGE_ORDER_VALUE_AMT": 0.9664,
+   "L6M_AVERAGE_ITEM_PRICE": 0.9665,
+   "L6M_AVERAGE_NUM_ITEMS": 0.9754,
+   "L3M_BRANDS": 0.9869,
+   "L3M_PREFERRED_BRAND": 0.9881,
+   "L3M_CHANNELS": 0.9859,
+   "L3M_PREFERRED_CHANNEL": 0.9875,
+   "L3M_STORES": 0.9868,
+   "L3M_PREFERRED_STORE_ID": 0.9882,
+   "L3M_ORDER_NET_AMT": 0.9822,
+   "L3M_ORDER_TOTAL_AMT": 0.9822,
+   "L3M_ORDER_FREQUENCY": 0.9823,
+   "L3M_TOTAL_ITEMS": 0.9822,
+   "L3M_AVERAGE_ORDER_VALUE_AMT": 0.9822,
+   "L3M_AVERAGE_ITEM_PRICE": 0.9822,
+   "L3M_AVERAGE_NUM_ITEMS": 0.9849,
+   "L30D_BRANDS": 0.994,
+   "L30D_PREFERRED_BRAND": 0.9942,
+   "L30D_CHANNELS": 0.9937,
+   "L30D_PREFERRED_CHANNEL": 0.994,
+   "L30D_STORES": 0.9952,
+   "L30D_PREFERRED_STORE_ID": 0.9954,
+   "L30D_ORDER_NET_AMT": 0.9932,
+   "L30D_ORDER_TOTAL_AMT": 0.9932,
+   "L30D_ORDER_FREQUENCY": 0.9932,
+   "L30D_TOTAL_ITEMS": 0.9932,
+   "L30D_AVERAGE_ORDER_VALUE_AMT": 0.9932,
+   "L30D_AVERAGE_ITEM_PRICE": 0.9932,
+   "L30D_AVERAGE_NUM_ITEMS": 0.9937,
+   "L12M_RECENCY": 0.9745,
+   "L12M_FREQUENCY": 0.9539,
+   "L12M_MONETARY": 0.9669,
+   "L12M_RFM_SCORE": 0.9518,
+   "L12M_RFM_CUSTOMER_SEGMENT": 0.9668,
+   "RETAIL_FLAG": 0.9738
+  },
+  "lifetime_net_abs_error_total": 3245680.91,
+  "lifetime_net_exact_share": 0.8922
+ },
+ "households": {
+  "pair_precision": 0.9998,
+  "pair_recall": 0.6368,
+  "true_pairs": 20211,
+  "households_output": 78670,
+  "engine_metrics": {
+   "stitch_run_id": "run-20261029122822-902355",
+   "customers": 92464,
+   "households": 78670,
+   "multi_member_households": 11142,
+   "max_household_size": 6,
+   "evidence_observed": 49901,
+   "evidence_skipped_values": {
+    "shared_address": 0,
+    "shared_surname_postal": 0,
+    "shared_phone": 0
+   },
+   "evidence_new": 49901,
+   "evidence_refreshed": 0,
+   "evidence_expired": 0,
+   "evidence_active": 49901,
+   "jitter": {
+    "records_total": 92464,
+    "records_compared": 0,
+    "records_changed": 0,
+    "jitter_pct": 0.0,
+    "ids_minted": 78670,
+    "ids_retired": 0,
+    "alert": false
+   }
+  }
+ },
+ "timing_s": {
+  "prepare": 1.8,
+  "resolve": 151.1,
+  "households": 102.7,
+  "evaluate": 10.2
+ },
+ "engine_metrics": {
+  "records": 397512,
+  "pairs_blocked": 6492270,
+  "pairs_scored": 15246015,
+  "edges": 824438,
+  "clusters": 92464,
+  "jitter": {
+   "records_total": 397512,
+   "records_compared": 0,
+   "records_changed": 0,
+   "jitter_pct": 0.0,
+   "ids_minted": 92464,
+   "ids_retired": 0,
+   "alert": false
+  },
+  "timings_sec": {
+   "load": 1.163,
+   "blocking": 1.909,
+   "scoring": 76.683,
+   "clustering": 6.607,
+   "stable_id": 0.54,
+   "persist": 0.888
+  },
+  "peak_rss_mb": 1290.0
+ }
+}

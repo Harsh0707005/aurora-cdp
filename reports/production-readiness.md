@@ -41,6 +41,44 @@ pairs, scoring 254 s of 434 s), not quadratic in records. Candidate pairs still 
 corpus), so the single-node design is comfortable to a few million records and needs partitioned execution beyond that —
 the gap to Amperity's Spark-based Stitch (tenants of 15–395 M records) is architectural, not algorithmic.
 
+### EDAP-shaped end-to-end test (2026-10-29): the Williams-Sonoma feed contract, simulated
+
+The EDAP → Amperity → EDAP DDL (ORDER_HEADER bill-to, ORDER_LINE ship-to, RETAIL_STORE_ESTIMATE_HEADER in; CUSTOMER
+out) was turned into a seeded simulator (`tools/wsi_edap_sim.py`) and an end-to-end evaluator
+(`tools/wsi_edap_eval.py`) that maps the feeds to identity records, resolves, builds households and the CUSTOMER rows
+(survivorship + FIRST/SECOND/LATEST order, LIFETIME/L12M/L6M/L3M/L30D, RFM, flags) and scores everything against
+the truth. 60,000 people, 7 concepts, 220k orders, 398k identity records; POS receipts carry only an e-mail (45 %),
+a phone (15 %), a loyalty id, or nothing (15 %, unlinkable by any system and excluded); 10 % of DTC orders are gifts
+shipped to someone else; the feeds carry no date of birth (none exists in the contract).
+
+| metric (60k, laptop) | default engine | + phone-only rule (`phone_exact_no_name_score: 3.5`) |
+|---|---|---|
+| pairwise precision / recall / F1 | 0.993 / 0.928 / 0.960 | 0.993 / 0.966 / 0.979 |
+| B³ F1 | 0.955 | 0.969 |
+| false-merge clusters | 0.35 % | 0.47 % |
+| split persons | 21.7 % | 14.9 % |
+| gift ship-to records merged into the buyer | 0 of 23,592 | 0 of 23,592 |
+| bill-to ↔ bill-to recall (same buyer, different orders) | 0.884 | 0.950 |
+| CUSTOMER rows with every attribute exact | 81.7 % | 88.0 % |
+| lifetime net amount exact / total abs. error | 83.0 % / $5.3 M | 89.2 % / $3.2 M |
+| household pair precision / recall | 0.9998 / 0.62 | 0.9998 / 0.64 |
+| resolve time (398k records) | 112 s | — |
+
+Findings. (1) The first run (precision 0.962, bill-to ↔ bill-to recall 0.747) exposed two things: a simulator bug
+(two people sharing one mailbox, fixed) and a real engine gap — an exact e-mail between a POS receipt record (no
+name) and a web order scored 3.1 in the logistic model, under the 3.25 threshold, so receipt-e-mail orders never joined
+the owning account. The new `email_exact_no_name_score` rule (on by default; fires only when a side has no name, so
+there is no name evidence either way) lifts recall 0.81 → 0.92 at equal precision; the synthetic tiers barely move.
+(2) The remaining splits are mostly phone-only POS receipts; linking them (`phone_exact_no_name_score`, off by default
+because phones are shared within households) buys 4 pts of recall and 6 pts of CUSTOMER-row exactness for +0.12 pt of
+false-merge clusters — a business choice to make on real data. (3) Gift recipients are never folded into the buyer.
+(4) Household recall sits near the data ceiling (79 % of co-household pairs have an address on both sides; movers
+move individually in the simulator). (5) Every CUSTOMER attribute error traces back to identity splits/merges: the
+survivorship and aggregate logic itself reproduces the expected rows exactly for every correctly resolved cluster.
+
+What this test cannot say: it is our own simulation of the contract, not EDAP data; real capture rates, e-mail reuse,
+B2B/trade accounts, registries and returns are approximated or absent (`tools/wsi_edap_sim.py` docstring).
+
 ### Real PII data (evening, 2026-10-22): North Carolina voter-registration snapshots, 7.0 M records
 
 Built from three public statewide snapshots (2023-01-01, 2024-01-01, 2025-01-01; `tools/build_ncvoter_corpus.py`,

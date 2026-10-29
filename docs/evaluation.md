@@ -163,3 +163,15 @@ Only ACTIVE / INACTIVE voters are kept (`--statuses all` keeps REMOVED etc., whi
 Limitations: no e-mail, year-only birthdate (two same-name people born in the same year cannot be separated by the
 birthdate conflict), and the corpus has at most one record per person per source, so it does not exercise
 within-source duplicates or hot keys the way the synthetic tiers do. Results: `reports/2026-10-22/ncvoter-*`.
+
+## EDAP-shaped end-to-end test (`tools/wsi_edap_sim.py`, `tools/wsi_edap_eval.py`)
+
+Simulates the Williams-Sonoma EDAP → Amperity feeds (ORDER_HEADER, ORDER_LINE, RETAIL_STORE_ESTIMATE_HEADER) with
+ground truth and scores Aurora's identity output *and* the Amperity → EDAP `CUSTOMER` rows it would produce:
+
+```bash
+.venv/bin/python tools/wsi_edap_sim.py --persons 60000 --seed 42 --out ~/Documents/aanya/datasets/wsi-edap-sim/p60k
+.venv/bin/python tools/wsi_edap_eval.py --data ~/Documents/aanya/datasets/wsi-edap-sim/p60k --run-name wsi-edap-p60k \
+    [--cdp-config '{"matcher": {"deterministic": {"phone_exact_no_name_score": 3.5}}}']
+```
+Outputs `reports/<date>/<run>/{report.md,metrics.json,CUSTOMER_aurora.parquet}`; see the memo for the 60k results.

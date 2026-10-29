@@ -1,0 +1,163 @@
+# WSI EDAP-shaped simulation — `wsi-edap-p3k-phonerule`
+
+_2026-10-29 · generator seed 1 · 3,000 persons · 10,633 orders · 19,264 identity records · engine run `run-20261029122727-369269`_
+
+## Identity (records -> persons)
+
+| metric | value |
+|---|---|
+| pairwise precision / recall / F1 | 0.9957 / 0.9618 / 0.9784 |
+| B³ precision / recall / F1 | 0.9963 / 0.9394 / 0.967 |
+| clusters output / persons with orders | 4,625 / 2,931 |
+| false-merge clusters (mixed persons) | 24 (0.52%) |
+| split persons | 454 (15.40%) |
+| gift ship-to records merged into the buyer | 0 of 1,148 |
+
+Recall by record roles of the pair:
+
+| pair | pairs | recall |
+|---|---|---|
+| bill_to <-> ship_to_self | 68,835 | 0.969 |
+| bill_to <-> bill_to | 42,468 | 0.9425 |
+| ship_to_self <-> ship_to_self | 22,444 | 0.9914 |
+| bill_to <-> ship_to_gift | 1,825 | 0.8384 |
+| ship_to_gift <-> ship_to_self | 664 | 0.9051 |
+| estimate <-> ship_to_self | 546 | 0.9725 |
+| ship_to_gift <-> ship_to_gift | 248 | 0.8145 |
+| estimate <-> estimate | 59 | 1.0 |
+| estimate <-> ship_to_gift | 43 | 0.9302 |
+
+## CUSTOMER table (Amperity -> EDAP shape) vs expected
+
+Rows: 3,848 output vs 2,931 expected. All attributes exact for **87.5%** of customers; lifetime net amount exact for 88.8% (total absolute error $168,640).
+
+| attribute | exact-match share |
+|---|---|
+| LIFETIME_ORDER_NET_AMT | 0.8878 |
+| LIFETIME_ORDER_TOTAL_AMT | 0.8878 |
+| LIFETIME_TOTAL_ITEMS | 0.8878 |
+| LIFETIME_AVERAGE_ORDER_VALUE_AMT | 0.8878 |
+| LIFETIME_AVERAGE_ITEM_PRICE | 0.8878 |
+| LIFETIME_ORDER_FREQUENCY | 0.8881 |
+| LIFETIME_STORES | 0.9058 |
+| FIRST_TO_SECOND_ORDER_DAYS | 0.9331 |
+| SECOND_ORDER_ID | 0.9335 |
+| SECOND_ORDER_DATE | 0.9335 |
+| SECOND_ORDER_NET_AMT | 0.9335 |
+| SECOND_ORDER_TOTAL_AMT | 0.9335 |
+| L12M_ORDER_NET_AMT | 0.9359 |
+| L12M_ORDER_TOTAL_AMT | 0.9359 |
+| L12M_TOTAL_ITEMS | 0.9359 |
+| L12M_AVERAGE_ORDER_VALUE_AMT | 0.9359 |
+| L12M_AVERAGE_ITEM_PRICE | 0.9359 |
+| L12M_ORDER_FREQUENCY | 0.9362 |
+| FIRST_TO_LATEST_ORDER_DAYS | 0.9365 |
+| SECOND_ORDER_TOTAL_ITEMS | 0.9420 |
+| L12M_RFM_SCORE | 0.9468 |
+| LIFETIME_PREFERRED_STORE_ID | 0.9471 |
+| SECOND_ORDER_CHANNEL | 0.9475 |
+| LIFETIME_AVERAGE_NUM_ITEMS | 0.9475 |
+| L12M_STORES | 0.9481 |
+| L12M_FREQUENCY | 0.9485 |
+| SECOND_ORDER_BRAND | 0.9522 |
+| SECOND_ORDER_STORE_ID | 0.9526 |
+| LIFETIME_CHANNELS | 0.9580 |
+| L12M_AVERAGE_NUM_ITEMS | 0.9621 |
+| L12M_PREFERRED_STORE_ID | 0.9635 |
+| L12M_MONETARY | 0.9635 |
+| LATEST_ORDER_ID | 0.9638 |
+| LATEST_ORDER_NET_AMT | 0.9638 |
+| LATEST_ORDER_TOTAL_AMT | 0.9638 |
+| LATEST_ORDER_DATE | 0.9642 |
+| DAYS_SINCE_LATEST_ORDER | 0.9642 |
+| L6M_ORDER_NET_AMT | 0.9649 |
+| L6M_ORDER_TOTAL_AMT | 0.9649 |
+| L6M_TOTAL_ITEMS | 0.9649 |
+| L6M_AVERAGE_ORDER_VALUE_AMT | 0.9649 |
+| L6M_AVERAGE_ITEM_PRICE | 0.9649 |
+| L6M_ORDER_FREQUENCY | 0.9652 |
+| SINGLE_CHANNEL | 0.9655 |
+| MULTI_CHANNEL | 0.9655 |
+| L12M_RFM_CUSTOMER_SEGMENT | 0.9659 |
+| L12M_CHANNELS | 0.9666 |
+| LIFETIME_BRANDS | 0.9672 |
+| LIFETIME_LARGEST_ORDER_VALUE_AMT | 0.9672 |
+| LATEST_ORDER_STORE_ID | 0.9676 |
+| ONE_AND_DONE | 0.9676 |
+| FIRST_ORDER_ID | 0.9679 |
+| FIRST_ORDER_DATE | 0.9679 |
+| FIRST_ORDER_NET_AMT | 0.9679 |
+| FIRST_ORDER_TOTAL_AMT | 0.9679 |
+| ADDRESS | 0.9686 |
+| LATEST_ORDER_TOTAL_ITEMS | 0.9686 |
+| FIRST_ORDER_STORE_ID | 0.9707 |
+| RECENT_EMAIL_ID | 0.9713 |
+| L12M_BRANDS | 0.9724 |
+| RETAIL_FLAG | 0.9724 |
+| RECENT_PHONE | 0.9727 |
+| FIRST_ORDER_TOTAL_ITEMS | 0.9727 |
+| L6M_STORES | 0.9727 |
+| L6M_AVERAGE_NUM_ITEMS | 0.9727 |
+| SINGLE_BRAND | 0.9737 |
+| MULTI_BRAND | 0.9737 |
+| L12M_PREFERRED_CHANNEL | 0.9737 |
+| LIFETIME_PREFERRED_CHANNEL | 0.9744 |
+| PRIMARY_PHONE | 0.9754 |
+| L6M_CHANNELS | 0.9754 |
+| L12M_RECENCY | 0.9754 |
+| LATEST_ORDER_CHANNEL | 0.9758 |
+| EARLY_REPEAT_PURCHASER | 0.9761 |
+| ADDRESS2 | 0.9768 |
+| L6M_PREFERRED_STORE_ID | 0.9768 |
+| PRIMARY_EMAIL_ID | 0.9771 |
+| FIRST_ORDER_CHANNEL | 0.9778 |
+| POSTAL_CD | 0.9782 |
+| L6M_BRANDS | 0.9782 |
+| CITY | 0.9785 |
+| STATE_CD | 0.9785 |
+| L6M_PREFERRED_CHANNEL | 0.9785 |
+| L12M_PREFERRED_BRAND | 0.9795 |
+| FIRST_NAME | 0.9799 |
+| COUNTRY_CD | 0.9809 |
+| L6M_PREFERRED_BRAND | 0.9809 |
+| LATEST_ORDER_BRAND | 0.9829 |
+| LAST_NAME | 0.9840 |
+| FIRST_ORDER_BRAND | 0.9850 |
+| LIFETIME_PREFERRED_BRAND | 0.9850 |
+| L3M_ORDER_NET_AMT | 0.9860 |
+| L3M_ORDER_TOTAL_AMT | 0.9860 |
+| L3M_ORDER_FREQUENCY | 0.9860 |
+| L3M_TOTAL_ITEMS | 0.9860 |
+| L3M_AVERAGE_ORDER_VALUE_AMT | 0.9860 |
+| L3M_AVERAGE_ITEM_PRICE | 0.9860 |
+| L3M_AVERAGE_NUM_ITEMS | 0.9881 |
+| L3M_CHANNELS | 0.9887 |
+| L3M_BRANDS | 0.9891 |
+| L3M_PREFERRED_CHANNEL | 0.9901 |
+| L3M_PREFERRED_BRAND | 0.9904 |
+| L3M_STORES | 0.9904 |
+| L3M_PREFERRED_STORE_ID | 0.9918 |
+| LOYALTY_ACCT_CNT | 0.9925 |
+| LOYALTY_MEMBER_FLAG | 0.9932 |
+| L30D_CHANNELS | 0.9939 |
+| L30D_PREFERRED_CHANNEL | 0.9939 |
+| L30D_ORDER_NET_AMT | 0.9939 |
+| L30D_ORDER_TOTAL_AMT | 0.9939 |
+| L30D_ORDER_FREQUENCY | 0.9939 |
+| L30D_TOTAL_ITEMS | 0.9939 |
+| L30D_AVERAGE_ORDER_VALUE_AMT | 0.9939 |
+| L30D_AVERAGE_ITEM_PRICE | 0.9939 |
+| L30D_BRANDS | 0.9942 |
+| L30D_PREFERRED_BRAND | 0.9942 |
+| L30D_AVERAGE_NUM_ITEMS | 0.9942 |
+| L30D_STORES | 0.9952 |
+| L30D_PREFERRED_STORE_ID | 0.9952 |
+| CURRENT_EMPLOYEE_FLAG | 0.9997 |
+
+## Households
+
+Pair precision 1.0 / recall 0.6402 over 995 true co-household pairs; 3,956 households output.
+
+## Timing
+
+prepare 0.2 s · resolve 3.1 s · households 2.5 s · evaluate 0.6 s
