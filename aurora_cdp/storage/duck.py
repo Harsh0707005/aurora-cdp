@@ -12,6 +12,7 @@ import duckdb
 import pandas as pd
 
 SCHEMA_FILE = Path(__file__).with_name("schema.sql")
+QA_VIEWS_FILE = Path(__file__).with_name("qa_views.sql")
 MIGRATIONS_DIR = Path(__file__).with_name("migrations")
 _MIGRATION_RE = re.compile(r"^V(\d+)__.*\.sql$")
 
@@ -87,6 +88,7 @@ def init_schema(con: duckdb.DuckDBPyConnection) -> list[int]:
             "INSERT INTO schema_version VALUES (?, ?, ?)", [version, datetime.utcnow(), path.name]
         )
         applied_now.append(version)
+    con.execute(QA_VIEWS_FILE.read_text(encoding="utf-8"))  # views over migrated tables; idempotent
     return applied_now
 
 

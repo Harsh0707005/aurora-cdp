@@ -204,6 +204,7 @@ cluster:
   carve:                        # internals §2.9: supersized / blackhole clusters get their weak tiers trimmed back
     enabled: true
     max_cluster_size: 500       # clusters above this lose their weakest tier(s) until the pieces fit; carved members are surfaced
+  unified_scores_max_members: 50   # [AMP: Unified Scores] member pairs (direct + scored_transitive) are written for clusters up to this size
   conflict_attributes: [birthdate, given_name]   # [AMP] hard conflicts refuse a merge however strong the score
   conflict_tolerances:          # per-attribute tolerance t_j (internals §2.8): values closer than this are not a conflict
     birthdate:  {measure: levenshtein_max, value: 2}      # typo / transposition tolerance

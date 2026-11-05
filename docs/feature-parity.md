@@ -16,16 +16,16 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
 | Rules Editor (ordered deterministic rules, first match wins) | ✅ | `matcher.rules`: user-authored ordered list (feature conditions with eq/ne/gt/gte/lt/lte/present, predicates `names_agree` / `names_missing`, score, optional category), evaluated before the probabilistic score in both scorer paths; `null` = the built-in list driven by `matcher.deterministic.*`; operator overrides via persisted Stitch labels |
 | Hard conflicts with explicit refuse-to-merge | ✅ | pairwise (birthdate) + cluster-time per-attribute tolerances checked at every union: birthdate (Levenshtein ≤ 2), given name (JW ≥ 0.6, swept on held-out seeds), optional set-valued contact (`any_overlap`); forced merge labels outrank inferred conflicts |
 | Connected components → conflict-aware hierarchical clustering | ✅ | `cluster.linkage: fusion`: tiered, evidence-gated fusion with per-attribute hard conflicts (birthdate, given name, set-valued contact) checked at every union; `single` = conflict-aware single link |
-| Supersized / blackhole components (BFS partition) | ✅ | BFS partition of oversized components before fusion + `cluster.carve` trimming weak tiers of oversized clusters after it (members surfaced as `carved_records`) |
+| Supersized / blackhole components (BFS partition), hierarchical cluster ids (US10922337) | ✅ | `stitch_cluster_tiers` = nested clusterings per score floor (threshold + fusion tiers), `hier_cluster_id` = cluster id + one segment per stronger tier (a prefix addresses a lower-confidence tier); BFS partition of oversized components before fusion + `cluster.carve` trimming weak tiers of oversized clusters after it (members surfaced as `carved_records`) |
 | Trivial duplicate groups | ✅ | identical records collapse to a representative for blocking/scoring and expand back in `stitch_scores`; `match_type = trivial_duplicate`; a group must share an identifier (`blocking.dupe_group_requires_identifier`, assumption 19) |
-| Bad-value blocklist with automatic detection + manual blocklist | ✅ | thresholds from docs; `blocklist.manual {email, phone, address}` values (raw or normalised) are NULLed before blocking and listed in `stitch_blocklist_values` with reason `manual` (config, not a tenant table) |
-| Stitch labels (forced merge / split) | ✅ | CSV overlay (`labels.file`) **and** persisted `stitch_labels` table (`aurora labels add|import|list|remove`, survive runs); merge → score-5 `label_merge` edge that outranks attribute conflicts, split → scored edge dropped + transitive pair veto; group-id label form not reproduced (pairs only) |
+| Bad-value blocklist with automatic detection + manual blocklist | ✅ | thresholds from docs; `blocklist.manual` in config **and** the persisted `blocklist_values_manual` table (`aurora blocklist add|remove|list`; e-mail, phone, address, given name, surname; raw or normalised) are NULLed before blocking and listed in `stitch_blocklist_values` with reason `manual` |
+| Stitch labels (forced merge / split) | ✅ | CSV overlay (`labels.file`) **and** persisted `stitch_labels` table (`aurora labels add|import|list|remove`, survive runs); merge → score-5 `label_merge` edge that outranks attribute conflicts, split → scored edge dropped + transitive pair veto; Amperity's group-id form (`datasource, pk, group_id`) accepted and expanded into merge chains + cross-group splits |
 | One-to-one (ck) Stitch mode | ✅ | `matcher.one_to_one: true`: same ck always merges (`ck_exact` rule), different cks never merge (ck becomes a hard-conflict attribute with exact tolerance) |
 | Incremental clustering | 🟡 | changed-record pair filtering + carried edges; correctness equivalence not verified |
 | Stable ID assignment (greedy max-overlap, ties by ascending id) | ✅ | `stable_id.py`; `stable_id.tie_break: documented` reproduces the ascending-id rule, the default `stable` breaks equal-overlap ties by oldest previous id → larger current cluster → documented order (assumption 18) |
 | Unified Changes PKs / Clusters (added/deleted/updated + run id) | ✅ | `unified_changes_pk`, `unified_changes_clusters` |
 | Jitter metric + 2% alert | ✅ | `jitter_reports` |
-| Stitch QA tables (blocking keys, scores incl. non-merges, skipped blocks, cluster size distribution) | ✅ / 🟡 | several QA queries still to add (weakest match, many semantic values, FK validation) |
+| Stitch QA tables (blocking keys, scores incl. non-merges, skipped blocks, cluster size distribution) | ✅ | plus the documented QA family as views (`aurora qa`): cluster scores (Unified Scores incl. `scored_transitive`), weakest match, split clusters, cluster size distribution, dedupe keys per id, connections across sources, source cluster distribution, many Amperity IDs, many semantic values, unmatched semantic values, null Amperity IDs, bad foreign keys, FK validation; each record carries component / supersized / dupe-group / hierarchical-tier ids (`stitch_clusters`, `stitch_cluster_tiers`) |
 
 ## Data model & profiles
 
@@ -45,7 +45,7 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
 |---|---|---|
 | Segments over Customer 360 | ✅ | filter-list → parameterised SQL |
 | Destinations | ✅ / 🟡 | CSV, JSONL and Parquet file connectors; JSON webhook with batching, retries/backoff, auth/custom headers (`dry_run` default, failures logged in `destination_runs`); no SFTP/S3/ad-platform catalogue ❌ |
-| Workflows / scheduling | 🟡 | YAML DAG + interval loop |
+| Workflows / scheduling | 🟡 | YAML DAG + interval loop; Stitch runs only when bronze/silver changed since the last successful run (`stitch: {force: true}` overrides), as documented |
 | Profile API (read-only lookup) | ✅ | FastAPI |
 | Real-time streaming layer | ❌ | out of scope for now |
 | Predictive models (CLV, propensity) | ❌ | |

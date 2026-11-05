@@ -383,6 +383,24 @@ def cluster_indices(
     return res
 
 
+def tier_partitions(n: int, left: np.ndarray, right: np.ndarray, score: np.ndarray, cluster: np.ndarray,
+                    floors: list[float]) -> list[np.ndarray]:
+    """Nested clusterings inside the final clusters, one per score floor (internals §2.8, US10922337 hierarchical
+    cluster ids): the tier at floor ``t`` is the connected components of the edges with ``score >= t`` that lie
+    inside a final cluster. Floors are taken in ascending order, so every tier refines the previous one; the first
+    (lowest) floor is normally the match threshold and reproduces the final clusters themselves."""
+    out = []
+    left = np.asarray(left, dtype=np.int64); right = np.asarray(right, dtype=np.int64); score = np.asarray(score, dtype=np.float64)
+    inside = cluster[left] == cluster[right] if len(left) else np.zeros(0, dtype=bool)
+    for t in sorted(floors):
+        uf = UnionFind(n)
+        keep = inside & (score >= t)
+        for a, b in zip(left[keep].tolist(), right[keep].tolist(), strict=True):
+            uf.union(a, b)
+        out.append(uf.roots().copy())
+    return out
+
+
 def attach_rids(res: ClusterResult, rids: list[str]) -> ClusterResult:
     """Fill the string views (assignment / component / supersized / members) from the integer views."""
     res.rids = rids

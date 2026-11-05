@@ -32,7 +32,7 @@ from aurora_cdp.config import Config
 from aurora_cdp.storage.duck import apply_settings, latest_run_id, read_df, write_df
 
 from .blocking import REC_COLUMNS, add_derived_columns, build_candidate_pairs
-from .cluster import _short_id, cluster_indices
+from .cluster import _short_id, cluster_indices, tier_partitions
 from .features import SIDE_COLUMNS, features_frame  # noqa: F401 - kept for callers
 from .labels import apply_split_labels, load_labels, load_labels_table, merge_labels, resolve_labels
 from .matcher import score_frame  # noqa: F401 - kept for callers
@@ -109,20 +109,29 @@ def load_records_table(con: duckdb.DuckDBPyConnection) -> int:
     return con.execute("SELECT COUNT(*) FROM _rec").fetchall()[0][0]
 
 
-def manual_blocklist(cfg: Config) -> list[tuple[str, str, list[str]]]:
+def manual_blocklist(cfg: Config, con: duckdb.DuckDBPyConnection | None = None) -> list[tuple[str, str, list[str]]]:
     """``blocklist.manual`` -> [(value column, semantic, normalised values)] (Amperity: BlocklistValues table).
 
     Values are normalised the way the records are (e-mail canonicalisation, last-10-digit phone, canonical
     address); the raw form is kept as well so a value is matched whichever way it was written."""
     from aurora_cdp.ingestion.normalize import canonical_address, canonical_email, canonical_phone
 
-    manual = cfg.blocklist.get("manual") or {}
+    manual = dict(cfg.blocklist.get("manual") or {})
+    if con is not None:  # operator-maintained table (aurora blocklist add|remove|list) on top of the config
+        try:
+            for semantic, value in con.execute("SELECT semantic, value FROM blocklist_values_manual").fetchall():
+                cur = manual.get(semantic) or []
+                manual[semantic] = ([cur] if isinstance(cur, str) else list(cur)) + [value]
+        except duckdb.CatalogException:
+            pass
     ncfg = cfg.get("normalize") or {}
     out: list[tuple[str, str, list[str]]] = []
     for semantic, col in (
         ("email", "email_norm"),
         ("phone", "phone_match"),
         ("address", "address_norm"),
+        ("given_name", "given_name_norm"),
+        ("surname", "surname_norm"),
     ):
         raw_values = manual.get(semantic) or []
         if isinstance(raw_values, str):
@@ -136,6 +145,10 @@ def manual_blocklist(cfg: Config) -> list[tuple[str, str, list[str]]]:
                 norm = canonical_email(raw, ncfg) or raw.lower()
             elif semantic == "phone":
                 norm = canonical_phone(raw, ncfg.get("default_region", "US"))[1] or raw
+            elif semantic in ("given_name", "surname"):
+                from aurora_cdp.ingestion.normalize import canonical_name
+
+                norm = canonical_name(raw) or raw.lower()
             else:
                 norm = (
                     canonical_address(
@@ -205,7 +218,7 @@ def apply_blocklist_sql(con: duckdb.DuckDBPyConnection, cfg: Config) -> list[dic
     """Null out manual blocklist values and values linked to too many distinct names, in place on ``_rec``
     (dossier §3.8). ``distinct_count`` of a manual entry is the number of records it blanked."""
     flagged: list[dict] = []
-    for value_col, semantic, values in manual_blocklist(cfg):
+    for value_col, semantic, values in manual_blocklist(cfg, con):
         for value in values:
             hit = con.execute(
                 f"SELECT COUNT(*) FROM _rec WHERE {value_col} = ?", [value]
@@ -621,9 +634,11 @@ def run_stitch(
         forbidden=resolved.forbidden if resolved is not None else None,
         forced=list(zip(resolved.merge_left.tolist(), resolved.merge_right.tolist(), strict=True)) if resolved is not None else None,
     )
+    left_c, right_c, score_c = left, right, score
     del conflict_values, left, right, score
     cluster_tables(con, clusters, rids)
-    del rids
+    tier_tables(con, clusters, left_c, right_c, score_c, rids, cfg)
+    del rids, left_c, right_c, score_c
     timings["clustering"] = round(time.perf_counter() - t, 3)
 
     t = time.perf_counter()
@@ -729,11 +744,86 @@ def cluster_tables(con: duckdb.DuckDBPyConnection, clusters, rids: list[str]) ->
     con.execute("""
         CREATE OR REPLACE TEMP TABLE _cur AS
         SELECT r.rid, r.datasource, r.pk, c1.cluster_id AS cid, c2.component_id, c3.component_id AS supersized_id,
-               l.sup_root >= 0 AS is_supersized
+               l.sup_root >= 0 AS is_supersized,
+               CASE WHEN dg.n > 1 THEN substr(sha256('dupe:' || rep.rid), 1, 16) END AS dupe_group_id
         FROM _clu l JOIN _rec r USING (idx)
         JOIN _cid c1 ON c1.root = l.cluster_root JOIN _cid c2 ON c2.root = l.comp_root
         LEFT JOIN _cid c3 ON c3.root = l.sup_root
+        JOIN _rec rep ON rep.idx = r.dupe_group
+        JOIN (SELECT dupe_group AS g, COUNT(*) AS n FROM _rec GROUP BY 1) dg ON dg.g = r.dupe_group
         """)
+
+
+def tier_tables(con: duckdb.DuckDBPyConnection, clusters, left, right, score, rids: list[str], cfg: Config) -> None:
+    """``_tier(idx, tier, min_score, tier_cluster_id)`` and ``hier_cluster_id`` on ``_cur``: the match threshold is
+    tier 1 (the final clusters), every stronger fusion tier floor refines it; the hierarchical id is the cluster id
+    followed by one segment per stronger tier, so a prefix addresses the entity at a lower confidence."""
+    threshold = float(cfg.matcher.get("match_threshold", 3.0))
+    floors = sorted({threshold} | {float(t) for t in ((cfg.cluster.get("fusion") or {}).get("tiers") or [])})
+    parts = tier_partitions(len(rids), left, right, score, clusters.cluster_idx, floors)
+    rows = []
+    for tier, (floor, roots) in enumerate(zip(floors, parts, strict=True), start=1):
+        ids = {int(r): _short_id(f"tier{tier}:" + rids[int(r)]) for r in np.unique(roots)}
+        rows.append(pd.DataFrame({"idx": np.arange(len(rids), dtype=np.int64), "tier": tier, "min_score": floor,
+                                  "tier_cluster_id": [ids[int(r)] for r in roots]}))
+    con.register("_tier_src", pd.concat(rows, ignore_index=True))
+    con.execute("CREATE OR REPLACE TEMP TABLE _tier AS SELECT * FROM _tier_src")
+    con.unregister("_tier_src")
+    con.execute("""
+        CREATE OR REPLACE TEMP TABLE _hier AS
+        SELECT idx, string_agg(tier_cluster_id, '.' ORDER BY tier) AS suffix FROM _tier WHERE tier > 1 GROUP BY idx
+        """)
+    con.execute("ALTER TABLE _cur ADD COLUMN hier_cluster_id VARCHAR")
+    con.execute("""
+        UPDATE _cur SET hier_cluster_id = c.cid || COALESCE('.' || h.suffix, '')
+        FROM (SELECT r.rid, r.idx, cur.cid FROM _cur cur JOIN _rec r USING (rid)) c LEFT JOIN _hier h ON h.idx = c.idx
+        WHERE _cur.rid = c.rid
+        """)
+
+
+def unified_scores_table(con: duckdb.DuckDBPyConnection, run_id: str, cfg: Config) -> int:
+    """[AMP: Unified Scores] every member pair of every cluster (up to ``cluster.unified_scores_max_members``
+    members): the direct score when the pair was scored, otherwise ``scored_transitive`` carrying the cluster's
+    weakest direct edge (the link that holds the cluster together)."""
+    cap = int(cfg.cluster.get("unified_scores_max_members", 50))
+    con.execute(f"""
+        CREATE OR REPLACE TEMP TABLE _mem AS
+        SELECT c.cid, m.aurora_id, c.datasource, c.pk FROM _cur c JOIN _cmap m USING (cid)
+        WHERE c.cid IN (SELECT cid FROM _cur GROUP BY cid HAVING COUNT(*) BETWEEN 2 AND {cap})
+        """)
+    con.execute("""
+        CREATE OR REPLACE TEMP TABLE _us AS
+        WITH pairs AS (
+            SELECT a.cid, a.aurora_id, a.datasource AS ld, a.pk AS lp, b.datasource AS rd, b.pk AS rp
+            FROM _mem a JOIN _mem b ON a.cid = b.cid AND (a.datasource, a.pk) < (b.datasource, b.pk)
+        ), edges AS (  -- scored edges with both sides in a kept cluster, oriented like `pairs` (hash-joinable)
+            SELECT LEAST((s.left_datasource, s.left_pk), (s.right_datasource, s.right_pk)) AS lo,
+                   GREATEST((s.left_datasource, s.left_pk), (s.right_datasource, s.right_pk)) AS hi,
+                   s.score, s.match_category, s.match_type
+            FROM stitch_scores s
+            WHERE s.run_id = ? AND s.is_edge
+              AND (s.left_datasource, s.left_pk) IN (SELECT (datasource, pk) FROM _mem)
+        ), direct AS (
+            SELECT p.*, e.score, e.match_category, e.match_type
+            FROM pairs p JOIN edges e ON e.lo = (p.ld, p.lp) AND e.hi = (p.rd, p.rp)
+        ), weakest AS (SELECT cid, MIN(score) AS w FROM direct GROUP BY cid)
+        SELECT p.cid, p.aurora_id, p.ld, p.lp, p.rd, p.rp,
+               COALESCE(d.score, w.w) AS score, d.match_category,
+               COALESCE(d.match_type, 'scored_transitive') AS match_type
+        FROM pairs p LEFT JOIN direct d USING (cid, aurora_id, ld, lp, rd, rp) LEFT JOIN weakest w USING (cid)
+        """, [run_id])
+    con.execute("""
+        INSERT INTO unified_scores (run_id, aurora_id, left_datasource, left_pk, right_datasource, right_pk, score, match_category, match_type)
+        SELECT ?, aurora_id, ld, lp, rd, rp, score,
+               COALESCE(match_category, CASE WHEN score IS NULL THEN NULL WHEN score >= 4.75 THEN 'exact' WHEN score >= 4.0 THEN 'excellent'
+                        WHEN score >= 3.0 THEN 'high' WHEN score >= 2.0 THEN 'moderate' WHEN score >= 1.0 THEN 'weak' ELSE 'non_conflict' END),
+               match_type
+        FROM _us
+        """, [run_id])
+    n = con.execute("SELECT COUNT(*) FROM _us").fetchone()[0]
+    for t in ("_mem", "_us"):
+        con.execute(f"DROP TABLE IF EXISTS {t}")
+    return int(n)
 
 
 def _persist(con, run_id, now, cfg, bstats, flagged, carried, jitter, label_rows=None):
@@ -793,12 +883,21 @@ def _persist(con, run_id, now, cfg, bstats, flagged, carried, jitter, label_rows
 
     con.execute(
         """
-        INSERT INTO stitch_clusters (run_id, datasource, pk, cluster_id, aurora_id, component_id, supersized_id, is_supersized)
-        SELECT ?, c.datasource, c.pk, c.cid, m.aurora_id, c.component_id, c.supersized_id, c.is_supersized
+        INSERT INTO stitch_clusters (run_id, datasource, pk, cluster_id, aurora_id, component_id, supersized_id, is_supersized,
+                                     dupe_group_id, hier_cluster_id)
+        SELECT ?, c.datasource, c.pk, c.cid, m.aurora_id, c.component_id, c.supersized_id, c.is_supersized, c.dupe_group_id, c.hier_cluster_id
         FROM _cur c JOIN _cmap m USING (cid)
         """,
         [run_id],
     )
+    con.execute(
+        """
+        INSERT INTO stitch_cluster_tiers (run_id, datasource, pk, tier, min_score, tier_cluster_id)
+        SELECT ?, r.datasource, r.pk, t.tier, t.min_score, t.tier_cluster_id FROM _tier t JOIN _rec r USING (idx)
+        """,
+        [run_id],
+    )
+    unified_scores_table(con, run_id, cfg)
     # SCD2 ledger: close rows whose id changed or whose record disappeared, open rows for new/changed.
     con.execute(
         """

@@ -90,6 +90,19 @@ def tag_feed(
     return len(raw)
 
 
+def stitch_updates_pending(con: duckdb.DuckDBPyConnection) -> dict | None:
+    """Rows landed (bronze) or re-preprocessed (silver) since the last successful Stitch run; None when no run exists."""
+    last = con.execute("SELECT run_id, started_at FROM stitch_runs WHERE status = 'succeeded' ORDER BY started_at DESC LIMIT 1").fetchone()
+    if last is None:
+        return None
+    run_id, since = last
+    new_rows = con.execute(
+        "SELECT (SELECT COUNT(*) FROM bronze_landing WHERE ingested_at > ?) + (SELECT COUNT(*) FROM silver_unified_preprocessed WHERE preprocessed_at > ?)",
+        [since, since],
+    ).fetchone()[0]
+    return {"last_run_id": run_id, "last_run_started_at": since.isoformat() if hasattr(since, "isoformat") else str(since), "new_rows": int(new_rows)}
+
+
 def run_pipeline(con: duckdb.DuckDBPyConnection, cfg: Config, spec: dict) -> PipelineResult:
     result = PipelineResult(name=spec.get("name", "pipeline"), started_at=datetime.utcnow())
 
@@ -149,7 +162,15 @@ def run_pipeline(con: duckdb.DuckDBPyConnection, cfg: Config, spec: dict) -> Pip
             else "full"
         )
 
+        force = bool((spec["stitch"] or {}).get("force", False)) if isinstance(spec["stitch"], dict) else False
+
         def _stitch():
+            # [AMP] "Stitch runs when domain tables contain updates to data that is used by Stitch; Stitch will not run
+            # when updates are not present" — with a `force: true` override (internals §5)
+            pending = stitch_updates_pending(con)
+            if not force and pending is not None and pending["new_rows"] == 0:
+                result.stitch_run_id = pending["last_run_id"]
+                return {"skipped": "no updates since the last successful run", **pending}
             r = run_stitch(con, cfg, mode=mode)
             result.stitch_run_id = r.run_id
             result.metrics = r.metrics
@@ -157,6 +178,7 @@ def run_pipeline(con: duckdb.DuckDBPyConnection, cfg: Config, spec: dict) -> Pip
                 "run_id": r.run_id,
                 "clusters": r.metrics["clusters"],
                 "jitter_pct": r.metrics["jitter"].get("jitter_pct"),
+                "forced": force,
             }
 
         step("stitch", _stitch)

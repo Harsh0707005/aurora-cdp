@@ -26,6 +26,7 @@ import numpy as np
 log = logging.getLogger(__name__)
 
 LABEL_COLUMNS = ("left_datasource", "left_pk", "right_datasource", "right_pk", "label")
+GROUP_COLUMNS = ("datasource", "pk", "group_id")   # [AMP] the documented label form: records tagged with a cluster group id
 LABEL_VALUES = ("merge", "split")
 
 
@@ -41,13 +42,62 @@ class StitchLabels:
         return len(self.merge) + len(self.split)
 
 
+def group_labels_to_pairs(rows: list[tuple[str, str, str]], source: str = "groups") -> StitchLabels:
+    """Amperity's group-id label form -> pair labels. Records sharing a ``group_id`` must end up together (a merge
+    chain through the group), records with different group ids must never share a cluster (a split for every
+    cross-group pair). Group sizes are small in practice; the expansion is O(Σ|g|·|g'|) over the labelled groups."""
+    groups: dict[str, list[str]] = {}
+    for ds, pk, gid in rows:
+        rid = f"{ds}|{pk}"
+        if not gid:
+            raise ValueError(f"group label for {rid}: empty group_id")
+        groups.setdefault(gid, [])
+        for g, members in groups.items():
+            if rid in members and g != gid:
+                raise ValueError(f"group labels: {rid} is in both group {g!r} and {gid!r}")
+        if rid not in groups[gid]:
+            groups[gid].append(rid)
+    out = StitchLabels(source=source)
+    names = sorted(groups)
+    for g in names:
+        m = sorted(groups[g])
+        out.merge.extend((m[i], m[i + 1]) for i in range(len(m) - 1))
+    for i, g in enumerate(names):
+        for h in names[i + 1:]:
+            for a in groups[g]:
+                for b in groups[h]:
+                    out.split.append((a, b) if a < b else (b, a))
+    log.info("expanded %d group labels (%d groups) into %d merge and %d split pairs", len(rows), len(groups), len(out.merge), len(out.split))
+    return out
+
+
+def load_group_labels(path: str | Path) -> StitchLabels:
+    p = Path(path)
+    with p.open("r", encoding="utf-8", newline="") as fh:
+        reader = csv.DictReader(fh)
+        missing = [c for c in GROUP_COLUMNS if c not in (reader.fieldnames or [])]
+        if missing:
+            raise ValueError(f"group labels file {str(p)!r} lacks columns {missing}; expected {list(GROUP_COLUMNS)}")
+        rows = [tuple((row.get(c) or "").strip() for c in GROUP_COLUMNS) for row in reader]
+    rows = [r for r in rows if any(r)]
+    if any(not all(r) for r in rows):
+        raise ValueError(f"group labels file {str(p)!r}: every column must be filled")
+    return group_labels_to_pairs(rows, source=str(p))
+
+
 def load_labels(path: str | Path | None) -> StitchLabels:
-    """Read the labels CSV (header required). Missing/unset path -> no labels (not an error)."""
+    """Read the labels CSV (header required). Missing/unset path -> no labels (not an error).
+    Two forms are accepted: pair labels (``left_datasource, left_pk, right_datasource, right_pk, label``) and
+    Amperity's group form (``datasource, pk, group_id``), detected from the header."""
     if not path:
         return StitchLabels()
     p = Path(path)
     if not p.exists():
         raise FileNotFoundError(f"labels.file {str(p)!r} does not exist")
+    with p.open("r", encoding="utf-8", newline="") as fh:
+        header = next(csv.reader(fh), [])
+    if all(c in header for c in GROUP_COLUMNS) and not all(c in header for c in LABEL_COLUMNS):
+        return load_group_labels(p)
     out = StitchLabels(source=str(p))
     seen: dict[tuple[str, str], str] = {}
     with p.open("r", encoding="utf-8", newline="") as fh:
@@ -167,6 +217,7 @@ def add_label(con, left: tuple[str, str], right: tuple[str, str], label: str, cr
 
 
 def import_labels_file(con, path: str | Path, created_by: str | None = None) -> int:
+    """Persist a labels file into ``stitch_labels``; group-form files are expanded to pair labels first."""
     labels = load_labels(path)
     n = 0
     for label, items in (("merge", labels.merge), ("split", labels.split)):

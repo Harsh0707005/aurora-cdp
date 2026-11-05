@@ -21,6 +21,20 @@ All notable changes to the `aurora_cdp` platform. Local-only history; one entry 
   the all-threshold loss exactly as the SIGMOD 2020 paper describes; **client-key labelling**
   (`ordinal.authoritative_keys`, `hard_negative_features`, `hard_negative_min_disagreements`) infers non-match labels
   from disagreeing trusted keys (US12499132) instead of only e-mail/phone.
+- **Diagnostic chain and Unified Scores**: every record now carries `dupe_group_id` and `hier_cluster_id`
+  (cluster id + one segment per stronger tier) next to `component_id` / `supersized_id`; `stitch_cluster_tiers`
+  persists the nested clusterings per score floor (US10922337 hierarchical cluster ids); `unified_scores` holds every
+  member pair of every cluster (≤ `cluster.unified_scores_max_members`), direct pairs with their score and
+  `scored_transitive` pairs carrying the cluster's weakest direct edge. Migration V6.
+- **Stitch QA views** (`aurora qa [view]`, `storage/qa_views.sql`): cluster scores, weakest match, split clusters,
+  cluster size distribution, dedupe keys per id, connections across sources, source cluster distribution, many
+  Amperity IDs, many semantic values, unmatched semantic values, null Amperity IDs, bad foreign keys, FK validation.
+- **Persisted manual blocklist** (`blocklist_values_manual`, `aurora blocklist add|remove|list`; e-mail, phone,
+  address, given name, surname) merged with `blocklist.manual` from config at run time.
+- **Group-id labels**: a labels file with `datasource, pk, group_id` (Amperity's form) is expanded into merge
+  chains inside a group and split vetoes across groups; `aurora labels import` accepts it.
+- **Stitch runs only on updates**: the pipeline skips Stitch when no bronze row landed and no silver row was
+  re-preprocessed since the last successful run, reporting the last run id; `stitch: {force: true}` overrides.
 - **Ground-truth-free evaluation** (`tools/signature_samples.py`, US10509809): `sample` groups a run's scored pairs
   by feature signature and writes a bounded, PII-bearing sample per signature for human labelling; `evaluate`
   rolls the labels up by signature frequency into estimated precision / recall of the merge decision and the

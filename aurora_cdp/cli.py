@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 
 import typer
+from datetime import datetime
 import yaml
 from rich.console import Console
 from rich.table import Table
@@ -127,6 +128,87 @@ def household_add_relationship(left: str, right: str, kind: str = typer.Argument
         typer.echo(f"relationship {left} -{kind}- {right} recorded")
     finally:
         con.close()
+
+
+QA_VIEWS = ["qa_cluster_scores", "qa_weakest_match", "qa_split_clusters", "qa_cluster_size_distribution", "qa_dedupe_keys_per_id",
+            "qa_connections_across_sources", "qa_source_cluster_distribution", "qa_many_amperity_ids", "qa_many_semantic_values",
+            "qa_unmatched_semantic_values", "qa_null_amperity_ids", "qa_bad_foreign_keys", "qa_fk_validation"]
+
+
+@app.command()
+def qa(
+    view: str | None = typer.Argument(None, help="one of the Stitch QA views (omit to list them with row counts)"),
+    limit: int = typer.Option(20, "--limit", "-n"),
+    config: str = _config_opt,
+    workspace: str = _workspace_opt,
+) -> None:
+    """[AMP: Stitch QA tables] cluster scores, weakest match, split clusters, many ids / many values, FK validation…"""
+    cfg = _cfg(config, workspace)
+    con = connect(cfg.db_path)
+    try:
+        init_schema(con)
+        if view is None:
+            for v in QA_VIEWS:
+                n = con.execute(f"SELECT COUNT(*) FROM {v}").fetchone()[0]
+                console.print(f"{v:36s} {n:>10,} rows")
+            return
+        if view not in QA_VIEWS:
+            raise typer.BadParameter(f"unknown view {view!r}; one of {', '.join(QA_VIEWS)}")
+        df = con.execute(f"SELECT * FROM {view} LIMIT {int(limit)}").df()
+    finally:
+        con.close()
+    console.print(df.to_string(index=False) if len(df) else "(no rows)")
+
+
+blocklist_app = typer.Typer(help="[AMP: BlocklistValues] manual blocklist persisted in the workspace", pretty_exceptions_enable=False)
+app.add_typer(blocklist_app, name="blocklist")
+BLOCKLIST_SEMANTICS = ("email", "phone", "address", "given_name", "surname")
+
+
+@blocklist_app.command("add")
+def blocklist_add(
+    semantic: str = typer.Argument(..., help="email | phone | address | given_name | surname"),
+    value: str = typer.Argument(...),
+    note: str | None = typer.Option(None, "--note"),
+    created_by: str | None = typer.Option(None, "--by"),
+    config: str = _config_opt,
+    workspace: str = _workspace_opt,
+) -> None:
+    """Ignore a value for matching from the next run on (raw or normalised form)."""
+    if semantic not in BLOCKLIST_SEMANTICS:
+        raise typer.BadParameter(f"semantic must be one of {BLOCKLIST_SEMANTICS}")
+    cfg = _cfg(config, workspace)
+    con = connect(cfg.db_path)
+    try:
+        init_schema(con)
+        con.execute("INSERT OR REPLACE INTO blocklist_values_manual VALUES (?, ?, ?, ?, ?)", [semantic, value.strip(), datetime.utcnow(), created_by, note])
+    finally:
+        con.close()
+    console.print(f"blocklisted {semantic} {value.strip()!r}")
+
+
+@blocklist_app.command("remove")
+def blocklist_remove(semantic: str = typer.Argument(...), value: str = typer.Argument(...), config: str = _config_opt, workspace: str = _workspace_opt) -> None:
+    cfg = _cfg(config, workspace)
+    con = connect(cfg.db_path)
+    try:
+        init_schema(con)
+        n = con.execute("DELETE FROM blocklist_values_manual WHERE semantic = ? AND value = ?", [semantic, value.strip()]).fetchone()[0]
+    finally:
+        con.close()
+    console.print(f"removed {n} entr{'y' if n == 1 else 'ies'}")
+
+
+@blocklist_app.command("list")
+def blocklist_list(config: str = _config_opt, workspace: str = _workspace_opt) -> None:
+    cfg = _cfg(config, workspace)
+    con = connect(cfg.db_path)
+    try:
+        init_schema(con)
+        df = con.execute("SELECT semantic, value, created_at, created_by, note FROM blocklist_values_manual ORDER BY semantic, value").df()
+    finally:
+        con.close()
+    console.print(df.to_string(index=False) if len(df) else "(empty)")
 
 
 @labels_app.command("remove")
