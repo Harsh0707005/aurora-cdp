@@ -477,7 +477,8 @@ def aggregates(orders: list[dict], since: date | None, prefix: str) -> dict:
         for k in ("BRANDS", "PREFERRED_BRAND", "CHANNELS", "PREFERRED_CHANNEL", "STORES", "PREFERRED_STORE_ID"):
             out[f"{prefix}_{k}"] = None
         for k in ("ORDER_NET_AMT", "ORDER_TOTAL_AMT", "ORDER_FREQUENCY", "TOTAL_ITEMS", "AVERAGE_ORDER_VALUE_AMT", "AVERAGE_ITEM_PRICE", "AVERAGE_NUM_ITEMS"):
-            out[f"{prefix}_{k}"] = 0 if "FREQUENCY" in k or "ITEMS" in k else 0.0
+            name = f"{prefix}_ORDER_TOTAL_ITEMS" if (k == "TOTAL_ITEMS" and prefix == "LIFETIME") else f"{prefix}_{k}"
+            out[name] = 0 if "FREQUENCY" in k or "ITEMS" in k else 0.0
         return out
     net_by_brand = Counter()
     net_by_ch = Counter()
@@ -499,7 +500,7 @@ def aggregates(orders: list[dict], since: date | None, prefix: str) -> dict:
     out[f"{prefix}_ORDER_NET_AMT"] = net
     out[f"{prefix}_ORDER_TOTAL_AMT"] = tot
     out[f"{prefix}_ORDER_FREQUENCY"] = len(sel)
-    out[f"{prefix}_TOTAL_ITEMS"] = items
+    out[f"{prefix}_{'ORDER_' if prefix == 'LIFETIME' else ''}TOTAL_ITEMS"] = items   # DDL: LIFETIME_ORDER_TOTAL_ITEMS, L12M_TOTAL_ITEMS, …
     out[f"{prefix}_AVERAGE_ORDER_VALUE_AMT"] = round(net / len(sel), 2)
     out[f"{prefix}_AVERAGE_ITEM_PRICE"] = round(net / items, 2) if items else 0.0
     out[f"{prefix}_AVERAGE_NUM_ITEMS"] = round(items / len(sel))

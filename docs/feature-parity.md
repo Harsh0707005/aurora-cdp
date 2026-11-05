@@ -35,7 +35,7 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
 | Unified Preprocessed Raw / Unified Coalesced / Identity Graph | ✅ | tables + views |
 | Merged Customers with Source/Field priority, 999 default, recency | ✅ | provenance per attribute |
 | Email AmpID Assignment (many-to-many narrowed to 1:1) | ✅ | `gold_email_ampid` (SCD2) written at profile build (`identity.email_ampid_assignment`); `identity.ampid_mode` adds `amperity_id` to exports and accepts it as a previous-assignment column |
-| Customer 360 with behavioural attributes | 🟡 | order_count / total_spend / last_order_ts only |
+| Customer 360 with behavioural attributes | ✅ | `customer_attributes` (`profile/attributes.py`, built after profiles when `events` are configured): first / second / latest order, first-to-second / first-to-latest / days-since, one-and-done, single/multi brand & channel, early repeat, retail flag, lifetime + L12M / L6M / L3M / L30D brands / channels / stores (+ preferred), net / total / frequency / items / AOV / item price, L12M RFM; joined into `customer_360`; definitions = the WSI CUSTOMER contract (`tools/wsi_edap_sim.expected_customer` is the executable reference, tested equal) |
 | Households | ✅ | owned entity (`profile/households.py`): persistent `household_id`, evidence edges (shared address, surname+postal, phone, explicit relationships) with first/last-seen and a TTL so moves do not churn, hot values excluded, stable ids by max-overlap; built by `aurora profile` / the pipeline, `aurora household build|show|add-relationship` |
 | Table/database versioning & rollback | 🟡 | SCD2 on ledger and merged customers; `*_as_of` helpers |
 
@@ -44,7 +44,7 @@ Legend: ✅ implemented (scaffold-grade) · 🟡 partial / stub · ❌ not start
 | Amperity behaviour | Status | Notes |
 |---|---|---|
 | Segments over Customer 360 | ✅ | filter-list → parameterised SQL |
-| Destinations | ✅ / 🟡 | CSV, JSONL and Parquet file connectors; JSON webhook with batching, retries/backoff, auth/custom headers (`dry_run` default, failures logged in `destination_runs`); no SFTP/S3/ad-platform catalogue ❌ |
+| Destinations | ✅ / 🟡 | CSV, JSONL and Parquet file connectors; JSON webhook with batching, retries/backoff, auth/custom headers (`dry_run` default, failures logged in `destination_runs`); **Activation IDs** per destination (`activation_ids: true`): a stable identifier namespace that survives id churn and is inherited across merges via the change feed; no SFTP/S3/ad-platform catalogue ❌ |
 | Workflows / scheduling | 🟡 | YAML DAG + interval loop; Stitch runs only when bronze/silver changed since the last successful run (`stitch: {force: true}` overrides), as documented |
 | Profile API (read-only lookup) | ✅ | FastAPI |
 | Real-time streaming layer | ❌ | out of scope for now |

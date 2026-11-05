@@ -1,4 +1,10 @@
--- Stitch QA views (applied by init_schema after every migration; CREATE OR REPLACE, so always current).
+-- Views applied by init_schema after every migration (CREATE OR REPLACE, so always current).
+
+-- [AMP: Customer 360] merged PII + interaction rollups + the Customer Attributes family (customer_attributes, V7)
+CREATE OR REPLACE VIEW customer_360 AS
+SELECT b.*, a.* EXCLUDE (aurora_id, run_id, built_at)
+FROM customer_360_base b LEFT JOIN customer_attributes a USING (aurora_id);
+
 -- ---------------------------------------------------------------------------------------------- Stitch QA views
 -- [AMP: Stitch QA tables] all over the latest succeeded run (internals §5). Read-only diagnostics; recreated on init.
 CREATE OR REPLACE VIEW stitch_latest_run AS

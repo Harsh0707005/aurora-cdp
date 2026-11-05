@@ -185,6 +185,10 @@ def run_pipeline(con: duckdb.DuckDBPyConnection, cfg: Config, spec: dict) -> Pip
 
     if spec.get("profile"):
         step("profile", lambda: build_profiles(con, cfg).__dict__)
+        if cfg.get("events"):
+            from aurora_cdp.profile.attributes import build_customer_attributes
+
+            step("attributes", lambda: {"customer_attributes": build_customer_attributes(con, cfg)})
 
     if spec.get("households", (cfg.get("household") or {}).get("build_with_profile", True) and bool(spec.get("profile"))):
         from aurora_cdp.profile.households import build_households
@@ -207,6 +211,10 @@ def run_pipeline(con: duckdb.DuckDBPyConnection, cfg: Config, spec: dict) -> Pip
             seg = load_segment(con, dest["segment"])
             members = evaluate_segment(con, seg, persist=False).members
             kind = dest.get("kind", "csv")
+            if dest.get("activation_ids"):  # [AMP] per-destination identifier namespace, stable across id churn
+                from aurora_cdp.audiences.activation import attach_activation_ids
+
+                members = attach_activation_ids(con, str(dest.get("id") or f"{dest['segment']}:{kind}"), members)
             if kind in FILE_FORMATS:
                 path = export_file(
                     con, dest["segment"], members, dest.get("dir") or cfg.outputs_path, kind, dest.get("columns")

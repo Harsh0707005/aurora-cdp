@@ -42,6 +42,15 @@ All notable changes to the `aurora_cdp` platform. Local-only history; one entry 
   (internals §2.12). `tools/incremental_equivalence.py` replays a corpus full-vs-incremental and compares the
   partitions: small tier, 6 windows — 100 % of records with identical cluster membership at every window; the
   legacy mode (carry everything, score only changed pairs) drifted to 90 % with pair precision 0.961 vs the batch.
+- **Customer Attributes** (`profile/attributes.py`, table `customer_attributes`, migration V7): the behavioural
+  feature family computed in SQL from the event timeline per id (first / second / latest order, lifetime and
+  L12M / L6M / L3M / L30D brand / channel / store rollups, flags, RFM) with the CUSTOMER-contract definitions;
+  `events[].attributes` maps payload fields; built by the pipeline after profiles and joined into `customer_360`
+  (`customer_360_base` keeps the old three rollups). Tested equal to the simulator's reference definition.
+- **Activation IDs** (`audiences/activation.py`, table `activation_ids`): per-destination identifiers
+  (`destinations[].activation_ids: true` adds an `activation_id` column) that stay fixed across runs and are
+  inherited by the surviving id when clusters merge (via `unified_changes_clusters`), so downstream systems keyed
+  on them are insulated from id churn (internals §4.4).
 - **Ground-truth-free evaluation** (`tools/signature_samples.py`, US10509809): `sample` groups a run's scored pairs
   by feature signature and writes a bounded, PII-bearing sample per signature for human labelling; `evaluate`
   rolls the labels up by signature frequency into estimated precision / recall of the merge decision and the

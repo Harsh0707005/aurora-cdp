@@ -264,7 +264,7 @@ CREATE OR REPLACE VIEW identity_graph AS
 SELECT aurora_id, datasource, COALESCE(ck, pk) AS customer_key, pk
 FROM unified_coalesced;
 
-CREATE OR REPLACE VIEW customer_360 AS
+CREATE OR REPLACE VIEW customer_360_base AS
 SELECT m.*,
        COALESCE(e.order_count, 0)  AS order_count,
        COALESCE(e.total_spend, 0.0) AS total_spend,

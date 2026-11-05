@@ -36,6 +36,7 @@ log = logging.getLogger(__name__)
 
 EXPORT_COLUMNS = [
     "aurora_id",
+    "activation_id",
     "given_name",
     "surname",
     "email",
