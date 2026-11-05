@@ -143,6 +143,9 @@ matcher:
                                         # (both sides carry the key, values differ) labels the pair a non-match
     hard_negative_features: [email_exact, phone_exact, loy_exact, fk_shared]   # weaker identifiers: a pair disagreeing on
     hard_negative_min_disagreements: 2  # at least this many of them (both present, different) is a non-match
+  incremental_recluster_neighbourhood: true   # [AMP internals §2.12] incremental runs re-score and re-cluster every previous
+                                #       cluster touched by a changed record or a new positive edge; false = carry all previous
+                                #       clusters as score-5 edges and score only pairs touching changed records (faster, drifts)
   score_chunk_size: 250000      # candidate pairs scored per chunk (bounds memory; results are chunk-invariant)
   persist_features: false       # keep per-pair features_json in stitch_scores (QA; large: ~300 B per pair)
   export_expanded_dupe_pairs: true   # expand collapsed trivial-dupe groups back into every member pair in stitch_scores

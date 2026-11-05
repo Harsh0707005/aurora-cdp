@@ -35,6 +35,13 @@ All notable changes to the `aurora_cdp` platform. Local-only history; one entry 
   chains inside a group and split vetoes across groups; `aurora labels import` accepts it.
 - **Stitch runs only on updates**: the pipeline skips Stitch when no bronze row landed and no silver row was
   re-preprocessed since the last successful run, reporting the last run id; `stitch: {force: true}` overrides.
+- **Incremental clustering made batch-equivalent** (`matcher.incremental_recluster_neighbourhood`, default on):
+  after scoring the pairs that touch changed records, every previous cluster holding a changed record or an
+  endpoint of a new positive edge is pulled in, all candidate pairs inside that neighbourhood are scored and the
+  neighbourhood is re-clustered from real evidence; only untouched clusters are carried as score-5 edges
+  (internals §2.12). `tools/incremental_equivalence.py` replays a corpus full-vs-incremental and compares the
+  partitions: small tier, 6 windows — 100 % of records with identical cluster membership at every window; the
+  legacy mode (carry everything, score only changed pairs) drifted to 90 % with pair precision 0.961 vs the batch.
 - **Ground-truth-free evaluation** (`tools/signature_samples.py`, US10509809): `sample` groups a run's scored pairs
   by feature signature and writes a bounded, PII-bearing sample per signature for human labelling; `evaluate`
   rolls the labels up by signature frequency into estimated precision / recall of the merge decision and the

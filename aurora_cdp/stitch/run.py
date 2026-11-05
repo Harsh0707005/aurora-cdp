@@ -352,9 +352,9 @@ def resolve_strategies(cfg: Config) -> tuple[dict, dict]:
 
 
 # ----------------------------------------------------------------------------------------- scoring
-def score_candidates(con: duckdb.DuckDBPyConnection, cfg: Config, scorer=None) -> dict:
-    """Stream ``_pairs`` through the vectorised scorer in chunks into ``_scores``. Returns counters.
-    ``scorer`` is a RulesScorer / OrdinalScorer (see stitch/ordinal.py); None = rules."""
+def score_candidates(con: duckdb.DuckDBPyConnection, cfg: Config, scorer=None, append: bool = False) -> dict:
+    """Stream ``_pairs`` through the vectorised scorer in chunks into ``_scores`` (``append=True`` keeps the rows
+    already there). Returns counters. ``scorer`` is a RulesScorer / OrdinalScorer (see stitch/ordinal.py); None = rules."""
     mcfg = cfg.matcher
     if scorer is None:
         from .ordinal import RulesScorer
@@ -365,10 +365,11 @@ def score_candidates(con: duckdb.DuckDBPyConnection, cfg: Config, scorer=None) -
     con.execute(
         "CREATE OR REPLACE TEMP TABLE _pairs_n AS SELECT (ROW_NUMBER() OVER (ORDER BY l, r) - 1) AS n, l, r FROM _pairs"
     )
-    con.execute(
-        "CREATE OR REPLACE TEMP TABLE _scores (l INTEGER, r INTEGER, score DOUBLE, match_category VARCHAR, "
-        "match_type VARCHAR, is_edge BOOLEAN, features_json VARCHAR)"
-    )
+    if not append:
+        con.execute(
+            "CREATE OR REPLACE TEMP TABLE _scores (l INTEGER, r INTEGER, score DOUBLE, match_category VARCHAR, "
+            "match_type VARCHAR, is_edge BOOLEAN, features_json VARCHAR)"
+        )
     total = con.execute("SELECT COUNT(*) FROM _pairs_n").fetchall()[0][0]
     lcols = ", ".join(f"a.{c} AS l_{c}" for c in SIDE_COLUMNS)
     rcols = ", ".join(f"b.{c} AS r_{c}" for c in SIDE_COLUMNS)
@@ -531,32 +532,76 @@ def run_stitch(
                 "SELECT datasource, pk, aurora_id FROM id_ledger WHERE is_current"
             ).fetchall()
         }
+    neighbourhood = bool(cfg.matcher.get("incremental_recluster_neighbourhood", True))
+    incremental_live = False
     if mode == "incremental" and previous:
         changed = _changed_rids(con, prev_run_id)
         if changed is not None:
+            incremental_live = True
             con.register("_changed_src", pd.DataFrame({"rid": sorted(changed)}))
             con.execute(
                 "CREATE OR REPLACE TEMP TABLE _changed AS SELECT DISTINCT r.dupe_group AS g FROM _rec r JOIN _changed_src c USING (rid)"
             )
             con.unregister("_changed_src")
+            con.execute("CREATE OR REPLACE TEMP TABLE _pairs_all AS SELECT * FROM _pairs")
             con.execute(
                 "DELETE FROM _pairs WHERE l NOT IN (SELECT g FROM _changed) AND r NOT IN (SELECT g FROM _changed)"
             )
-        rids_present = set(r[0] for r in con.execute("SELECT rid FROM _rec").fetchall())
-        by_id: dict[str, list[str]] = {}
-        for rid, aid in previous.items():
-            if rid in rids_present:
-                by_id.setdefault(aid, []).append(rid)
-        for members in by_id.values():
-            members.sort()
-            for other in members[1:]:
-                carried.append((members[0], other, 5.0))
-        del rids_present
+        con.execute(
+            "CREATE OR REPLACE TEMP TABLE _prev_ids AS SELECT l.datasource || '|' || l.pk AS rid, l.aurora_id, r.dupe_group AS g "
+            "FROM id_ledger l JOIN _rec r ON r.datasource = l.datasource AND r.pk = l.pk WHERE l.is_current"
+        )
     timings["blocking"] = round(time.perf_counter() - t, 3)
 
     t = time.perf_counter()
     scorer, scorer_info = prepare_scorer(con, cfg, run_id, getattr(cfg, "workspace_path", None))
     scoring = score_candidates(con, cfg, scorer)
+    incremental_info: dict = {}
+    if mode == "incremental" and previous:
+        # [AMP internals §2.12] "for each positive edge touching an unchanged record, pull in that record's existing
+        # cluster, then re-unify / re-cluster just that local neighbourhood": previous clusters touched by a changed
+        # record or by a new positive edge are re-scored in full (every candidate pair among their members) and
+        # re-clustered from real evidence; only untouched clusters are carried as score-5 edges.
+        if incremental_live and neighbourhood:
+            con.execute("""
+                CREATE OR REPLACE TEMP TABLE _touched AS
+                SELECT DISTINCT g FROM (SELECT l AS g FROM _scores WHERE is_edge UNION ALL SELECT r FROM _scores WHERE is_edge
+                                        UNION ALL SELECT g FROM _changed)
+                """)
+            con.execute("""
+                CREATE OR REPLACE TEMP TABLE _affected_ids AS
+                SELECT DISTINCT p.aurora_id FROM _prev_ids p JOIN _touched t ON t.g = p.g
+                """)
+            con.execute("""
+                CREATE OR REPLACE TEMP TABLE _affected AS
+                SELECT DISTINCT g FROM (SELECT p.g FROM _prev_ids p JOIN _affected_ids a USING (aurora_id) UNION ALL SELECT g FROM _touched)
+                """)
+            con.execute("""
+                CREATE OR REPLACE TEMP TABLE _pairs AS
+                SELECT a.l, a.r FROM _pairs_all a
+                WHERE a.l IN (SELECT g FROM _affected) AND a.r IN (SELECT g FROM _affected)
+                  AND NOT EXISTS (SELECT 1 FROM _scores s WHERE s.l = a.l AND s.r = a.r)
+                """)
+            extra = score_candidates(con, cfg, scorer, append=True)
+            incremental_info = {
+                "incremental_changed_groups": int(con.execute("SELECT COUNT(*) FROM _changed").fetchone()[0]),
+                "incremental_affected_previous_clusters": int(con.execute("SELECT COUNT(*) FROM _affected_ids").fetchone()[0]),
+                "incremental_neighbourhood_pairs": int(extra["pairs_scored_representative"]),
+            }
+            scoring["pairs_scored_representative"] += extra["pairs_scored_representative"]
+            scoring["edges_representative"] += extra["edges_representative"]
+            carried_ids = con.execute(
+                "SELECT rid, aurora_id FROM _prev_ids WHERE aurora_id NOT IN (SELECT aurora_id FROM _affected_ids) ORDER BY aurora_id, rid"
+            ).fetchall()
+        else:
+            carried_ids = con.execute("SELECT rid, aurora_id FROM _prev_ids ORDER BY aurora_id, rid").fetchall()
+        by_id: dict[str, list[str]] = {}
+        for rid, aid in carried_ids:
+            by_id.setdefault(aid, []).append(rid)
+        for members in by_id.values():
+            for other in members[1:]:
+                carried.append((members[0], other, 5.0))
+        incremental_info["carried_previous_clusters"] = len(by_id)
     expansion = expand_scores(con, run_id, cfg)
     left, right, score = edge_arrays(con)
     rids: list[str] = [r[0] for r in con.execute("SELECT rid FROM _rec ORDER BY idx").fetchall()]
@@ -676,6 +721,7 @@ def run_stitch(
         "pairs_expansion_truncated": expansion["pairs_expansion_truncated"],
         "edges": edges_total,
         "carried_edges": len(carried),
+        **incremental_info,
         **(
             resolved.as_metrics()
             if resolved is not None
