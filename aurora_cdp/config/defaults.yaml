@@ -115,6 +115,8 @@ matcher:
   match_threshold: 3.25         # [AMP] documents 3.0; 3.25 chosen by the held-out sweep (tune seeds 7/11, confirm medium seed 7;
                                 #       top configs within noise, see reports/<date>/tuning/sweep.md)
   scorer: rules                 # rules (hand-set logistic + deterministic rules) | ordinal (learned, label-free; see stitch/ordinal.py)
+  one_to_one: false             # [AMP] one-to-one Stitch: records with the same ck always merge, records with different cks
+                                #       never merge (ck becomes a hard-conflict attribute with exact tolerance)
   ordinal:                      # learned ordinal-regression scorer (Amperity SIGMOD 2020 §2.5-2.6 analogue)
     model_file: null            # json written by tools/train_ordinal.py or by a run; null -> train on this run's candidates
     retrain: auto               # auto (train when no usable model file) | always | never (model_file required; else fall back)
@@ -134,6 +136,13 @@ matcher:
     sample_seed: 0              # sampling seed (documented; training is otherwise deterministic)
     monotone: false             # constrain weights to each feature's orientation (stitch/ordinal.py FEATURE_ORIENTATION):
                                 # more agreement never lowers the score. Off = unconstrained fit (current behaviour)
+    cost_matrix: {}             # [AMP, SIGMOD 2020 Γ] asymmetric costs "p,q": cost of predicting level p when the truth is q
+                                # (levels 0..levels-1; default 1 everywhere). The paper's example: raising γ(4,5) from 1 to 5 on
+                                # a 5-level model moved strong-match precision from 99.3 % to 100 %. e.g. {"3,4": 5.0}
+    authoritative_keys: [ck_exact]      # [AMP, US12499132 "intelligent labelling"] a single disagreement on one of these keys
+                                        # (both sides carry the key, values differ) labels the pair a non-match
+    hard_negative_features: [email_exact, phone_exact, loy_exact, fk_shared]   # weaker identifiers: a pair disagreeing on
+    hard_negative_min_disagreements: 2  # at least this many of them (both present, different) is a non-match
   score_chunk_size: 250000      # candidate pairs scored per chunk (bounds memory; results are chunk-invariant)
   persist_features: false       # keep per-pair features_json in stitch_scores (QA; large: ~300 B per pair)
   export_expanded_dupe_pairs: true   # expand collapsed trivial-dupe groups back into every member pair in stitch_scores

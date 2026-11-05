@@ -4,6 +4,29 @@ All notable changes to the `aurora_cdp` platform. Local-only history; one entry 
 
 ## [Unreleased]
 
+### 2026-11-05 — Reproducing the documented Stitch surface: Rules Editor, one-to-one mode, ordinal model completion (model: Claude Fable 5.1 via Claude Code)
+
+- **Rules Editor** (`matcher.rules`): the ordered deterministic rules are now data, not code — a list of
+  `{name, when: {feature-or-predicate: condition}, score[, category]}` evaluated first-match-wins before the
+  probabilistic score, in both the per-pair reference and the vectorised scorer. Conditions: scalar equality,
+  booleans for the predicates `names_agree` / `names_missing`, or `{eq|ne|gt|gte|lt|lte|present: value}`.
+  `null` keeps the built-in list (`ck_exact, loy_exact, email_with_name, phone_with_name, email_no_name[, phone_no_name]`)
+  driven by `matcher.deterministic.*`, so the frozen snapshot and every report stay byte-identical. Invalid rules
+  fail at load. `tests/test_rules_editor.py`.
+- **One-to-one Stitch** (`matcher.one_to_one`): records with the same customer key always merge, records with
+  different customer keys never do (ck joins the hard-conflict attributes with an exact tolerance).
+- **Ordinal scorer** (`stitch/ordinal.py`): `levels: 5` now reproduces Amperity's five ordered labels
+  (hard-conflict < non-conflict < weak < moderate < strong) with the learned thresholds anchoring the 0–5 band
+  floors; the Γ **cost matrix** (`ordinal.cost_matrix {"p,q": γ}`, cost of predicting p when the truth is q) weights
+  the all-threshold loss exactly as the SIGMOD 2020 paper describes; **client-key labelling**
+  (`ordinal.authoritative_keys`, `hard_negative_features`, `hard_negative_min_disagreements`) infers non-match labels
+  from disagreeing trusted keys (US12499132) instead of only e-mail/phone.
+- **Ground-truth-free evaluation** (`tools/signature_samples.py`, US10509809): `sample` groups a run's scored pairs
+  by feature signature and writes a bounded, PII-bearing sample per signature for human labelling; `evaluate`
+  rolls the labels up by signature frequency into estimated precision / recall of the merge decision and the
+  P(match) of every score band. On the small synthetic tier 3,286 labels over 1,322 signatures estimate precision
+  0.991 (harness: 0.998) — the method works without labelling the pair space.
+
 ### 2026-10-29 — EDAP-shaped end-to-end test (Williams-Sonoma feed contract) and identifier-only matching rules (model: Claude Fable 5.1 via Claude Code)
 
 - **`tools/wsi_edap_sim.py` / `tools/wsi_edap_eval.py`**: synthetic EDAP → Amperity feeds in the shared DDL shapes

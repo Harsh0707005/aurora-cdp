@@ -210,13 +210,31 @@ class OrdinalModel:
         return (z[:, None] > self.thresholds[None, :]).sum(axis=1)
 
     def score(self, z: np.ndarray) -> np.ndarray:
-        """Monotone map of z to the engine's 0–5 scale anchored at the learned thresholds."""
-        t1, t2 = float(self.thresholds[0]), float(self.thresholds[-1])
-        s = max(t2 - t1, 1e-3)
-        low = 2.0 / (1.0 + np.exp(-(z - t1) / s))
-        mid = 2.0 + (z - t1) / s
-        high = 3.0 + 2.0 * (1.0 - np.exp(-(z - t2) / s))
-        return np.round(np.where(z < t1, low, np.where(z < t2, mid, high)), 3)
+        """Monotone map of z to the engine's 0–5 scale anchored at the learned thresholds.
+
+        3 levels (default): 0–2 below θ1, 2–3 between θ1 and θ2, 3–5 above θ2 (match_threshold 3.0 = level 2).
+        5 levels (Amperity's hard-conflict / non-conflict / weak / moderate / strong): θ1..θ4 anchor the band
+        floors 1, 2, 3, 4 of the documented 0–5 scale, piecewise linear between thresholds, saturating at 0 and 5."""
+        th = self.thresholds
+        if len(th) == 2:
+            t1, t2 = float(th[0]), float(th[-1])
+            s = max(t2 - t1, 1e-3)
+            low = 2.0 / (1.0 + np.exp(-(z - t1) / s))
+            mid = 2.0 + (z - t1) / s
+            high = 3.0 + 2.0 * (1.0 - np.exp(-(z - t2) / s))
+            return np.round(np.where(z < t1, low, np.where(z < t2, mid, high)), 3)
+        K = len(th)
+        gaps = np.diff(th)
+        s = float(np.maximum(gaps.mean() if K > 1 else 1.0, 1e-3))
+        out = np.empty_like(z, dtype=np.float64)
+        below = z < th[0]
+        out[below] = 1.0 / (1.0 + np.exp(-(z[below] - th[0]) / s))  # 0..1
+        above = z >= th[-1]
+        out[above] = K + (5.0 - K) * (1.0 - np.exp(-(z[above] - th[-1]) / s))  # K..5
+        for k in range(K - 1):
+            sel = (z >= th[k]) & (z < th[k + 1])
+            out[sel] = (k + 1) + (z[sel] - th[k]) / max(float(th[k + 1] - th[k]), 1e-6)
+        return np.round(out, 3)
 
     def to_json(self) -> dict:
         return {
@@ -260,8 +278,13 @@ def fit_ordinal(
     feature_names: list[str] | None = None,
     seed: int = 0,
     monotone: bool = False,
+    cost_matrix: dict | None = None,
 ) -> OrdinalModel:
     """All-threshold logistic ordinal regression by full-batch Adam; thresholds kept ordered via softplus gaps.
+
+    ``cost_matrix`` (Amperity's Γ): ``{(p, q): γ}`` or ``{"p,q": γ}`` = cost of predicting level p when the truth is
+    q. For threshold k and a pair of true level y, landing on the wrong side means predicting k (if y > k) or
+    k+1 (if y ≤ k); that threshold term is weighted by the corresponding γ (default 1).
 
     ``monotone=True`` projects the feature weights onto their :data:`FEATURE_ORIENTATION` sign after every step
     (projected gradient descent), which makes ``z`` — and therefore the 0–5 score — non-decreasing in every
@@ -286,6 +309,13 @@ def fit_ordinal(
     v = np.zeros(d + K)
     b1, b2, eps = 0.9, 0.999, 1e-8
     cw = n / (levels * np.maximum(np.bincount(y, minlength=levels), 1))  # class balancing
+    gamma = parse_cost_matrix(cost_matrix, levels)
+    # per-sample, per-threshold cost of the wrong side (Γ): predict k when y > k, predict k+1 when y <= k
+    Wk = np.ones((n, K))
+    if gamma is not None:
+        ks = np.arange(K)[None, :]
+        wrong_level = np.where(y[:, None] > ks, ks, ks + 1)
+        Wk = gamma[wrong_level, y[:, None]]
 
     def thresholds(t0, gaps):
         return t0 + np.concatenate([[0.0], np.cumsum(np.log1p(np.exp(gaps)))])
@@ -297,7 +327,7 @@ def fit_ordinal(
         s = np.where(y[:, None] > np.arange(K)[None, :], 1.0, -1.0)
         marg = s * (z[:, None] - th[None, :])
         sig = 1.0 / (1.0 + np.exp(marg))  # d loss / d marg = -sig
-        wt = cw[y][:, None]
+        wt = cw[y][:, None] * Wk
         L = float(np.mean(wt * np.logaddexp(0.0, -marg))) + l2 * float(w @ w)
         g_marg = -sig * wt / n
         gz = (g_marg * s).sum(axis=1)
@@ -348,9 +378,23 @@ def fit_ordinal(
             "l2": l2,
             "lr": lr,
             "monotone": bool(monotone),
+            "cost_matrix": {f"{p},{q}": float(gamma[p, q]) for p in range(levels) for q in range(levels) if gamma is not None and gamma[p, q] != 1.0},
         },
     )
     return model
+
+
+def parse_cost_matrix(cost_matrix: dict | None, levels: int) -> np.ndarray | None:
+    """Γ as a levels×levels array (default 1.0) from ``{"p,q": γ}`` / ``{(p, q): γ}``; None when empty."""
+    if not cost_matrix:
+        return None
+    gamma = np.ones((levels, levels))
+    for key, val in cost_matrix.items():
+        p, q = (int(x) for x in (key.split(",") if isinstance(key, str) else key))
+        if not (0 <= p < levels and 0 <= q < levels):
+            raise ValueError(f"ordinal.cost_matrix entry {key!r} outside levels 0..{levels - 1}")
+        gamma[p, q] = float(val)
+    return gamma
 
 
 # ----------------------------------------------------------------------------------------- scoring
@@ -408,29 +452,40 @@ class TrainingReport:
         }
 
 
-HARD_NEGATIVE_FEATURES = (
-    "email_exact",
-    "phone_exact",
-)  # strong identifiers: present on both sides and different
+HARD_NEGATIVE_FEATURES = ("email_exact", "phone_exact", "loy_exact", "fk_shared")  # identifiers: present on both sides and different
+AUTHORITATIVE_KEYS = ("ck_exact",)  # one disagreement is enough (a customer key maps to one person by definition)
+
+
+def label_values(levels: int) -> tuple[int, int, int]:
+    """(match, non-match, hard-conflict) label values for a model with ``levels`` ordered labels.
+    3 levels: 2 / 0 / 0. 5 levels (Amperity: hard-conflict < non-conflict < weak < moderate < strong): 4 / 1 / 0."""
+    return (levels - 1, 1 if levels >= 5 else 0, 0)
 
 
 def weak_labels(F: pd.DataFrame, cfg) -> np.ndarray:
-    """2 for deterministic / trivial-dupe pairs; 0 for hard conflicts and for *hard negatives* — candidate pairs
-    whose strong identifiers are present on both sides and disagree on at least
-    ``matcher.ordinal.hard_negative_min_disagreements`` of them (the label-free analogue of Amperity's
-    "different trusted keys ⇒ negative"; without them the only negatives are random pairs, which never share a
-    name, and the model learns that a shared name alone is a match); -1 (unlabeled) otherwise."""
+    """Label inference without ground truth (Amperity US12499132 "intelligent labelling" from client keys):
+    the match label for deterministic / trivial-dupe pairs (a trusted key or an identifier with an agreeing name
+    says the same person); the non-match label for pairs whose *authoritative* key (``ordinal.authoritative_keys``,
+    ck by default) is present on both sides and differs, or that disagree on at least
+    ``hard_negative_min_disagreements`` of ``hard_negative_features`` (e-mail, phone, loyalty, foreign keys);
+    the hard-conflict label for hard-conflict pairs; -1 (unlabeled) otherwise."""
     ocfg = cfg.get("ordinal", {}) or {}
+    levels = int(ocfg.get("levels", 3))
+    pos, neg, hc = label_values(levels)
     rules = score_frame(F, cfg)
     y = np.full(len(F), -1, dtype=np.int64)
-    y[(rules["match_type"].isin(["deterministic", "trivial_duplicate"])).to_numpy()] = 2
+    y[(rules["match_type"].isin(["deterministic", "trivial_duplicate"])).to_numpy()] = pos
+    for f in ocfg.get("authoritative_keys", list(AUTHORITATIVE_KEYS)) or []:
+        if f in F.columns:
+            y[(F[f].to_numpy(dtype=np.float64) == 0.0) & (y != pos)] = neg
     k = int(ocfg.get("hard_negative_min_disagreements", 2))
-    if k > 0:
+    feats = [f for f in (ocfg.get("hard_negative_features") or HARD_NEGATIVE_FEATURES) if f in F.columns]
+    if k > 0 and feats:
         disagree = np.zeros(len(F), dtype=np.int64)
-        for f in HARD_NEGATIVE_FEATURES:
+        for f in feats:
             disagree += (F[f].to_numpy(dtype=np.float64) == 0.0).astype(np.int64)
-        y[(disagree >= k) & (y != 2)] = 0
-    y[(rules["match_category"] == "hard_conflict").to_numpy()] = 0
+        y[(disagree >= k) & (y != pos)] = neg
+    y[(rules["match_category"] == "hard_conflict").to_numpy()] = hc
     return y
 
 
@@ -440,12 +495,13 @@ def self_train(
     """Label-free training: rule positives + (random + conflict) negatives, then self-training rounds."""
     rep = TrainingReport()
     levels = int(ocfg.get("levels", 3))
+    pos, neg, hc = label_values(levels)
     y_c = weak_labels(F_cand, matcher_cfg)
     F = pd.concat([F_cand, F_neg], ignore_index=True)
-    y = np.concatenate([y_c, np.zeros(len(F_neg), dtype=np.int64)])
+    y = np.concatenate([y_c, np.full(len(F_neg), neg, dtype=np.int64)])
     rep.positives, rep.negatives, rep.unlabeled = (
-        int((y == 2).sum()),
-        int((y == 0).sum()),
+        int((y == pos).sum()),
+        int(((y == neg) | (y == hc)).sum()),
         int((y == -1).sum()),
     )
     if rep.positives < int(ocfg.get("min_positive_pairs", 300)):
@@ -461,6 +517,7 @@ def self_train(
         epochs=int(ocfg.get("epochs", 300)),
         seed=int(ocfg.get("sample_seed", 0)),
         monotone=bool(ocfg.get("monotone", False)),
+        cost_matrix=ocfg.get("cost_matrix") or None,
     )
     margin = float(ocfg.get("confidence_margin", 1.0))
     labelled = y >= 0
@@ -484,8 +541,8 @@ def self_train(
         conf_pos = z > t2 + margin
         conf_neg = z < t1 - margin
         idx = np.flatnonzero(un)
-        y[idx[conf_pos]] = 2
-        y[idx[conf_neg]] = 0
+        y[idx[conf_pos]] = pos
+        y[idx[conf_neg]] = neg
         labelled = y >= 0
         rep.rounds.append(
             {
@@ -499,9 +556,15 @@ def self_train(
         )
         if not conf_pos.any() and not conf_neg.any():
             break
-    # final: remaining unlabeled candidates become the middle band (weak/moderate), then one more fit
+    # final: remaining unlabeled candidates become the middle band(s) — weak/moderate (3 levels: label 1;
+    # 5 levels: weak = 2 below the mid-point between the outer thresholds, moderate = 3 above it), then one more fit
     if levels >= 3 and (~labelled).any():
-        y[~labelled] = 1
+        if levels >= 5 and model is not None:
+            zu = model.z(F[~labelled])
+            midpoint = 0.5 * (float(model.thresholds[0]) + float(model.thresholds[-1]))
+            y[np.flatnonzero(~labelled)] = np.where(zu < midpoint, 2, 3)
+        else:
+            y[~labelled] = 1
         model = fit_ordinal(F, y, **fit_kw)
     assert model is not None
     rep.model_meta = model.meta

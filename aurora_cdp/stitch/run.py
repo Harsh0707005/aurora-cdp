@@ -597,6 +597,16 @@ def run_stitch(
     t = time.perf_counter()
     ccfg = dict(cfg.cluster)
     ccfg["birthdate_typo_tolerance"] = cfg.matcher.get("hard_conflicts", {}).get("birthdate_typo_tolerance", 2)
+    if bool(cfg.matcher.get("one_to_one", False)):
+        # [AMP] one-to-one Stitch: a customer key (ck) maps to exactly one id — same ck always merges (ck_exact rule),
+        # different cks never do, however strong the rest of the evidence
+        attrs = list(ccfg.get("conflict_attributes", ["birthdate"]))
+        if "ck" not in attrs:
+            attrs.append("ck")
+        ccfg["conflict_attributes"] = attrs
+        tols = dict(ccfg.get("conflict_tolerances") or {})
+        tols.setdefault("ck", {"measure": "exact"})
+        ccfg["conflict_tolerances"] = tols
     columns = {"birthdate": "birthdate_norm", "given_name": "given_name_canon", **(ccfg.get("conflict_columns") or {})}
     conflict_values = {}
     for attr in ccfg.get("conflict_attributes", ["birthdate"]):
