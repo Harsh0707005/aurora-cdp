@@ -107,6 +107,7 @@ def main() -> None:
         return pd.read_parquet(f) if f.exists() else pd.read_parquet(d)
     oh, ol, est = _read("ORDER_HEADER"), _read("ORDER_LINE"), _read("RETAIL_STORE_ESTIMATE_HEADER")
     truth, expected, persons = _read("truth_records"), _read("expected_CUSTOMER"), _read("truth_persons")
+    expected = expected.rename(columns={"LIFETIME_TOTAL_ITEMS": "LIFETIME_ORDER_TOTAL_ITEMS"})  # corpora built before the DDL alignment
     manifest = json.loads((data / "manifest.json").read_text())
 
     # items per order for the aggregates (ORDER_LINE)
